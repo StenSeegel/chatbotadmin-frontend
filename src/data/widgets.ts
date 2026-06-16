@@ -14,6 +14,13 @@ export const widgets: Widget[] = [
       apiKey: "sk-jlu-7f3a9c2e1b4d8f6a",
       startPrompt:
         "Du bist der offizielle Assistent der JLU Gießen. Beantworte Fragen freundlich, sachlich und ausschließlich auf Basis der hinterlegten Wissensdatenbank.",
+      templates: ["Was ist die JLU?", "Wie bewerbe ich mich?", "Semesterticket", "Öffnungszeiten"],
+      rules: [
+        { text: "Nur auf Deutsch antworten", enabled: true },
+        { text: "Keine persönlichen Daten speichern", enabled: true },
+        { text: "Keine medizinischen Ratschläge geben", enabled: true },
+        { text: "Keine Links zu externen Webseiten", enabled: false },
+      ],
       minDialogDepth: 1,
       maxDialogDepth: 10,
       saveHistory: true,
@@ -40,6 +47,8 @@ export const widgets: Widget[] = [
       apiKey: "sk-sales-4d8e2f1a9c3b7e5d",
       startPrompt:
         "Du bist ein interner Assistent für das Vertriebsteam. Hilf bei Fragen zu Verkaufszahlen, Kundenkontakten und internen Prozessen.",
+      templates: [],
+      rules: [],
       minDialogDepth: 1,
       maxDialogDepth: 6,
       saveHistory: false,

@@ -1,13 +1,10 @@
+import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 
-interface AddWidgetCardProps {
-  onClick: () => void;
-}
-
-export function AddWidgetCard({ onClick }: AddWidgetCardProps) {
+export function AddWidgetCard() {
   return (
-    <button
-      onClick={onClick}
+    <Link
+      to="/widgets/new"
       className="border-2 border-dashed border-outline-variant rounded-xl p-4 flex flex-col items-center justify-center text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer group bg-surface-container-low/50"
     >
       <div className="w-12 h-12 rounded-full border-2 border-dashed border-current flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -15,6 +12,6 @@ export function AddWidgetCard({ onClick }: AddWidgetCardProps) {
       </div>
       <span className="font-headline-md text-base font-bold">Widget hinzufügen</span>
       <p className="text-xs mt-1 opacity-70 text-center">Erstellen Sie einen neuen Bot</p>
-    </button>
+    </Link>
   );
 }

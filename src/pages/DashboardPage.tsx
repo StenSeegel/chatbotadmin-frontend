@@ -1,30 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AddWidgetCard } from "../components/AddWidgetCard";
-import { AddWidgetModal } from "../components/AddWidgetModal";
 import { SearchToolbar, type SortOption, type StatusFilter } from "../components/SearchToolbar";
 import { WidgetCard } from "../components/WidgetCard";
-import { loadWidgets, saveWidgets } from "../data/widgetsStore";
+import { loadWidgets } from "../data/widgetsStore";
 import type { Widget } from "../types/widget";
 
 export function DashboardPage() {
-  const [widgets, setWidgets] = useState<Widget[]>(loadWidgets);
+  const [widgets] = useState<Widget[]>(loadWidgets);
 
-  useEffect(() => {
-    saveWidgets(widgets);
-  }, [widgets]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("name");
 
-  const handleAddWidget = (widget: Widget) => {
-    setWidgets((current) => [...current, widget]);
-  };
-
   const filteredWidgets = widgets
     .filter((widget) => {
       if (statusFilter !== "all" && widget.status !== statusFilter) return false;
-
       const query = search.trim().toLowerCase();
       if (!query) return true;
       return (
@@ -64,16 +54,8 @@ export function DashboardPage() {
         {filteredWidgets.map((widget) => (
           <WidgetCard key={widget.id} widget={widget} />
         ))}
-        <AddWidgetCard onClick={() => setIsAddModalOpen(true)} />
+        <AddWidgetCard />
       </div>
-
-      {isAddModalOpen && (
-        <AddWidgetModal
-          onClose={() => setIsAddModalOpen(false)}
-          onAdd={handleAddWidget}
-          existingCount={widgets.length}
-        />
-      )}
     </main>
   );
 }

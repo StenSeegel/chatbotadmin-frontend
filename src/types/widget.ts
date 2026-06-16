@@ -9,9 +9,16 @@ export interface WidgetStats {
   rating: number;
 }
 
+export interface WidgetRule {
+  text: string;
+  enabled: boolean;
+}
+
 export interface WidgetConfig {
   apiKey: string;
   startPrompt: string;
+  templates: string[];
+  rules: WidgetRule[];
   minDialogDepth: number;
   maxDialogDepth: number;
   saveHistory: boolean;

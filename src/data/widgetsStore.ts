@@ -7,6 +7,8 @@ export function createDefaultConfig(): WidgetConfig {
   return {
     apiKey: `sk-${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`,
     startPrompt: "Du bist ein hilfreicher Assistent. Beantworte Fragen freundlich und sachlich.",
+    templates: [],
+    rules: [],
     minDialogDepth: 1,
     maxDialogDepth: 8,
     saveHistory: true,
