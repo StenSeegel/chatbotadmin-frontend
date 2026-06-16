@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 import type { Widget } from "../types/widget";
 
@@ -21,54 +22,57 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   const rating = widget.stats.rating.toFixed(1).replace(".", ",");
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`w-12 h-12 ${accent.iconBg} rounded-xl flex items-center justify-center`}>
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col">
+      <div className="flex justify-between items-start mb-3">
+        <div className={`w-10 h-10 ${accent.iconBg} rounded-xl flex items-center justify-center`}>
           <Icon name={widget.icon} className={accent.iconText} />
         </div>
-        <div className={`flex items-center gap-1.5 ${status.badge} px-3 py-1 rounded-full text-label-sm font-bold`}>
+        <div className={`flex items-center gap-1.5 ${status.badge} px-2.5 py-1 rounded-full text-label-sm font-bold`}>
           <span className={`w-2 h-2 rounded-full ${status.dot}`} />
           {status.label}
         </div>
       </div>
 
-      <div className="mb-4">
-        <h4 className="font-headline-md text-headline-md">{widget.name}</h4>
+      <div className="mb-3">
+        <h4 className="font-headline-md text-base font-bold">{widget.name}</h4>
         <div className="flex items-center gap-2 text-on-surface-variant mt-1">
           <Icon name="database" className="text-sm" />
-          <span className="font-label-sm">{widget.kbId}</span>
+          <span className="font-label-sm text-xs truncate">{widget.kbId}</span>
         </div>
       </div>
 
-      <div className="border-t border-outline-variant/30 my-4" />
+      <div className="border-t border-outline-variant/30 my-3" />
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="flex flex-col">
-          <span className="text-xs text-on-surface-variant">Routing</span>
-          <span className="font-semibold">{widget.routing}</span>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs text-on-surface-variant truncate">Routing</span>
+          <span className="font-semibold text-sm truncate">{widget.routing}</span>
         </div>
-        <div className="flex flex-col border-l border-outline-variant/30 pl-4">
-          <span className="text-xs text-on-surface-variant">Gespräche</span>
-          <span className="font-semibold">{widget.stats.conversations}</span>
+        <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+          <span className="text-xs text-on-surface-variant truncate">Gespräche</span>
+          <span className="font-semibold text-sm truncate">{widget.stats.conversations}</span>
         </div>
-        <div className="flex flex-col border-l border-outline-variant/30 pl-4">
-          <span className="text-xs text-on-surface-variant">Bewertung</span>
-          <span className="font-semibold">{rating} / 5</span>
+        <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+          <span className="text-xs text-on-surface-variant truncate">Bewertung</span>
+          <span className="font-semibold text-sm truncate">{rating} / 5</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 mt-auto">
-        <button className="flex flex-col items-center justify-center gap-1 px-1 py-2 border border-outline-variant rounded-lg font-label-sm text-[11px] text-on-surface hover:bg-surface-container-high transition-colors">
+      <div className="grid grid-cols-3 gap-1 mt-auto">
+        <Link
+          to={`/widgets/${widget.id}`}
+          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] leading-tight text-on-surface hover:bg-surface-container-high transition-colors"
+        >
           <Icon name="settings" className="text-sm" />
-          <span>Einstellungen</span>
-        </button>
-        <button className="flex flex-col items-center justify-center gap-1 px-1 py-2 border border-outline-variant rounded-lg font-label-sm text-[11px] text-on-surface hover:bg-surface-container-high transition-colors">
+          <span className="w-full text-center break-words">Einstellungen</span>
+        </Link>
+        <button className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors">
           <Icon name="chat" className="text-sm" />
-          <span>Chatbox</span>
+          <span className="truncate w-full text-center">Chatbox</span>
         </button>
-        <button className="flex flex-col items-center justify-center gap-1 px-1 py-2 border border-outline-variant rounded-lg font-label-sm text-[11px] text-on-surface hover:bg-surface-container-high transition-colors">
+        <button className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors">
           <Icon name="code" className="text-sm" />
-          <span>Einbetten</span>
+          <span className="truncate w-full text-center">Einbetten</span>
         </button>
       </div>
     </div>

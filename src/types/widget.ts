@@ -2,9 +2,27 @@ export type WidgetStatus = "active" | "paused";
 
 export type WidgetAccent = "primary" | "secondary";
 
+export type WidgetPosition = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+
 export interface WidgetStats {
   conversations: number;
   rating: number;
+}
+
+export interface WidgetConfig {
+  apiKey: string;
+  startPrompt: string;
+  minDialogDepth: number;
+  maxDialogDepth: number;
+  saveHistory: boolean;
+  feedbackButtons: boolean;
+  rateLimitPerMinute: number;
+  rateLimitPerUserPerDay: number;
+  maxTokensPerAnswer: number;
+  title: string;
+  greeting: string;
+  accentColor: string;
+  position: WidgetPosition;
 }
 
 export interface Widget {
@@ -16,4 +34,5 @@ export interface Widget {
   icon: string;
   accent: WidgetAccent;
   stats: WidgetStats;
+  config: WidgetConfig;
 }

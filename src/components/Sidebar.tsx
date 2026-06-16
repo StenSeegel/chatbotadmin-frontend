@@ -1,18 +1,20 @@
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "./Icon";
 
 interface NavItem {
   label: string;
   icon: string;
-  active?: boolean;
+  to?: string;
 }
 
 const navItems: NavItem[] = [
-  { label: "Speichern", icon: "save", active: true },
+  { label: "Widgets", icon: "grid_view", to: "/" },
   { label: "Statistiken", icon: "bar_chart" },
-  { label: "Einstellungen", icon: "settings" },
 ];
 
 export function Sidebar() {
+  const location = useLocation();
+
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 p-4 bg-surface dark:bg-inverse-surface border-r border-outline-variant z-50">
       <div className="flex items-center gap-3 mb-10 px-2">
@@ -20,19 +22,28 @@ export function Sidebar() {
         <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
       </div>
       <nav className="flex flex-col gap-2 flex-grow">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={
-              item.active
-                ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
-                : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out"
-            }
-          >
-            <Icon name={item.icon} />
-            <span className={item.active ? "font-label-sm" : "font-body-base"}>{item.label}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const active = item.to === "/" && (location.pathname === "/" || location.pathname.startsWith("/widgets"));
+          const className = active
+            ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
+            : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out";
+
+          if (item.to) {
+            return (
+              <Link key={item.label} to={item.to} className={className}>
+                <Icon name={item.icon} />
+                <span className={active ? "font-label-sm" : "font-body-base"}>{item.label}</span>
+              </Link>
+            );
+          }
+
+          return (
+            <button key={item.label} className={className}>
+              <Icon name={item.icon} />
+              <span className="font-body-base">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
       <div className="mt-auto pt-4 border-t border-outline-variant">
         <div className="flex items-center gap-3 px-2">
