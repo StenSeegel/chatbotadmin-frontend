@@ -1,0 +1,18 @@
+services:
+  # Remote/Production Deployment (Pulls pre-built image from GitHub Container Registry)
+  chatbotadmin-frontend:
+    image: ghcr.io/stenseegel/chatbotadmin-frontend:latest
+    container_name: chatbotadmin-frontend
+    ports:
+      - "8080:80"             # Maps host port 8080 to container port 80
+    restart: always
+    pull_policy: always
+
+  # Local Build & Run (Builds the image from local source code)
+  local-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatbotadmin-frontend-local
+    ports:
+      - "8081:80"             # Alternate port for local builds to avoid conflicts
