@@ -62,6 +62,8 @@ export function WidgetConfigView({
   ]);
   const [previewDraft, setPreviewDraft] = useState("");
   const [previewTyping, setPreviewTyping] = useState(false);
+  // Grundeinstellungen sind beim Erstellen offen, bei bestehenden Widgets eingeklappt.
+  const [basicsOpen, setBasicsOpen] = useState(isNew);
 
   // Vorschau-Chat bei neuen Nachrichten / während des Streamens nach unten scrollen.
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -246,59 +248,78 @@ export function WidgetConfigView({
         {/* Left column */}
         <div className="lg:col-span-2 space-y-stack-lg">
 
-          {/* Grundeinstellungen — create mode only */}
-          {isNew && (
-            <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          {/* Grundeinstellungen — beim Erstellen offen, bei bestehenden Widgets einklappbar */}
+          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+            {isNew ? (
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <Icon name="tune" className="text-primary" />
                 Grundeinstellungen
               </h3>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setBasicsOpen((o) => !o)}
+                aria-expanded={basicsOpen}
+                className="w-full flex items-center justify-between gap-2 text-left"
+              >
+                <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
+                  <Icon name="tune" className="text-primary" />
+                  Grundeinstellungen
+                </h3>
+                <span className="flex items-center gap-1 text-xs text-on-surface-variant">
+                  {basicsOpen ? "Einklappen" : "Bearbeiten"}
+                  <Icon name="expand_more" className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} />
+                </span>
+              </button>
+            )}
 
-              <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-on-surface-variant" htmlFor="widget-name">
-                  Name <span className="text-error">*</span>
-                </label>
-                <input
-                  id="widget-name"
-                  value={widget.name}
-                  onChange={(e) => onUpdate("name", e.target.value)}
-                  placeholder="z.B. Support Bot"
-                  className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm">
+            {basicsOpen && (
+              <>
                 <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-on-surface-variant" htmlFor="widget-kbid">
-                    Knowledge-Base-ID <span className="text-error">*</span>
+                  <label className="font-label-sm text-on-surface-variant" htmlFor="widget-name">
+                    Name <span className="text-error">*</span>
                   </label>
                   <input
-                    id="widget-kbid"
-                    value={widget.kbId}
-                    onChange={(e) => onUpdate("kbId", e.target.value)}
-                    placeholder="z.B. jlu-public-2024"
+                    id="widget-name"
+                    value={widget.name}
+                    onChange={(e) => onUpdate("name", e.target.value)}
+                    placeholder="z.B. Support Bot"
                     className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-on-surface-variant" htmlFor="widget-routing">
-                    Routing
-                  </label>
-                  <select
-                    id="widget-routing"
-                    value={widget.routing}
-                    onChange={(e) => onUpdate("routing", e.target.value)}
-                    className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  >
-                    <option value="public">public</option>
-                    <option value="internal">internal</option>
-                    <option value="private">private</option>
-                  </select>
-                </div>
-              </div>
 
-            </section>
-          )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm">
+                  <div className="flex flex-col gap-1">
+                    <label className="font-label-sm text-on-surface-variant" htmlFor="widget-kbid">
+                      Knowledge-Base-ID <span className="text-error">*</span>
+                    </label>
+                    <input
+                      id="widget-kbid"
+                      value={widget.kbId}
+                      onChange={(e) => onUpdate("kbId", e.target.value)}
+                      placeholder="z.B. jlu-public-2024"
+                      className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="font-label-sm text-on-surface-variant" htmlFor="widget-routing">
+                      Routing
+                    </label>
+                    <select
+                      id="widget-routing"
+                      value={widget.routing}
+                      onChange={(e) => onUpdate("routing", e.target.value)}
+                      className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                    >
+                      <option value="public">public</option>
+                      <option value="internal">internal</option>
+                      <option value="private">private</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
 
           {/* Gesprächseinstellungen */}
           <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">

@@ -17,11 +17,7 @@ export function DashboardPage() {
       if (statusFilter !== "all" && widget.status !== statusFilter) return false;
       const query = search.trim().toLowerCase();
       if (!query) return true;
-      return (
-        widget.name.toLowerCase().includes(query) ||
-        widget.kbId.toLowerCase().includes(query) ||
-        widget.routing.toLowerCase().includes(query)
-      );
+      return widget.name.toLowerCase().includes(query);
     })
     .sort((a, b) => {
       switch (sortOption) {
