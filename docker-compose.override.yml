@@ -1,0 +1,9 @@
+services:
+  # Local Build & Run (Builds the image from local source code)
+  local-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatbotadmin-frontend-local
+    ports:
+      - "8081:80"             # Alternate port for local builds to avoid conflicts
