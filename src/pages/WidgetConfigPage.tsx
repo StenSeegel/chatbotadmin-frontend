@@ -25,16 +25,16 @@ function makeUniqueId(base: string, existing: Widget[]): string {
 const WIDGET_BASE_URL = import.meta.env.VITE_WIDGET_BASE_URL || "https://ki-chat.uni-giessen.de";
 
 function buildEmbedCode(widgetId: string, kbId: string, routing: string): string {
-  return `<!-- ChatBot Widget -->
-<div id="chatbot-root"></div>
-<script
-  src="${WIDGET_BASE_URL}/widget.js"
+  return `<!-- 1. Globaler Loader (Einmalig im Theme / <head> einbinden) -->
+<script src="${WIDGET_BASE_URL}/widget.js" defer></script>
+
+<!-- 2. Widget-Platzhalter (Im Seiteninhalt einfügen) -->
+<div class="chatbot-widget"
   data-widget-id="${widgetId || "widget-id"}"
   data-kb="${kbId || "kb-id"}"
   data-routing="${routing || "public"}-widget"
   data-lang="de"
-  defer
-></script>`;
+></div>`;
 }
 
 function buildDirectUrl(widgetId: string): string {
