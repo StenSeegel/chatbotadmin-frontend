@@ -60,7 +60,7 @@ On the staging environment hosted at **`sv90073.hrz.uni-giessen.de`**, the widge
    ```bash
    docker compose up -d
    ```
-   *This starts the `chatbotadmin-frontend` on port `442` (HTTP alternate) and the `widget-test-site` mockup page on port `8082`.*
+   *This starts the `chatbotadmin-frontend` on host port `8080` (which is reverse-proxied by the server environment to the external port `442`) and the `widget-test-site` mockup page on port `8082`.*
 
 ### Embedding the Widget on Staging Pages
 To test the widget on staging CMS environments or static staging portals:
