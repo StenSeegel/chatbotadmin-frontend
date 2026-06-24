@@ -1,0 +1,31 @@
+services:
+  # Remote/Production Deployment (Pulls pre-built image from GitHub Container Registry)
+  chatbotadmin-frontend:
+    image: ghcr.io/stenseegel/chatbotadmin-frontend:latest
+    container_name: chatbotadmin-frontend
+    ports:
+      - "8080:80"             # Maps host port 8080 to container port 80 (Reverse proxied on staging to port 442)
+
+    restart: always
+    pull_policy: always
+    environment:
+      - HTTP_PROXY=http://10.60.3.254:3128
+      - HTTPS_PROXY=http://10.60.3.254:3128
+      - NO_PROXY=localhost,127.0.0.1
+
+  # Local Widget Test Website (Simulates an external site embedding the widget, e.g. uni-giessen.de)
+  widget-test-site:
+    image: nginx:alpine
+    container_name: widget-test-site
+    ports:
+      - "8082:80"             # Maps host port 8082 to container port 80 (Nginx webroot)
+    volumes:
+      - ./widget-test:/usr/share/nginx/html:ro
+    restart: always
+    environment:
+      - HTTP_PROXY=http://10.60.3.254:3128
+      - HTTPS_PROXY=http://10.60.3.254:3128
+      - NO_PROXY=localhost,127.0.0.1
+
+
+

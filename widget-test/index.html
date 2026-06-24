@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universität Gießen - Testseite für Chatbot-Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@400,0..1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #0052ff;
+      --secondary-color: #3b82f6;
+      --text-color: #1e293b;
+      --bg-color: #f8fafc;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      line-height: 1.6;
+    }
+
+    /* Test Controls Floating Panel */
+    .test-controls-panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      width: 320px;
+      font-size: 13px;
+    }
+
+    .test-controls-panel h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .test-controls-panel h3 span {
+      font-size: 18px;
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #64748b;
+    }
+
+    .control-group input, .control-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .control-group input:focus, .control-group select:focus {
+      border-color: var(--primary-color);
+    }
+
+    .btn-reload {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-reload:hover {
+      background-color: #0043d0;
+    }
+
+    /* Mock University Branding */
+    header {
+      background-color: #ffffff;
+      border-b: 1px solid var(--border-color);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #090d16;
+    }
+
+    .logo-symbol {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .logo-text span {
+      font-weight: 400;
+      color: #64748b;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #64748b;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary-color);
+    }
+
+    /* Main Content Layout */
+    .hero {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      padding: 80px 24px;
+      text-align: center;
+    }
+
+    .hero-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #475569;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: rgba(0, 82, 255, 0.1);
+      color: var(--primary-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .content-grid {
+      max-width: 1200px;
+      margin: 48px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background-color: #f1f5f9;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .card-icon span {
+      font-size: 24px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .card p {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    footer {
+      background-color: #0f172a;
+      color: #94a3b8;
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 14px;
+      margin-top: 80px;
+    }
+
+    /* Embedded Widget Target Container */
+    #chatbot-root {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Test Control Panel -->
+  <div class="test-controls-panel">
+    <h3>
+      <span class="material-symbols-outlined">settings_suggest</span>
+      Widget Teststeuerung
+    </h3>
+    
+    <div class="control-group">
+      <label for="server-origin">Widget Server Origin</label>
+      <input type="text" id="server-origin" value="http://localhost:8081" placeholder="z.B. http://localhost:8081">
+    </div>
+
+    <div class="control-group">
+      <label for="widget-id">Widget ID</label>
+      <select id="widget-id">
+        <option value="support-bot" selected>support-bot (Support Bot)</option>
+        <option value="sales-tracker">sales-tracker (Sales Tracker)</option>
+        <option value="custom">Benutzerdefiniert...</option>
+      </select>
+    </div>
+
+    <div class="control-group" id="custom-widget-id-group" style="display: none;">
+      <label for="custom-widget-id">Custom Widget ID</label>
+      <input type="text" id="custom-widget-id" placeholder="z.B. my-custom-bot">
+    </div>
+
+    <div class="control-group">
+      <label for="kb-id">Knowledge-Base-ID</label>
+      <input type="text" id="kb-id" value="jlu-public-2024" placeholder="z.B. jlu-public-2024">
+    </div>
+
+    <div class="control-group">
+      <label for="widget-routing">Routing</label>
+      <select id="widget-routing">
+        <option value="public" selected>public</option>
+        <option value="internal">internal</option>
+        <option value="private">private</option>
+      </select>
+    </div>
+
+    <button class="btn-reload" id="btn-reload-widget">
+      <span class="material-symbols-outlined">refresh</span>
+      Widget neu laden
+    </button>
+  </div>
+
+  <!-- Mock Website Content -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <div class="logo-symbol">JLU</div>
+        <div class="logo-text">Justus-Liebig-Universität<span> Gießen</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#">Studium</a></li>
+        <li><a href="#">Forschung</a></li>
+        <li><a href="#">Internationales</a></li>
+        <li><a href="#">Campus</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-container">
+        <span class="badge">TEST-UMGEBUNG FÜR EMBED-LOADER</span>
+        <h1>Willkommen im Portal der JLU</h1>
+        <p>Dies ist eine lokale Mock-Website zur Simulation einer externen Einbettung (z.B. uni-giessen.de). Das Chatbot Widget wird über einen zentralen Loader-Script von der Admin-Instanz geladen.</p>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <div class="card">
+        <div class="card-icon">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <h2>Studienangebot</h2>
+        <p>Entdecken Sie über 150 Studiengänge an einer der forschungsstärksten Universitäten Deutschlands. Von Agrarwissenschaften bis Zahnmedizin bieten wir beste Studienbedingungen.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <span class="material-symbols-outlined">science</span>
+        </div>
+        <h2>Exzellente Forschung</h2>
+        <p>Die JLU ist international bekannt für ihre Forschungsergebnisse in den Lebenswissenschaften und Kulturwissenschaften. Erfahren Sie mehr über unsere Sonderforschungsbereiche.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <span class="material-symbols-outlined">calendar_month</span>
+        </div>
+        <h2>Termine & Fristen</h2>
+        <p>Wann beginnt das Semester? Bis wann kann ich mich rückmelden? Informieren Sie sich über alle wichtigen Fristen für das kommende Wintersemester.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Justus-Liebig-Universität Gießen &bull; Lokale Testseite für Chatbot Integration</p>
+  </footer>
+
+  <!-- Target element for chatbot widget insertion -->
+  <div id="chatbot-root"></div>
+
+  <!-- Script for dynamic Widget loading -->
+  <script>
+    const serverOriginInput = document.getElementById('server-origin');
+    const widgetIdSelect = document.getElementById('widget-id');
+    const customWidgetIdGroup = document.getElementById('custom-widget-id-group');
+    const customWidgetIdInput = document.getElementById('custom-widget-id');
+    const kbIdInput = document.getElementById('kb-id');
+    const routingSelect = document.getElementById('widget-routing');
+    const btnReload = document.getElementById('btn-reload-widget');
+
+    // Auto toggle custom widget id input
+    widgetIdSelect.addEventListener('change', () => {
+      if (widgetIdSelect.value === 'custom') {
+        customWidgetIdGroup.style.display = 'block';
+      } else {
+        customWidgetIdGroup.style.display = 'none';
+      }
+    });
+
+    // Function to reload widget script dynamically
+    function loadWidget() {
+      // 1. Remove existing script and widget UI elements if any
+      const existingScript = document.getElementById('dynamically-loaded-widget-script');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Remove any injected wrappers, CSS, google font links injected by widget.js
+      const activeWidgetId = widgetIdSelect.value === 'custom' ? customWidgetIdInput.value : widgetIdSelect.value;
+      const existingWrapper = document.querySelector('.chatbot-widget-wrapper');
+      if (existingWrapper) {
+        existingWrapper.remove();
+      }
+      const existingStyle = document.getElementById('widget-styles-' + activeWidgetId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+
+      // 2. Extract configuration & rebuild passive placeholder div
+      const origin = serverOriginInput.value.trim() || 'http://localhost:8080';
+      const kb = kbIdInput.value.trim();
+      const routing = routingSelect.value;
+
+      // Clear and rebuild the passive placeholder container
+      const targetRoot = document.getElementById('chatbot-root');
+      targetRoot.innerHTML = '';
+      
+      const placeholder = document.createElement('div');
+      placeholder.className = 'chatbot-widget';
+      placeholder.setAttribute('data-widget-id', activeWidgetId);
+      placeholder.setAttribute('data-kb', kb);
+      placeholder.setAttribute('data-routing', `${routing}-widget`);
+      placeholder.setAttribute('data-lang', 'de');
+      targetRoot.appendChild(placeholder);
+
+      // 3. Create loader script tag (without config attributes)
+      const script = document.createElement('script');
+      script.id = 'dynamically-loaded-widget-script';
+      script.src = `${origin}/widget.js`;
+      script.defer = true;
+
+      // Log action
+      console.log(`Lade Loader-Skript von: ${script.src}`);
+      console.log(`Erstellter HTML-Platzhalter:`, placeholder);
+
+      // 4. Append script to body to trigger loading
+      document.body.appendChild(script);
+    }
+
+    // Set default server origin based on current host if matching, or keep localhost:8080
+    if (window.location.hostname === 'localhost' && window.location.port !== '8082') {
+      serverOriginInput.value = `http://localhost:${window.location.port}`;
+    }
+
+    // Bind event
+    btnReload.addEventListener('click', loadWidget);
+
+    // Initial load on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      // Small delay to ensure page rendering
+      setTimeout(loadWidget, 500);
+    });
+  </script>
+</body>
+</html>
