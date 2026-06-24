@@ -407,15 +407,15 @@
 
     containerEl.appendChild(wrapper);
 
-    // Interactive Logic Elements
-    const fab = document.getElementById(`chatbot-fab-${widgetId}`);
-    const chatWindow = document.getElementById(`chatbot-window-${widgetId}`);
-    const closeBtn = document.getElementById(`chatbot-close-btn-${widgetId}`);
-    const inputEl = document.getElementById(`chatbot-input-${widgetId}`);
-    const sendBtn = document.getElementById(`chatbot-send-btn-${widgetId}`);
-    const messagesContainer = document.getElementById(`chatbot-messages-${widgetId}`);
-    const chipsContainer = document.getElementById(`chatbot-chips-${widgetId}`);
-    const fabIcon = document.getElementById(`chatbot-fab-icon-${widgetId}`);
+    // Interactive Logic Elements (scoped to the wrapper element)
+    const fab = wrapper.querySelector('.chatbot-fab');
+    const chatWindow = wrapper.querySelector('.chatbot-window');
+    const closeBtn = wrapper.querySelector('.chatbot-header-close');
+    const inputEl = wrapper.querySelector('.chatbot-input');
+    const sendBtn = wrapper.querySelector('.chatbot-send');
+    const messagesContainer = wrapper.querySelector('.chatbot-messages');
+    const chipsContainer = wrapper.querySelector('.chatbot-chips');
+    const fabIcon = wrapper.querySelector('.chatbot-fab span');
 
     let isOpen = false;
     let hasInitiated = false;
@@ -596,10 +596,14 @@
   const selectors = ['.chatbot-widget', '.widget', '#chatbot-root'];
   selectors.forEach(sel => {
     document.querySelectorAll(sel).forEach(el => {
-      if (el.getAttribute('data-chatbot-initialized') !== 'true') {
-        el.setAttribute('data-chatbot-initialized', 'true');
-        initWidget(el);
+      // Prevent double initialization if already initialized OR if nested inside an already initialized container
+      if (el.getAttribute('data-chatbot-initialized') === 'true' || 
+          el.closest('[data-chatbot-initialized="true"]') ||
+          el.querySelector('[data-chatbot-initialized="true"]')) {
+        return;
       }
+      el.setAttribute('data-chatbot-initialized', 'true');
+      initWidget(el);
     });
   });
 })();

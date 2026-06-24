@@ -4,7 +4,7 @@ services:
     image: ghcr.io/stenseegel/chatbotadmin-frontend:latest
     container_name: chatbotadmin-frontend
     ports:
-      - "443:80"              # Maps host port 443 to container port 80
+      - "442:80"              # Maps host port 442 to container port 80 (HTTP alternate)
 
     restart: always
     pull_policy: always
