@@ -11,15 +11,18 @@ in the backend — nothing sensitive is bundled into the SPA. Auth details:
 | frontend (Nginx) | 80 / 443 | static SPA + `/widget.js`; proxies `/api` → backend |
 | backend (Go) | 8080 | JWT/OIDC auth, API keys, model proxy |
 | Postgres / Redis | — | users, providers, API keys / JWT revocation |
-| widget mock-portal | 8082 | standalone site that embeds the widget |
+| widget mock-portal | 6443 (server) / 8082 (local) | cross-origin site that embeds the widget |
 
 > **Mock widget portal** — available on **every** deployment as a **separate,
-> cross-origin origin** (locally `:8082`; on a server the same host on `:8082`,
-> or override with `VITE_WIDGET_PORTAL_URL`). It embeds the widget and logs in
-> against the admin's real backend (`POST /api/auth/login`), so it always
-> exercises the true cross-origin flow. It's linked from the admin user menu
-> (admins only). Browsing to `http://<host>:8080` returns **404** — the backend
-> serves only `/api/*` and `/healthz`.
+> cross-origin origin**: locally the `widget-test-site` container on `http://…:8082`;
+> on a TLS server the **frontend nginx serves it over HTTPS on `:6443`** (same
+> cert, a different port = a different origin). Override either with
+> `VITE_WIDGET_PORTAL_URL`. It embeds the widget and logs in against the admin's
+> real backend (`POST /api/auth/login`), so it always exercises the true
+> cross-origin flow — which means the portal's origin must be in the backend's
+> `ALLOWED_ORIGINS`. It's linked from the admin user menu (admins only). Browsing
+> to `http://<host>:8080` returns **404** — the backend serves only `/api/*` and
+> `/healthz`.
 
 There are exactly three deployments:
 
@@ -78,8 +81,11 @@ docker compose up -d             # frontend + backend + Postgres + Redis + porta
   taken, map `"442:443"` and add `:442` to the URLs + OIDC redirect URIs.)
 - **Admin UI:** https://sv90073.hrz.uni-giessen.de — once OIDC is on, the **first
   SSO login becomes superadmin**, so log in immediately (see AUTHENTICATION.md).
-- The widget portal (`widget-test-site`, `:8082`) is plain HTTP; for a TLS site
-  serve it on an HTTPS origin or point `VITE_WIDGET_PORTAL_URL` at the real portal.
+- **Widget test portal:** the frontend nginx serves it over TLS on **`:6443`**
+  (cross-origin from the admin, same cert — see `nginx.staging.conf`). Its origin
+  (`https://sv90073.hrz.uni-giessen.de:6443`) is in `ALLOWED_ORIGINS` so the
+  cross-origin login works. The plain-HTTP `widget-test-site` container is
+  local-only (compose `local` profile) and is **not** started on the server.
 
 **Required `.env`** (full template in [`.env.staging.example`](../.env.staging.example)):
 

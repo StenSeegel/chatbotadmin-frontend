@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run backend:up && docker compose up -d widget-test-site && vite",
+    "dev": "npm run backend:up && docker compose --profile local up -d widget-test-site && vite",
     "dev:frontend": "vite",
     "backend:up": "docker compose -f go-backend/docker-compose.yml up -d --build",
     "backend:down": "docker compose -f go-backend/docker-compose.yml down",

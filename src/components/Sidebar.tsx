@@ -24,16 +24,20 @@ const navItems: NavItem[] = [
  * cross-origin embed + login path; the same-origin /test-widget/ copy is useless
  * for that.
  *
- * Default: follow the CURRENT deployment's host on the widget-test-site port
- * (8082) — so a locally-served admin links to the local portal and a staging
- * admin links to the staging portal, never a hardcoded environment. Override
- * with VITE_WIDGET_PORTAL_URL when the portal lives somewhere else.
+ * Default: follow the CURRENT deployment's host on the widget-portal port — so a
+ * locally-served admin links to the local portal and a staging admin links to the
+ * staging portal, never a hardcoded environment. The port differs by deployment:
+ * HTTPS servers serve it over TLS on :6443 (frontend nginx, same cert); local
+ * plain-HTTP dev uses the :8082 widget-test-site container. Either way it's a
+ * different port than the admin, i.e. a genuinely different origin. Override with
+ * VITE_WIDGET_PORTAL_URL when the portal lives somewhere else.
  */
 function resolveWidgetPortalUrl(): string {
   const override = import.meta.env.VITE_WIDGET_PORTAL_URL;
   if (override) return override;
   const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:8082/`;
+  const port = protocol === "https:" ? "6443" : "8082";
+  return `${protocol}//${hostname}:${port}/`;
 }
 
 export function Sidebar({ onLogout }: SidebarProps) {

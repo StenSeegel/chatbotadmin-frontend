@@ -37,8 +37,9 @@ services:
     image: ghcr.io/stenseegel/chatbotadmin-frontend:${FRONTEND_IMAGE_TAG:-latest}
     container_name: chatbotadmin-frontend
     ports:
-      - "443:443"             # Maps host port 443 to container HTTPS port 443
-      - "80:80"               # Maps host port 80 to container HTTP port 80 (for redirects)
+      - "443:443"             # admin SPA + /api proxy (HTTPS)
+      - "80:80"               # HTTP → HTTPS redirect
+      - "6443:6443"           # cross-origin widget test portal (HTTPS, same cert)
     volumes:
       - /etc/ssl/certs/sv90073.pem:/etc/nginx/ssl/sv90073.pem:ro
       - /etc/ssl/private/priv.pem:/etc/nginx/ssl/priv.pem:ro
@@ -52,10 +53,16 @@ services:
       - HTTPS_PROXY=http://10.60.3.254:3128
       - NO_PROXY=localhost,127.0.0.1
 
-  # Local Widget Test Website (Simulates an external site embedding the widget, e.g. uni-giessen.de)
+  # Local-only widget test portal (simulates an external site embedding the widget).
+  # Plain HTTP on :8082 — fine for loopback dev, but unusable on a TLS server, so
+  # it's gated behind the "local" profile and NOT started by `docker compose up -d`
+  # on staging/prod. There the frontend nginx serves the portal over TLS on :6443
+  # (see nginx.staging.conf). Start locally via `npm run dev` (which passes
+  # --profile local) or `docker compose --profile local up -d widget-test-site`.
   widget-test-site:
     image: nginx:alpine
     container_name: widget-test-site
+    profiles: ["local"]
     ports:
       - "8082:80"             # Maps host port 8082 to container port 80 (Nginx webroot)
     volumes:
