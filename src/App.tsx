@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { Sidebar } from "./components/Sidebar";
@@ -7,8 +7,11 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { LoginPage } from "./pages/LoginPage";
+import { StandaloneWidgetPage } from "./pages/StandaloneWidgetPage";
 import { StatisticsPage } from "./pages/StatisticsPage";
 import { WidgetConfigPage } from "./pages/WidgetConfigPage";
+import { WidgetConversationsPage } from "./pages/WidgetConversationsPage";
+import { WidgetDashboardPage } from "./pages/WidgetDashboardPage";
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const { logout } = useAuth();
@@ -23,6 +26,17 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const location = useLocation();
+
+  // Public standalone widget page - no admin login required
+  if (location.pathname.startsWith("/w/")) {
+    return (
+      <Routes>
+        <Route path="/w/:id" element={<StandaloneWidgetPage />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       {/* Public auth routes */}
@@ -47,6 +61,26 @@ function App() {
           <ProtectedRoute>
             <AuthenticatedLayout>
               <WidgetConfigPage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/widgets/:id/gespraeche"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <WidgetDashboardPage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/widgets/:id/gespraeche/:convId"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <WidgetConversationsPage />
             </AuthenticatedLayout>
           </ProtectedRoute>
         }

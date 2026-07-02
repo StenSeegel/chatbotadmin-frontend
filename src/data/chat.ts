@@ -47,13 +47,22 @@ export async function sendChatMessage(params: {
  * Ergebnis zurückgegeben.
  */
 export async function streamChatMessage(
-  params: { model: string; messages: ChatMessage[]; maxTokens?: number },
+  params: {
+    knowledgeBaseId: string;
+    messages: ChatMessage[];
+    maxTokens?: number;
+    widgetId?: string;
+    /** Bricht die Anfrage ab (z. B. bei Reset/Unmount); danach werden keine Tokens mehr geliefert. */
+    signal?: AbortSignal;
+  },
   onToken: (chunk: string) => void,
 ): Promise<ChatResult> {
+  const { signal, ...body } = params;
   const res = await apiFetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...params, stream: true }),
+    body: JSON.stringify({ ...body, stream: true }),
+    signal,
   });
 
   if (!res.ok || !res.body) {

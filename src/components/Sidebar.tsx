@@ -1,36 +1,19 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Icon } from "./Icon";
-
-interface NavItem {
-  label: string;
-  icon: string;
-  to?: string;
-}
+import { WidgetIcon } from "./WidgetIcon";
+import { fetchWidgets } from "../data/widgetsStore";
+import type { Widget } from "../types/widget";
 
 interface SidebarProps {
   onLogout: () => void;
 }
 
-const navItems: NavItem[] = [
-  { label: "Widgets", icon: "grid_view", to: "/" },
-  { label: "Statistiken", icon: "bar_chart", to: "/statistiken" },
-];
-
 /**
  * URL of the mock widget portal — the standalone site that embeds the widget.
  * It must live on a DIFFERENT origin than the admin UI so it exercises the real
- * cross-origin embed + login path; the same-origin /test-widget/ copy is useless
- * for that.
- *
- * Default: follow the CURRENT deployment's host on the widget-portal port — so a
- * locally-served admin links to the local portal and a staging admin links to the
- * staging portal, never a hardcoded environment. The port differs by deployment:
- * HTTPS servers serve it over TLS on :6443 (frontend nginx, same cert); local
- * plain-HTTP dev uses the :8082 widget-test-site container. Either way it's a
- * different port than the admin, i.e. a genuinely different origin. Override with
- * VITE_WIDGET_PORTAL_URL when the portal lives somewhere else.
+ * cross-origin embed + login path.
  */
 function resolveWidgetPortalUrl(): string {
   const override = import.meta.env.VITE_WIDGET_PORTAL_URL;
@@ -42,10 +25,28 @@ function resolveWidgetPortalUrl(): string {
 
 export function Sidebar({ onLogout }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const user = useCurrentUser();
   const isAdmin = user?.role === "admin" || user?.role === "superadmin";
   const widgetPortalUrl = resolveWidgetPortalUrl();
+
+  const [widgets, setWidgets] = useState<Widget[]>([]);
+  const widgetsActive = location.pathname === "/" || location.pathname.startsWith("/widgets");
+  const [widgetsOpen, setWidgetsOpen] = useState(widgetsActive);
+
+  useEffect(() => {
+    fetchWidgets()
+      .then(setWidgets)
+      .catch(() => setWidgets([]));
+  }, []);
+
+  const statistikenActive = location.pathname.startsWith("/statistiken");
+
+  const parentClass = (active: boolean) =>
+    active
+      ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
+      : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out";
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 p-4 bg-surface dark:bg-inverse-surface border-r border-outline-variant z-50">
@@ -53,31 +54,52 @@ export function Sidebar({ onLogout }: SidebarProps) {
         <Icon name="smart_toy" className="text-primary" style={{ fontSize: 32 }} />
         <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
       </div>
-      <nav className="flex flex-col gap-2 flex-grow">
-        {navItems.map((item) => {
-          const active =
-            (item.to === "/" && (location.pathname === "/" || location.pathname.startsWith("/widgets"))) ||
-            (item.to !== "/" && !!item.to && location.pathname.startsWith(item.to));
-          const className = active
-            ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
-            : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out";
+      <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/");
+              setWidgetsOpen((v) => !v);
+            }}
+            className={`${parentClass(widgetsActive)} w-full`}
+          >
+            <Icon name="grid_view" />
+            <span className={widgetsActive ? "font-label-sm" : "font-body-base"}>Widgets</span>
+            <Icon
+              name="expand_more"
+              className={`ml-auto shrink-0 transition-transform duration-200 ${widgetsOpen ? "rotate-180" : ""}`}
+              style={{ fontSize: 20 }}
+            />
+          </button>
 
-          if (item.to) {
-            return (
-              <Link key={item.label} to={item.to} className={className}>
-                <Icon name={item.icon} />
-                <span className={active ? "font-label-sm" : "font-body-base"}>{item.label}</span>
-              </Link>
-            );
-          }
+          {widgetsOpen && (
+            <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
+              {widgets.map((widget) => {
+                const active = location.pathname === `/widgets/${widget.id}/gespraeche`;
+                return (
+                  <Link
+                    key={widget.id}
+                    to={`/widgets/${widget.id}/gespraeche`}
+                    className={
+                      active
+                        ? "flex items-center gap-3 px-3 py-2 rounded-full bg-secondary-container text-on-secondary-container transition-colors"
+                        : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary transition-colors"
+                    }
+                  >
+                    <WidgetIcon name={widget.icon} size={18} className="shrink-0" />
+                    <span className="font-body-base text-sm truncate">{widget.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-          return (
-            <button key={item.label} className={className}>
-              <Icon name={item.icon} />
-              <span className="font-body-base">{item.label}</span>
-            </button>
-          );
-        })}
+        <Link to="/statistiken" className={parentClass(statistikenActive)}>
+          <Icon name="bar_chart" />
+          <span className={statistikenActive ? "font-label-sm" : "font-body-base"}>Statistiken</span>
+        </Link>
       </nav>
       <div className="mt-auto pt-4 border-t border-outline-variant relative">
         {menuOpen && (
