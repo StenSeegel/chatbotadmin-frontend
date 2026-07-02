@@ -14,6 +14,9 @@ dist-ssr
 .env
 .claude/settings.local.json
 
+# Backend-Datenstand (Widget-Konfigurationen, lokal generiert)
+server/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
