@@ -28,6 +28,7 @@ import {
   CirclePlay,
   LoaderCircle,
   RefreshCw,
+  History,
   Clock,
   Search,
   Send,
@@ -45,6 +46,15 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
+  Download,
+  CircleCheck,
+  Paperclip,
+  Undo2,
+  Redo2,
+  Smile,
+  Bold,
+  Italic,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -83,6 +93,7 @@ const ICONS: Record<string, LucideIcon> = {
   play_circle: CirclePlay,
   progress_activity: LoaderCircle,
   refresh: RefreshCw,
+  history: History,
   schedule: Clock,
   search: Search,
   send: Send,
@@ -99,6 +110,15 @@ const ICONS: Record<string, LucideIcon> = {
   upload: Upload,
   visibility: Eye,
   visibility_off: EyeOff,
+  download: Download,
+  check_circle: CircleCheck,
+  attach_file: Paperclip,
+  undo: Undo2,
+  redo: Redo2,
+  mood: Smile,
+  format_bold: Bold,
+  format_italic: Italic,
+  description: FileText,
 };
 
 interface IconProps {

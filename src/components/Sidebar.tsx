@@ -1,25 +1,35 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { fetchWidgets } from "../data/widgetsStore";
+import type { Widget } from "../types/widget";
 import { Icon } from "./Icon";
-
-interface NavItem {
-  label: string;
-  icon: string;
-  to?: string;
-}
+import { WidgetIcon } from "./WidgetIcon";
 
 interface SidebarProps {
   onLogout: () => void;
 }
 
-const navItems: NavItem[] = [
-  { label: "Widgets", icon: "grid_view", to: "/" },
-  { label: "Statistiken", icon: "bar_chart", to: "/statistiken" },
-];
-
 export function Sidebar({ onLogout }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [widgets, setWidgets] = useState<Widget[]>([]);
+
+  const widgetsActive = location.pathname === "/" || location.pathname.startsWith("/widgets");
+  const [widgetsOpen, setWidgetsOpen] = useState(widgetsActive);
+
+  useEffect(() => {
+    fetchWidgets()
+      .then(setWidgets)
+      .catch(() => setWidgets([]));
+  }, []);
+
+  const statistikenActive = location.pathname.startsWith("/statistiken");
+
+  const parentClass = (active: boolean) =>
+    active
+      ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
+      : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out";
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 p-4 bg-surface dark:bg-inverse-surface border-r border-outline-variant z-50">
@@ -27,31 +37,52 @@ export function Sidebar({ onLogout }: SidebarProps) {
         <Icon name="smart_toy" className="text-primary" style={{ fontSize: 32 }} />
         <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
       </div>
-      <nav className="flex flex-col gap-2 flex-grow">
-        {navItems.map((item) => {
-          const active =
-            (item.to === "/" && (location.pathname === "/" || location.pathname.startsWith("/widgets"))) ||
-            (item.to !== "/" && !!item.to && location.pathname.startsWith(item.to));
-          const className = active
-            ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
-            : "flex items-center gap-4 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary rounded-full transition-all duration-200 ease-in-out";
+      <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/");
+              setWidgetsOpen((v) => !v);
+            }}
+            className={`${parentClass(widgetsActive)} w-full`}
+          >
+            <Icon name="grid_view" />
+            <span className={widgetsActive ? "font-label-sm" : "font-body-base"}>Widgets</span>
+            <Icon
+              name="expand_more"
+              className={`ml-auto shrink-0 transition-transform duration-200 ${widgetsOpen ? "rotate-180" : ""}`}
+              style={{ fontSize: 20 }}
+            />
+          </button>
 
-          if (item.to) {
-            return (
-              <Link key={item.label} to={item.to} className={className}>
-                <Icon name={item.icon} />
-                <span className={active ? "font-label-sm" : "font-body-base"}>{item.label}</span>
-              </Link>
-            );
-          }
+          {widgetsOpen && (
+            <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
+              {widgets.map((widget) => {
+                const active = location.pathname === `/widgets/${widget.id}/gespraeche`;
+                return (
+                  <Link
+                    key={widget.id}
+                    to={`/widgets/${widget.id}/gespraeche`}
+                    className={
+                      active
+                        ? "flex items-center gap-3 px-3 py-2 rounded-full bg-secondary-container text-on-secondary-container transition-colors"
+                        : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary transition-colors"
+                    }
+                  >
+                    <WidgetIcon name={widget.icon} size={18} className="shrink-0" />
+                    <span className="font-body-base text-sm truncate">{widget.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-          return (
-            <button key={item.label} className={className}>
-              <Icon name={item.icon} />
-              <span className="font-body-base">{item.label}</span>
-            </button>
-          );
-        })}
+        <Link to="/statistiken" className={parentClass(statistikenActive)}>
+          <Icon name="bar_chart" />
+          <span className={statistikenActive ? "font-label-sm" : "font-body-base"}>Statistiken</span>
+        </Link>
       </nav>
       <div className="mt-auto pt-4 border-t border-outline-variant relative">
         {menuOpen && (

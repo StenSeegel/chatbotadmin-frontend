@@ -36,6 +36,26 @@ export function Markdown({ children }: { children: string }) {
         blockquote: ({ children }) => (
           <blockquote className="border-l-2 border-outline-variant pl-2 italic">{children}</blockquote>
         ),
+        // Tabellen in einen horizontal scrollbaren Container packen, damit breite
+        // GFM-Tabellen die schmale Chat-Bubble nicht sprengen; lange Zellinhalte
+        // brechen um statt überzulaufen.
+        table: ({ children }) => (
+          <div className="my-1.5 w-full overflow-x-auto">
+            <table className="w-full border-collapse border border-outline-variant text-xs">
+              {children}
+            </table>
+          </div>
+        ),
+        th: ({ children }) => (
+          <th className="border border-outline-variant px-2 py-1 text-left font-semibold align-top [overflow-wrap:anywhere]">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="border border-outline-variant px-2 py-1 align-top [overflow-wrap:anywhere]">
+            {children}
+          </td>
+        ),
       }}
     >
       {children}

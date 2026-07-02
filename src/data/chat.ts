@@ -15,43 +15,29 @@ interface ChatResponse {
 }
 
 /**
- * Sendet einen Chat-Verlauf an den Backend-Proxy (/api/chat) und gibt die vom
- * gewählten Sprachmodell generierte Antwort zurück. openai-node läuft
- * serverseitig im Vite-Proxy gegen den HRZ-Endpunkt.
- */
-export async function sendChatMessage(params: {
-  model: string;
-  messages: ChatMessage[];
-  maxTokens?: number;
-}): Promise<ChatResult> {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-
-  const data: ChatResponse = await res.json().catch(() => ({}));
-
-  if (!res.ok || data.error) {
-    throw new Error(data.error || `Anfrage fehlgeschlagen (HTTP ${res.status})`);
-  }
-
-  return { reply: data.reply ?? "", finishReason: data.finishReason ?? null };
-}
-
-/**
- * Wie sendChatMessage, aber streamt die Antwort Token für Token. `onToken` wird
- * für jedes Textstück aufgerufen; der vollständige Text wird zusätzlich im
- * Ergebnis zurückgegeben.
+ * Sendet einen Chat-Verlauf an den Backend-Proxy (/api/chat) und streamt die von
+ * der gewählten Knowledge-Base generierte Antwort Token für Token. `onToken` wird für jedes
+ * Textstück aufgerufen; der vollständige Text wird zusätzlich im Ergebnis
+ * zurückgegeben. openai-node läuft serverseitig (Vite-Proxy bzw. Backend-Container)
+ * gegen den HRZ-Endpunkt.
  */
 export async function streamChatMessage(
-  params: { model: string; messages: ChatMessage[]; maxTokens?: number },
+  params: {
+    knowledgeBaseId: string;
+    messages: ChatMessage[];
+    maxTokens?: number;
+    widgetId?: string;
+    /** Bricht die Anfrage ab (z. B. bei Reset/Unmount); danach werden keine Tokens mehr geliefert. */
+    signal?: AbortSignal;
+  },
   onToken: (chunk: string) => void,
 ): Promise<ChatResult> {
+  const { signal, ...body } = params;
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...params, stream: true }),
+    body: JSON.stringify({ ...body, stream: true }),
+    signal,
   });
 
   if (!res.ok || !res.body) {
