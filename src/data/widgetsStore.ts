@@ -1,9 +1,9 @@
-import { apiFetch } from "../auth/api";
+import { widgets as initialWidgets } from "./widgets";
 import type { Widget, WidgetConfig } from "../types/widget";
 
-const API = "/api/widgets";
+const STORAGE_KEY = "chatbotadmin.widgets";
 
-/** Öffentliche, präsentationsbezogene Konfiguration (vom Backend für widget.js / Standalone-Seite). */
+/** Öffentliche, präsentationsbezogene Konfiguration (für widget.js / Standalone-Seite). */
 export interface PublicWidgetConfig {
   id: string;
   status: string;
@@ -38,41 +38,62 @@ export function createDefaultConfig(): WidgetConfig {
   };
 }
 
-/** Lädt alle Widgets vom Backend (Quelle der Wahrheit, persistent). */
+/** Lädt alle Widgets aus dem LocalStorage (oder die Initialdaten). */
 export async function fetchWidgets(): Promise<Widget[]> {
-  const res = await apiFetch(API);
-  const data = (await res.json().catch(() => ({}))) as { widgets?: Widget[]; error?: string };
-  if (!res.ok || data.error) {
-    throw new Error(data.error || `Widgets konnten nicht geladen werden (HTTP ${res.status})`);
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return initialWidgets;
+
+    const parsed = JSON.parse(stored) as Widget[];
+    return parsed.map((widget) => ({
+      ...widget,
+      config: { ...createDefaultConfig(), ...widget.config },
+    }));
+  } catch {
+    return initialWidgets;
   }
-  return data.widgets ?? [];
 }
 
-/**
- * Lädt die öffentliche Konfiguration eines Widgets (für die Standalone-Seite /w/:id).
- * Gibt `null` zurück, wenn das Widget nicht existiert (HTTP 404).
+/** 
+ * Lädt die öffentliche Konfiguration eines Widgets (für die Standalone-Seite /w/:id). 
+ * Im LocalStorage-Modus suchen wir einfach in der Liste.
  */
 export async function fetchPublicConfig(id: string): Promise<PublicWidgetConfig | null> {
-  // Diese Route ist öffentlich und benötigt kein Auth-Token.
-  const res = await fetch(`${API}/${encodeURIComponent(id)}`);
-  if (res.status === 404) return null;
-  const data = (await res.json().catch(() => ({}))) as PublicWidgetConfig & { error?: string };
-  if (!res.ok || data.error) {
-    throw new Error(data.error || `Widget konnte nicht geladen werden (HTTP ${res.status})`);
-  }
-  return data;
+  const all = await fetchWidgets();
+  const w = all.find((item) => item.id === id);
+  if (!w) return null;
+
+  return {
+    id: w.id,
+    status: w.status,
+    knowledgeBaseId: w.knowledgeBaseId,
+    routing: w.routing,
+    title: w.config.title,
+    greeting: w.config.greeting,
+    accentColor: w.config.accentColor,
+    position: w.config.position,
+    icon: w.icon,
+    templates: w.config.templates,
+    rules: w.config.rules.filter(r => r.enabled).map(r => r.text),
+    startPrompt: w.config.startPrompt,
+    feedbackButtons: w.config.feedbackButtons,
+    maxTokens: w.config.maxTokensPerAnswer,
+  };
 }
 
-/** Legt ein Widget an oder aktualisiert es (per ID). Gibt das gespeicherte Widget zurück. */
+/** Speichert ein Widget im LocalStorage. */
 export async function saveWidget(widget: Widget): Promise<Widget> {
-  const res = await apiFetch(`${API}/${encodeURIComponent(widget.id)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(widget),
-  });
-  const data = (await res.json().catch(() => ({}))) as Widget & { error?: string };
-  if (!res.ok || data.error) {
-    throw new Error(data.error || `Speichern fehlgeschlagen (HTTP ${res.status})`);
+  const all = await fetchWidgets();
+  const index = all.findIndex((w) => w.id === widget.id);
+  
+  let updated: Widget[];
+  if (index >= 0) {
+    updated = [...all];
+    updated[index] = widget;
+  } else {
+    updated = [...all, widget];
   }
-  return data;
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  return widget;
 }
