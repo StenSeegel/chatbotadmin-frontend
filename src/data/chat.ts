@@ -22,14 +22,18 @@ interface ChatResponse {
  * serverseitig (mit angehängtem JWT) den HRZ-Endpunkt auf.
  */
 export async function sendChatMessage(params: {
-  model: string;
+  knowledgeBaseId: string; // Wird im Frontend verwendet
   messages: ChatMessage[];
   maxTokens?: number;
 }): Promise<ChatResult> {
+  const { knowledgeBaseId, ...rest } = params;
   const res = await apiFetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      ...rest,
+      model: knowledgeBaseId, // Go-Backend erwartet "model"
+    }),
   });
 
   const data: ChatResponse = await res.json().catch(() => ({}));
@@ -57,11 +61,15 @@ export async function streamChatMessage(
   },
   onToken: (chunk: string) => void,
 ): Promise<ChatResult> {
-  const { signal, ...body } = params;
+  const { signal, knowledgeBaseId, ...rest } = params;
   const res = await apiFetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, stream: true }),
+    body: JSON.stringify({
+      ...rest,
+      model: knowledgeBaseId, // Go-Backend erwartet "model"
+      stream: true,
+    }),
     signal,
   });
 
