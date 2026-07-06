@@ -1,5 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Icon } from "../components/Icon";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -34,7 +37,7 @@ const stepBadge: Record<Tone, string> = {
 };
 
 const statusBadge: Record<Tone, { label: string; className: string }> = {
-  done: { label: "Erledigt", className: "bg-green-500/10 text-green-600 dark:text-green-400" },
+  done: { label: "Erledigt", className: "bg-success-container text-on-success-container" },
   active: { label: "Aktiv", className: "bg-primary/10 text-primary" },
   pending: { label: "Ausstehend", className: "bg-error/10 text-error" },
 };
@@ -58,8 +61,8 @@ function StepCard({
 }) {
   const status = statusBadge[tone];
   return (
-    <section
-      className={`bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-stack-sm ${
+    <Card
+      className={`rounded-2xl p-6 space-y-stack-sm ${
         accent ? "border-l-4 border-l-primary" : ""
       }`}
     >
@@ -97,12 +100,15 @@ function StepCard({
       </div>
 
       {children}
-    </section>
+    </Card>
   );
 }
 
 function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; onCopy: () => void }) {
   return (
+    // Documented design-system exception: a code/terminal viewer stays fixed-dark
+    // in both themes (see docs/DESIGN_SYSTEM.md "Accepted color exceptions").
+    // eslint-disable-next-line design-system/no-hardcoded-colors
     <div className="relative rounded-xl bg-[#1e1e2e] overflow-hidden">
       <button
         type="button"
@@ -116,6 +122,7 @@ function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; on
         {code.split("\n").map((line, i) => (
           <div
             key={i}
+            // eslint-disable-next-line design-system/no-hardcoded-colors
             className={line.trim().startsWith("<!--") ? "text-emerald-400/80" : "text-slate-100"}
           >
             {line || " "}
@@ -174,13 +181,11 @@ export function WidgetEmbedPage() {
 
   const header = (
     <div className="flex items-center gap-3 mb-2">
-      <Link
-        to="/"
-        aria-label="Zurück zur Übersicht"
-        className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors"
-      >
-        <Icon name="arrow_back" className="text-[20px]" />
-      </Link>
+      <Button asChild variant="outline" size="icon" className="rounded-lg">
+        <Link to="/" aria-label="Zurück zur Übersicht">
+          <Icon name="arrow_back" className="text-[20px]" />
+        </Link>
+      </Button>
       <div className="min-w-0">
         <h1 className="font-headline-md text-headline-md text-on-surface">Einbetten</h1>
         <p className="text-sm text-on-surface-variant truncate">
@@ -223,7 +228,7 @@ export function WidgetEmbedPage() {
     {
       label: "Script eingebunden",
       node: (
-        <span className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400">
+        <span className="inline-flex items-center gap-1 text-info">
           <Icon name="info" className="text-[16px]" />
           Erkannt
         </span>
@@ -232,7 +237,7 @@ export function WidgetEmbedPage() {
     {
       label: "API erreichbar",
       node: (
-        <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+        <span className="inline-flex items-center gap-1 text-success">
           <Icon name="check_circle" className="text-[16px]" />
           OK
         </span>
@@ -241,7 +246,7 @@ export function WidgetEmbedPage() {
     {
       label: "CORS konfiguriert",
       node: (
-        <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+        <span className="inline-flex items-center gap-1 text-success">
           <Icon name="check_circle" className="text-[16px]" />
           OK
         </span>
@@ -312,28 +317,36 @@ export function WidgetEmbedPage() {
             Direkte URL
           </label>
           <div className="flex items-center gap-2">
-            <input
+            <Input
               readOnly
               value={directUrl}
-              className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg font-mono text-xs outline-none"
+              className="bg-surface font-mono text-xs"
             />
-            <a
-              href={directUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="URL öffnen"
-              className="shrink-0 p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="shrink-0 rounded-lg"
             >
-              <Icon name="open_in_new" className="text-[18px]" />
-            </a>
-            <button
+              <a
+                href={directUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="URL öffnen"
+              >
+                <Icon name="open_in_new" className="text-[18px]" />
+              </a>
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => copy(directUrl, "url")}
               aria-label="URL kopieren"
-              className="shrink-0 p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+              className="shrink-0 rounded-lg"
             >
               <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
-            </button>
+            </Button>
           </div>
         </div>
       </StepCard>
@@ -357,15 +370,16 @@ export function WidgetEmbedPage() {
           ))}
         </div>
 
-        <a
-          href={directUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 flex items-center justify-center gap-2 w-full px-4 py-3 bg-surface-container-high hover:bg-surface-container-highest rounded-xl text-sm font-medium transition-colors"
+        <Button
+          asChild
+          variant="ghost"
+          className="mt-2 w-full rounded-xl px-4 py-3 bg-surface-container-high hover:bg-surface-container-highest"
         >
-          <Icon name="send" className="text-[18px]" />
-          Testseite öffnen
-        </a>
+          <a href={directUrl} target="_blank" rel="noopener noreferrer">
+            <Icon name="send" className="text-[18px]" />
+            Testseite öffnen
+          </a>
+        </Button>
       </StepCard>
     </main>
   );

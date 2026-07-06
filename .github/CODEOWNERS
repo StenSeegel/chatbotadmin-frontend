@@ -1,0 +1,17 @@
+# CODEOWNERS — design system review gate.
+#
+# Edits to the paths below auto-request review from the design system owner
+# (see docs/DESIGN_SYSTEM.md §1 "Ownership"). This is the mechanism that keeps
+# tokens and shared components from sprawling.
+#
+# ⚠️ ACTION REQUIRED: replace @design-system-owner with a real GitHub username
+#    or team handle (e.g. @your-org/design-system) to activate it. Until then
+#    these lines document intent but don't enforce review.
+
+/src/index.css                          @design-system-owner
+/src/components/ui/                      @design-system-owner
+/src/theme/                             @design-system-owner
+/tools/eslint-plugin-design-system.js   @design-system-owner
+/.ladle/                                @design-system-owner
+/docs/DESIGN_SYSTEM.md                  @design-system-owner
+/docs/COMPONENT_GUIDELINES.md           @design-system-owner

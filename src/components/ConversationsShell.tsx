@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
+import { Input } from "@/components/ui/input";
 import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
 
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
@@ -110,12 +111,12 @@ export function ConversationsShell({
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
                 style={{ fontSize: 18 }}
               />
-              <input
+              <Input
                 type="text"
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-outline-variant text-sm bg-surface-container-lowest focus:outline-none focus:border-primary"
+                className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest"
               />
             </div>
 
@@ -160,7 +161,7 @@ export function ConversationsShell({
                     <div className="h-12 w-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-sm font-semibold">
                       {c.initials}
                     </div>
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-surface" />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-surface" />
                   </div>
                   <span className="text-xs text-on-surface-variant">{c.name.split(" ")[0]}</span>
                 </Link>

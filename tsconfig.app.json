@@ -7,6 +7,12 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
 
+    /* Path alias (@/* -> src/*), spiegelt Vite resolve.alias wider.
+     * Kein baseUrl (in TS 6 deprecated) — paths lösen relativ zur tsconfig auf. */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

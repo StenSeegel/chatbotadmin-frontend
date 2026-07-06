@@ -69,7 +69,7 @@ export const TOP_QUESTIONS: TopQuestion[] = [
 export const STATUS_STYLES: Record<ConversationStatus, string> = {
   Offen: "bg-primary-container text-on-primary-container",
   Neu: "bg-secondary-container text-on-secondary-container",
-  Gelöst: "bg-green-100 text-green-700",
+  Gelöst: "bg-success-container text-on-success-container",
 };
 
 const DEFAULT_BREAKDOWN: RatingBreakdown[] = [

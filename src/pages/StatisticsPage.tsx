@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -297,23 +300,23 @@ export function StatisticsPage() {
             <div className="relative">
               <Icon
                 name="search"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10"
                 style={{ fontSize: 18 }}
               />
-              <input
+              <Input
                 type="text"
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-1.5 rounded-full border border-outline-variant text-sm bg-surface-container-lowest focus:outline-none focus:border-primary w-40"
+                className="pl-9 pr-3 py-1.5 rounded-full bg-surface-container-lowest text-sm w-40"
               />
             </div>
 
             {/* Export button */}
-            <button className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-on-primary text-sm font-medium hover:opacity-90 transition-opacity">
+            <Button className="px-4 py-1.5 rounded-full font-medium">
               <Icon name="upload" style={{ fontSize: 18 }} />
               Exportieren
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -323,9 +326,9 @@ export function StatisticsPage() {
         {/* KPI row */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {KPI_CARDS.map((kpi, i) => (
-            <div
+            <Card
               key={i}
-              className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 flex flex-col gap-3"
+              className="rounded-2xl shadow-none p-5 flex flex-col gap-3"
             >
               <div className="flex items-start justify-between">
                 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
@@ -334,8 +337,8 @@ export function StatisticsPage() {
                 <span
                   className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
                     kpi.positive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
+                      ? "bg-success-container text-on-success-container"
+                      : "bg-error-container text-on-error-container"
                   }`}
                 >
                   <Icon name={kpi.positive ? "trending_up" : "trending_down"} style={{ fontSize: 14 }} />
@@ -347,12 +350,12 @@ export function StatisticsPage() {
                 <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
               </div>
               <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* Bar chart */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6">
+        <Card className="rounded-2xl shadow-none p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
@@ -375,12 +378,12 @@ export function StatisticsPage() {
             </div>
           </div>
           <BarChart data={CHART_DATA[chartView]} />
-        </div>
+        </Card>
 
         {/* Bottom row: top questions + donut */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Häufigste Fragen */}
-          <div className="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-6">
+          <Card className="lg:col-span-3 rounded-2xl shadow-none p-6">
             <h3 className="text-title-md font-semibold">Häufigste Fragen</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Top 5 Nutzeranfragen diesen Monat</p>
             <div className="space-y-4">
@@ -405,26 +408,26 @@ export function StatisticsPage() {
                 <p className="text-sm text-on-surface-variant text-center py-4">Keine Ergebnisse</p>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Widget-Verteilung */}
-          <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-2xl p-6">
+          <Card className="lg:col-span-2 rounded-2xl shadow-none p-6">
             <h3 className="text-title-md font-semibold">Widget-Verteilung</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Gespräche nach Widget</p>
             <DonutChart />
-          </div>
+          </Card>
         </div>
 
         {/* Period summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PERIOD_CARDS.map((period, i) => (
-            <div
+            <Card
               key={i}
-              className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5"
+              className="rounded-2xl shadow-none p-5"
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
-                <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1 text-xs font-semibold text-on-success-container bg-success-container px-2 py-0.5 rounded-full">
                   <Icon name="trending_up" style={{ fontSize: 13 }} />
                   {period.trend}
                 </span>
@@ -443,7 +446,7 @@ export function StatisticsPage() {
                   <span className="text-sm font-semibold">{period.antwortzeit}</span>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </main>

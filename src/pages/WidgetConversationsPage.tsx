@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "../components/Icon";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -58,15 +60,27 @@ export function WidgetConversationsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button className="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-secondary-container transition-colors">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-lg text-on-surface-variant hover:bg-secondary-container"
+              >
                 <Icon name="download" style={{ fontSize: 18 }} />
-              </button>
-              <button className="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-secondary-container transition-colors">
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-lg text-on-surface-variant hover:bg-secondary-container"
+              >
                 <Icon name="check_circle" style={{ fontSize: 18 }} />
-              </button>
-              <button className="p-2 rounded-lg border border-error/40 text-error hover:bg-error/10 transition-colors">
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-lg border-error/40 text-error hover:bg-error/10"
+              >
                 <Icon name="delete" style={{ fontSize: 18 }} />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -86,7 +100,7 @@ export function WidgetConversationsPage() {
                     <p className="text-xs text-on-surface-variant mb-1">
                       {m.author} • {m.time}
                     </p>
-                    <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl rounded-tl-sm px-4 py-3">
+                    <Card className="rounded-2xl rounded-tl-sm px-4 py-3">
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
                       {m.sources && m.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
@@ -101,7 +115,7 @@ export function WidgetConversationsPage() {
                           ))}
                         </div>
                       )}
-                    </div>
+                    </Card>
                   </div>
                 </div>
               ) : (
@@ -124,17 +138,17 @@ export function WidgetConversationsPage() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-outline-variant p-4">
-            <div className="border border-outline-variant rounded-xl bg-surface-container-lowest">
+            <Card className="rounded-xl">
               <div className="flex items-center gap-1 px-3 py-2 border-b border-outline-variant">
-                <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                   <Icon name="format_bold" style={{ fontSize: 16 }} />
-                </button>
-                <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                </Button>
+                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                   <Icon name="format_italic" style={{ fontSize: 16 }} />
-                </button>
-                <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                </Button>
+                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                   <Icon name="link" style={{ fontSize: 16 }} />
-                </button>
+                </Button>
               </div>
               <textarea
                 value={draft}
@@ -148,29 +162,29 @@ export function WidgetConversationsPage() {
               />
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-1">
-                  <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                     <Icon name="attach_file" style={{ fontSize: 18 }} />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                  </Button>
+                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                     <Icon name="undo" style={{ fontSize: 18 }} />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                  </Button>
+                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                     <Icon name="redo" style={{ fontSize: 18 }} />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant transition-colors">
+                  </Button>
+                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
                     <Icon name="mood" style={{ fontSize: 18 }} />
-                  </button>
+                  </Button>
                 </div>
-                <button
+                <Button
                   onClick={handleSend}
                   disabled={!draft.trim()}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="px-5 py-2"
                 >
                   <Icon name="send" style={{ fontSize: 16 }} />
                   Senden
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           </div>
         </section>
 
@@ -188,8 +202,8 @@ export function WidgetConversationsPage() {
             <p className="text-xs text-on-surface-variant truncate max-w-full mt-0.5">{selected.email}</p>
             <div className="flex items-center gap-2 mt-3">
               {selected.online ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="flex items-center gap-1 text-xs font-medium text-on-success-container bg-success-container px-2.5 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   Online
                 </span>
               ) : (
@@ -257,7 +271,7 @@ export function WidgetConversationsPage() {
             <h4 className="text-xs font-bold tracking-widest text-on-surface-variant mb-4">KB ROUTING</h4>
             <div className="flex items-center justify-between border border-outline-variant rounded-xl px-4 py-3">
               <span className="flex items-center gap-2 text-sm">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="w-2 h-2 rounded-full bg-success" />
                 Aktive KB
               </span>
               <span className="text-xs font-mono bg-surface-container-high px-2 py-1 rounded">

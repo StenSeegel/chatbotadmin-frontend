@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
+import { Input } from "@/components/ui/input";
 import type { WidgetStatus } from "../types/widget";
 
 export type StatusFilter = "all" | WidgetStatus;
@@ -109,8 +110,8 @@ export function SearchToolbar({
           name="search"
           className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors text-[18px]"
         />
-        <input
-          className="w-full pl-9 pr-3 py-2 text-sm bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all shadow-sm"
+        <Input
+          className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest shadow-sm"
           placeholder="Widgets durchsuchen..."
           type="text"
           value={value}

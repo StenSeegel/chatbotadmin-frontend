@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useParams } from "react-router-dom";
 import { Bot, Send, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Markdown } from "../components/Markdown";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import { fetchPublicConfig, type PublicWidgetConfig } from "../data/widgetsStore";
@@ -158,8 +159,9 @@ export function StandaloneWidgetPage() {
             <h1 className="font-semibold text-base leading-tight truncate">{config.title}</h1>
             <p className="text-xs opacity-85 flex items-center gap-1.5">
               <span
-                className="inline-block h-2 w-2 rounded-full"
-                style={{ backgroundColor: isActive ? "#22c55e" : "#cbd5e1" }}
+                className={`inline-block h-2 w-2 rounded-full ${
+                  isActive ? "bg-success" : "bg-outline-variant"
+                }`}
               />
               {isActive ? "Online" : "Pausiert"}
             </p>
@@ -255,15 +257,15 @@ export function StandaloneWidgetPage() {
                 autoComplete="off"
                 className="flex-1 rounded-full border border-outline-variant bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary"
               />
-              <button
+              <Button
                 type="submit"
                 disabled={!draft.trim() || typing}
                 aria-label="Senden"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-transform active:scale-95 disabled:opacity-50"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white p-0 disabled:opacity-50"
                 style={{ backgroundColor: accent }}
               >
                 <Send size={18} />
-              </button>
+              </Button>
             </form>
           ) : (
             <p className="text-center text-sm text-on-surface-variant py-1">

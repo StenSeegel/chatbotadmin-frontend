@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { ModelCombobox } from "./ModelCombobox";
@@ -216,13 +221,15 @@ export function WidgetConfigView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
 
           <div className="flex items-center gap-3 min-w-0">
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={onCancel}
               aria-label="Zurück zur Übersicht"
-              className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors"
+              className="rounded-lg"
             >
               <Icon name="arrow_back" className="text-[20px]" />
-            </button>
+            </Button>
 
             <div className="min-w-0">
               {isNew ? (
@@ -268,19 +275,16 @@ export function WidgetConfigView({
                 {isActive ? "Widget deaktivieren" : "Widget aktivieren"}
               </button>
             )}
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 border border-outline-variant rounded-lg font-label-sm text-label-sm text-on-surface hover:bg-surface-container-high transition-colors"
-            >
+            <Button variant="outline" onClick={onCancel}>
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onSave}
               disabled={saved || (isNew && (!widget.name.trim() || !widget.knowledgeBaseId.trim()))}
-              className="bg-primary text-on-primary px-4 py-2 rounded-lg shadow-sm hover:brightness-110 active:scale-95 transition-all font-label-sm text-label-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:brightness-100"
+              className="shadow-sm"
             >
               {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -292,7 +296,7 @@ export function WidgetConfigView({
         <div className="lg:col-span-2 space-y-stack-lg">
 
           {/* Grundeinstellungen — beim Erstellen offen, bei bestehenden Widgets einklappbar */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             {isNew ? (
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <Icon name="tune" className="text-primary" />
@@ -318,35 +322,35 @@ export function WidgetConfigView({
 
             {basicsOpen && (
               <>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-on-surface-variant" htmlFor="widget-name">
+                <FormItem>
+                  <FormLabel>
                     Name <span className="text-error">*</span>
-                  </label>
-                  <input
-                    id="widget-name"
-                    value={widget.name}
-                    onChange={(e) => {
-                      const newName = e.target.value;
-                      // Titel automatisch mitführen, solange er nicht manuell
-                      // angepasst wurde (noch Standardwert "ChatBot", leer, oder
-                      // identisch mit dem bisherigen Namen).
-                      const titleUntouched =
-                        widget.config.title === "" ||
-                        widget.config.title === "ChatBot" ||
-                        widget.config.title === widget.name;
-                      if (titleUntouched) onUpdateConfig("title", newName);
-                      onUpdate("name", newName);
-                    }}
-                    placeholder="z.B. Support Bot"
-                    className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  />
-                </div>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      value={widget.name}
+                      onChange={(e) => {
+                        const newName = e.target.value;
+                        // Titel automatisch mitführen, solange er nicht manuell
+                        // angepasst wurde (noch Standardwert "ChatBot", leer, oder
+                        // identisch mit dem bisherigen Namen).
+                        const titleUntouched =
+                          widget.config.title === "" ||
+                          widget.config.title === "ChatBot" ||
+                          widget.config.title === widget.name;
+                        if (titleUntouched) onUpdateConfig("title", newName);
+                        onUpdate("name", newName);
+                      }}
+                      placeholder="z.B. Support Bot"
+                    />
+                  </FormControl>
+                </FormItem>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm">
                   <div className="flex flex-col gap-1">
-                    <label className="font-label-sm text-on-surface-variant" htmlFor="widget-kb">
+                    <Label htmlFor="widget-kb">
                       Knowledge-Base-ID <span className="text-error">*</span>
-                    </label>
+                    </Label>
                     <ModelCombobox
                       id="widget-kb"
                       value={widget.knowledgeBaseId}
@@ -356,9 +360,9 @@ export function WidgetConfigView({
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="font-label-sm text-on-surface-variant" htmlFor="widget-routing">
+                    <Label htmlFor="widget-routing">
                       Routing
-                    </label>
+                    </Label>
                     <select
                       id="widget-routing"
                       value={widget.routing}
@@ -373,19 +377,19 @@ export function WidgetConfigView({
                 </div>
               </>
             )}
-          </section>
+          </Card>
 
           {/* Gesprächseinstellungen */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Icon name="forum" className="text-primary" />
               Gesprächseinstellungen
             </h3>
 
             <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-on-surface-variant" htmlFor="start-prompt">
+              <Label htmlFor="start-prompt">
                 Start-Prompt
-              </label>
+              </Label>
               <textarea
                 id="start-prompt"
                 rows={4}
@@ -398,12 +402,12 @@ export function WidgetConfigView({
             {/* Vorlagen */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="font-label-sm text-on-surface-variant">
+                <Label>
                   Vorlagen
                   <span className="ml-1 text-on-surface-variant/60">
                     ({widget.config.templates.length}/4)
                   </span>
-                </label>
+                </Label>
                 <button
                   type="button"
                   disabled={widget.config.templates.length >= 4}
@@ -423,7 +427,7 @@ export function WidgetConfigView({
                 <div className="flex flex-col gap-2">
                   {widget.config.templates.map((tpl, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <input
+                      <Input
                         value={tpl}
                         onChange={(e) => {
                           const updated = [...widget.config.templates];
@@ -431,16 +435,18 @@ export function WidgetConfigView({
                           onUpdateConfig("templates", updated);
                         }}
                         placeholder={`Vorlage ${i + 1}`}
-                        className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
+                        className="text-sm"
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => onUpdateConfig("templates", widget.config.templates.filter((_, j) => j !== i))}
                         aria-label="Vorlage entfernen"
-                        className="p-2 text-on-surface-variant hover:text-error hover:bg-error-container rounded-lg transition-colors shrink-0"
+                        className="rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
                       >
                         <Icon name="delete" className="text-[18px]" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -450,7 +456,7 @@ export function WidgetConfigView({
             {/* Regeln */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="font-label-sm text-on-surface-variant">Regeln</label>
+                <Label>Regeln</Label>
                 <button
                   type="button"
                   onClick={() =>
@@ -534,10 +540,10 @@ export function WidgetConfigView({
                 description="Zeigt Daumen hoch/runter unter jeder Antwort an."
               />
             </div>
-          </section>
+          </Card>
 
           {/* Rate Limits */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Icon name="speed" className="text-primary" />
               Rate Limits
@@ -546,7 +552,7 @@ export function WidgetConfigView({
             {RATE_SLIDERS.map(({ id, label, key, min, max, step }) => (
               <div key={id} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <label className="font-label-sm text-on-surface-variant" htmlFor={id}>{label}</label>
+                  <Label htmlFor={id}>{label}</Label>
                   <span className="font-mono text-sm">{widget.config[key]}</span>
                 </div>
                 <input
@@ -561,14 +567,14 @@ export function WidgetConfigView({
                 />
               </div>
             ))}
-          </section>
+          </Card>
         </div>
 
         {/* Right column */}
         <div className="space-y-stack-lg">
 
           {/* Output — Widget-Code */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Icon name="code" className="text-primary" />
               Output — Widget-Code
@@ -582,7 +588,7 @@ export function WidgetConfigView({
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-on-surface-variant">Einbettungscode</label>
+              <Label>Einbettungscode</Label>
               <div className="relative">
                 <pre className="w-full overflow-x-auto px-4 py-3 bg-surface border border-outline-variant rounded-lg font-mono text-xs leading-relaxed whitespace-pre">
                   {embedCode}
@@ -599,72 +605,76 @@ export function WidgetConfigView({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-on-surface-variant">Direkte URL</label>
+              <Label>Direkte URL</Label>
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   readOnly
                   value={directUrl}
-                  className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg font-mono text-xs outline-none"
+                  className="font-mono text-xs"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => onCopy(directUrl, "url")}
                   aria-label="URL kopieren"
-                  className="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+                  className="rounded-lg"
                 >
                   <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
-                </button>
+                </Button>
                 {!isNew && (
-                  <a
-                    href={directUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
                     aria-label="URL öffnen"
-                    className="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors"
+                    className="rounded-lg"
                   >
-                    <Icon name="open_in_new" className="text-[18px]" />
-                  </a>
+                    <a
+                      href={directUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Icon name="open_in_new" className="text-[18px]" />
+                    </a>
+                  </Button>
                 )}
               </div>
             </div>
-          </section>
+          </Card>
 
           {/* Erscheinungsbild */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Icon name="palette" className="text-primary" />
               Erscheinungsbild
             </h3>
 
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-on-surface-variant" htmlFor="appearance-title">
-                Titel
-              </label>
-              <input
-                id="appearance-title"
-                value={widget.config.title}
-                onChange={(e) => onUpdateConfig("title", e.target.value)}
-                className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-              />
-            </div>
+            <FormItem>
+              <FormLabel>Titel</FormLabel>
+              <FormControl>
+                <Input
+                  value={widget.config.title}
+                  onChange={(e) => onUpdateConfig("title", e.target.value)}
+                />
+              </FormControl>
+            </FormItem>
 
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-on-surface-variant" htmlFor="appearance-greeting">
-                Begrüßungstext
-              </label>
-              <input
-                id="appearance-greeting"
-                value={widget.config.greeting}
-                onChange={(e) => onUpdateConfig("greeting", e.target.value)}
-                className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-              />
-            </div>
+            <FormItem>
+              <FormLabel>Begrüßungstext</FormLabel>
+              <FormControl>
+                <Input
+                  value={widget.config.greeting}
+                  onChange={(e) => onUpdateConfig("greeting", e.target.value)}
+                />
+              </FormControl>
+            </FormItem>
 
             <div className="grid grid-cols-2 gap-stack-sm">
               <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-on-surface-variant" htmlFor="appearance-color">
+                <Label htmlFor="appearance-color">
                   Akzentfarbe
-                </label>
+                </Label>
                 <div className="flex items-center gap-2">
                   <input
                     id="appearance-color"
@@ -673,18 +683,18 @@ export function WidgetConfigView({
                     onChange={(e) => onUpdateConfig("accentColor", e.target.value)}
                     className="h-10 w-12 rounded-lg border border-outline-variant cursor-pointer bg-surface"
                   />
-                  <input
+                  <Input
                     value={widget.config.accentColor}
                     onChange={(e) => onUpdateConfig("accentColor", e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-outline-variant rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                    className="px-3 font-mono text-sm"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-on-surface-variant" htmlFor="appearance-position">
+                <Label htmlFor="appearance-position">
                   Position
-                </label>
+                </Label>
                 <select
                   id="appearance-position"
                   value={widget.config.position}
@@ -699,7 +709,7 @@ export function WidgetConfigView({
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="font-label-sm text-on-surface-variant">Icon</label>
+              <Label>Icon</Label>
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map((iconName) => (
                   <button
@@ -717,10 +727,10 @@ export function WidgetConfigView({
                 ))}
               </div>
             </div>
-          </section>
+          </Card>
 
           {/* Vorschau */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-stack-sm">
+          <Card className="p-6 space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <Icon name="visibility" className="text-primary" />
@@ -763,7 +773,7 @@ export function WidgetConfigView({
                   <div className="flex flex-col min-w-0 flex-1 leading-tight">
                     <span className="truncate text-sm font-semibold">{widget.config.title || "ChatBot"}</span>
                     <span className="flex items-center gap-1 text-[10px] opacity-90">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
                       {widget.routing}
                     </span>
                   </div>
@@ -874,7 +884,7 @@ export function WidgetConfigView({
               </div>
               )}
             </div>
-          </section>
+          </Card>
 
         </div>
       </div>

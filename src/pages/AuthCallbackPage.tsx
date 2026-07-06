@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type AuthUser } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
+import { Button } from "@/components/ui/button";
 
 type ParsedCallback = { token: string; user: AuthUser } | { error: string };
 
@@ -57,12 +58,9 @@ export function AuthCallbackPage() {
           <Icon name="error" className="text-error mb-4" style={{ fontSize: 40 }} />
           <h1 className="text-headline-md font-bold text-error mb-2">Anmeldung fehlgeschlagen</h1>
           <p className="text-sm text-on-surface-variant mb-6">{error}</p>
-          <button
-            onClick={() => navigate("/login", { replace: true })}
-            className="bg-primary text-on-primary px-6 py-3 rounded-lg hover:brightness-110 active:scale-95 transition-all font-label-sm"
-          >
+          <Button onClick={() => navigate("/login", { replace: true })}>
             Zurück zur Anmeldung
-          </button>
+          </Button>
         </div>
       </div>
     );

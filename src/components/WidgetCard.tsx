@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "./Icon";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
@@ -13,6 +15,14 @@ const statusClasses: Record<Widget["status"], { badge: string; dot: string; labe
   paused: { badge: "bg-surface-container-highest text-on-surface-variant", dot: "bg-on-surface-variant", label: "Pause" },
 };
 
+// Die drei identischen Footer-Buttons (Einstellungen / Chatbox / Einbetten).
+// `path` wird an `/widgets/${id}` angehängt; `wrap` steuert break-words vs. truncate.
+const footerActions: { path: string; icon: string; label: string; wrap: boolean; tight: boolean }[] = [
+  { path: "", icon: "settings", label: "Einstellungen", wrap: true, tight: true },
+  { path: "/gespraeche", icon: "chat", label: "Chatbox", wrap: false, tight: false },
+  { path: "/einbetten", icon: "code", label: "Einbetten", wrap: false, tight: false },
+];
+
 interface WidgetCardProps {
   widget: Widget;
   /** Klarname der Knowledge-Base (aufgelöst aus der ID); fällt auf die ID zurück. */
@@ -25,7 +35,7 @@ export function WidgetCard({ widget, kbName }: WidgetCardProps) {
   const rating = widget.stats.rating.toFixed(1).replace(".", ",");
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col">
+    <Card className="p-4 hover:shadow-card-hover hover:-translate-y-1 transition-all flex flex-col">
       <div className="flex justify-between items-start mb-3">
         <div className={`w-10 h-10 ${accent.iconBg} rounded-xl flex items-center justify-center`}>
           <WidgetIcon name={widget.icon} className={accent.iconText} />
@@ -62,28 +72,23 @@ export function WidgetCard({ widget, kbName }: WidgetCardProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-1 mt-auto">
-        <Link
-          to={`/widgets/${widget.id}`}
-          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] leading-tight text-on-surface hover:bg-surface-container-high transition-colors"
-        >
-          <Icon name="settings" className="text-sm" />
-          <span className="w-full text-center break-words">Einstellungen</span>
-        </Link>
-        <Link
-          to={`/widgets/${widget.id}/gespraeche`}
-          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors"
-        >
-          <Icon name="chat" className="text-sm" />
-          <span className="truncate w-full text-center">Chatbox</span>
-        </Link>
-        <Link
-          to={`/widgets/${widget.id}/einbetten`}
-          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors"
-        >
-          <Icon name="code" className="text-sm" />
-          <span className="truncate w-full text-center">Einbetten</span>
-        </Link>
+        {footerActions.map((action) => (
+          <Button
+            key={action.path}
+            asChild
+            variant="outline"
+            size="sm"
+            className={`flex-col gap-1 min-w-0 w-full px-1 py-1.5 font-mono text-[10px]${action.tight ? " leading-tight" : ""}`}
+          >
+            <Link to={`/widgets/${widget.id}${action.path}`}>
+              <Icon name={action.icon} className="text-sm" />
+              <span className={`w-full text-center ${action.wrap ? "break-words" : "truncate"}`}>
+                {action.label}
+              </span>
+            </Link>
+          </Button>
+        ))}
       </div>
-    </div>
+    </Card>
   );
 }

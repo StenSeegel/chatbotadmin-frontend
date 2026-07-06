@@ -3,6 +3,10 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../auth/api";
 import { useAuth } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
 
 interface PublicProvider {
   id: string;
@@ -103,7 +107,7 @@ export function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 space-y-stack-sm">
+        <Card className="p-6 space-y-stack-sm">
           {error && (
             <p className="text-sm text-error text-center" role="alert">
               {error}
@@ -117,56 +121,49 @@ export function LoginPage() {
           )}
 
           {showOidcButton && oidcProvider && (
-            <button
-              type="button"
-              onClick={loginWithSSO}
-              className="w-full bg-primary text-on-primary px-6 py-3 rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition-all font-label-sm text-label-sm flex items-center justify-center gap-2"
-            >
+            <Button type="button" onClick={loginWithSSO} className="w-full">
               <Icon name="login" className="text-[18px]" />
               Anmelden mit {oidcProvider.name}
-            </button>
+            </Button>
           )}
 
           {showPasswordForm && (
             <form onSubmit={handleSubmit} className="space-y-stack-sm">
-              <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-on-surface-variant" htmlFor="login-username">
-                  Benutzername
-                </label>
-                <input
-                  id="login-username"
-                  type="text"
-                  autoComplete="username"
-                  className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-on-surface-variant" htmlFor="login-password">
-                  Passwort
-                </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  autoComplete="current-password"
-                  className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button
+              <FormItem>
+                <FormLabel>Benutzername</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </FormControl>
+              </FormItem>
+              <FormItem>
+                <FormLabel>Passwort</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </FormControl>
+              </FormItem>
+              <Button
                 type="submit"
+                variant="secondary"
                 disabled={submitting}
-                className="w-full bg-secondary-container text-on-secondary-container px-6 py-3 rounded-lg hover:brightness-105 active:scale-95 transition-all font-label-sm text-label-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full"
               >
                 {submitting ? "Anmeldung…" : "Anmelden"}
-              </button>
+              </Button>
             </form>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

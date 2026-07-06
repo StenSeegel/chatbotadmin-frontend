@@ -1,5 +1,7 @@
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Icon } from "./Icon";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface TopAppBarProps {
   title: string;
@@ -21,9 +23,10 @@ export function TopAppBar({ title }: TopAppBarProps) {
           <h2 className="font-headline-md text-headline-md text-on-surface">{title}</h2>
         </div>
         <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+          <ThemeToggle className="hidden sm:inline-flex" />
+          <Button variant="ghost" size="icon" aria-label="Benachrichtigungen">
             <Icon name="notifications" />
-          </button>
+          </Button>
           <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-surface shadow-sm transition-transform scale-95 active:scale-90 lg:hidden">
             <span className="text-on-primary-container text-xs font-semibold">
               {user?.initials ?? "?"}

@@ -11,6 +11,25 @@
       rel="stylesheet"
     />
     <title>ChatBot Admin</title>
+    <!--
+      Resolve the theme before first paint to avoid a flash of the wrong theme.
+      Mirrors src/theme/ThemeContext.tsx (storage key "theme", values
+      light/dark/system). Keep the two in sync.
+    -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme") || "system";
+          var dark =
+            t === "dark" ||
+            (t === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Icon } from "./Icon";
 import { WidgetIcon } from "./WidgetIcon";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { fetchWidgets } from "../data/widgetsStore";
 import type { Widget } from "../types/widget";
 
@@ -102,6 +103,9 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </Link>
       </nav>
       <div className="mt-auto pt-4 border-t border-outline-variant relative">
+        <div className="mb-3 flex justify-center">
+          <ThemeToggle />
+        </div>
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />

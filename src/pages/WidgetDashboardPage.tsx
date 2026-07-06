@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Card } from "@/components/ui/card";
 import { Icon } from "../components/Icon";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -49,9 +50,9 @@ export function WidgetDashboardPage() {
     <ConversationsShell widgetId={id} widgetName={widgetName}>
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-surface-container-low/30">
         {/* Bot header card */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4">
+        <Card className="rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" />
+            <span className="w-2.5 h-2.5 rounded-full bg-success shrink-0" />
             <h2 className="text-title-lg font-bold">{widgetName ?? "Widget"}</h2>
             <span className="text-sm text-on-surface-variant">
               {DASHBOARD_STATS.gespraecheHeute} Gespräche heute
@@ -71,27 +72,24 @@ export function WidgetDashboardPage() {
               className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-outline-variant text-sm bg-surface-container-low focus:outline-none focus:border-primary"
             />
           </div>
-        </div>
+        </Card>
 
         {/* KPI row */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {kpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5"
-            >
+            <Card key={kpi.label} className="rounded-2xl p-5">
               <p className="text-sm text-on-surface-variant">{kpi.label}</p>
               <p className={`text-2xl font-bold mt-2 ${kpi.accent ? "text-primary" : "text-on-surface"}`}>
                 {kpi.value}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* Zuletzt aktiv + Top-Fragen */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Zuletzt aktiv */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6">
+          <Card className="rounded-2xl p-6">
             <h3 className="text-title-md font-semibold mb-4">Zuletzt aktiv</h3>
             <div className="space-y-1">
               {recent.map((c) => (
@@ -113,10 +111,10 @@ export function WidgetDashboardPage() {
                 <p className="text-sm text-on-surface-variant text-center py-4">Keine Treffer</p>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Top-Fragen */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6">
+          <Card className="rounded-2xl p-6">
             <h3 className="text-title-md font-semibold mb-4">Top-Fragen</h3>
             <div className="space-y-4">
               {TOP_QUESTIONS.map((q) => (
@@ -134,7 +132,7 @@ export function WidgetDashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </ConversationsShell>
