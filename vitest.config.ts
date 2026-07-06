@@ -1,0 +1,15 @@
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+
+// Eigene Vitest-Konfiguration (statt vite.config.ts), damit der Dev-Proxy-Plugin
+// samt Env/Backend nicht in die Testumgebung geladen wird.
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test/setup.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    css: false,
+  },
+});
