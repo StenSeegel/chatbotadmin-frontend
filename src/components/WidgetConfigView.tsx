@@ -218,10 +218,10 @@ export function WidgetConfigView({
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onCancel}
-              aria-label="Zurück"
-              className="p-2 -ml-2 rounded-full hover:bg-surface-container-high transition-colors"
+              aria-label="Zurück zur Übersicht"
+              className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors"
             >
-              <Icon name="arrow_back" />
+              <Icon name="arrow_back" className="text-[20px]" />
             </button>
 
             <div className="min-w-0">

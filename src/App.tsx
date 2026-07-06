@@ -10,6 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { StandaloneWidgetPage } from "./pages/StandaloneWidgetPage";
 import { StatisticsPage } from "./pages/StatisticsPage";
 import { WidgetConfigPage } from "./pages/WidgetConfigPage";
+import { WidgetEmbedPage } from "./pages/WidgetEmbedPage";
 import { WidgetConversationsPage } from "./pages/WidgetConversationsPage";
 import { WidgetDashboardPage } from "./pages/WidgetDashboardPage";
 
@@ -61,6 +62,16 @@ function App() {
           <ProtectedRoute>
             <AuthenticatedLayout>
               <WidgetConfigPage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/widgets/:id/einbetten"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <WidgetEmbedPage />
             </AuthenticatedLayout>
           </ProtectedRoute>
         }

@@ -15,9 +15,11 @@ const statusClasses: Record<Widget["status"], { badge: string; dot: string; labe
 
 interface WidgetCardProps {
   widget: Widget;
+  /** Klarname der Knowledge-Base (aufgelöst aus der ID); fällt auf die ID zurück. */
+  kbName?: string;
 }
 
-export function WidgetCard({ widget }: WidgetCardProps) {
+export function WidgetCard({ widget, kbName }: WidgetCardProps) {
   const accent = accentClasses[widget.accent];
   const status = statusClasses[widget.status];
   const rating = widget.stats.rating.toFixed(1).replace(".", ",");
@@ -38,7 +40,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
         <h4 className="font-headline-md text-base font-bold">{widget.name}</h4>
         <div className="flex items-center gap-2 text-on-surface-variant mt-1">
           <Icon name="smart_toy" className="text-sm" />
-          <span className="font-label-sm text-xs truncate">{widget.knowledgeBaseId}</span>
+          <span className="font-label-sm text-xs truncate">{kbName || widget.knowledgeBaseId}</span>
         </div>
       </div>
 
@@ -67,14 +69,20 @@ export function WidgetCard({ widget }: WidgetCardProps) {
           <Icon name="settings" className="text-sm" />
           <span className="w-full text-center break-words">Einstellungen</span>
         </Link>
-        <button className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors">
+        <Link
+          to={`/widgets/${widget.id}/gespraeche`}
+          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors"
+        >
           <Icon name="chat" className="text-sm" />
           <span className="truncate w-full text-center">Chatbox</span>
-        </button>
-        <button className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors">
+        </Link>
+        <Link
+          to={`/widgets/${widget.id}/einbetten`}
+          className="flex flex-col items-center justify-center gap-1 min-w-0 w-full px-1 py-1.5 border border-outline-variant rounded-lg font-mono text-[10px] text-on-surface hover:bg-surface-container-high transition-colors"
+        >
           <Icon name="code" className="text-sm" />
           <span className="truncate w-full text-center">Einbetten</span>
-        </button>
+        </Link>
       </div>
     </div>
   );

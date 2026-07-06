@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { AddWidgetCard } from "../components/AddWidgetCard";
 import { SearchToolbar, type SortOption, type StatusFilter } from "../components/SearchToolbar";
 import { WidgetCard } from "../components/WidgetCard";
+import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import type { Widget } from "../types/widget";
 
 export function DashboardPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Zuordnung Knowledge-Base-ID → Klarname, damit die Karten den Namen statt
+  // der kb-…-ID zeigen. Fehlschläge sind unkritisch (dann greift die ID).
+  const [kbNames, setKbNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchWidgets()
@@ -16,6 +20,14 @@ export function DashboardPage() {
         setLoadError(null);
       })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : "Unbekannter Fehler"));
+
+    fetchModels()
+      .then((models) => {
+        const map: Record<string, string> = {};
+        for (const m of models) if (m.name) map[m.id] = m.name;
+        setKbNames(map);
+      })
+      .catch(() => setKbNames({}));
   }, []);
 
   const [search, setSearch] = useState("");
@@ -64,7 +76,7 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
         {filteredWidgets.map((widget) => (
-          <WidgetCard key={widget.id} widget={widget} />
+          <WidgetCard key={widget.id} widget={widget} kbName={kbNames[widget.knowledgeBaseId]} />
         ))}
         <AddWidgetCard />
       </div>
