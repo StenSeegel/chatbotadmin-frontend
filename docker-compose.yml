@@ -1,8 +1,9 @@
-# Backend env shared by the migrate + backend services. The dev defaults make
-# the full local stack (frontend on :8081 + backend) work with NO .env; every
-# value is overridable via the repo-root .env or the shell for staging/prod.
-# NEVER rely on these defaults in production — set GO_ENV=production with real
-# secrets (start from .env.staging.example).
+# Backend env shared by the migrate + backend services. This compose deploys the
+# server stack (admin SPA on :443, widget test portal on :6443 — see
+# nginx.staging.conf); every value is overridable via the repo-root .env or the
+# shell. NEVER rely on these defaults in production — set GO_ENV=production with
+# real secrets (start from .env.staging.example). For pure local development use
+# `npm run dev` (Vite on :5173 + the go-backend/ compose) instead.
 x-backend-env: &backend-env
   DATABASE_URL: postgres://chatbotadmin:${POSTGRES_PASSWORD:-chatbotadmin}@postgres:5432/chatbotadmin?sslmode=disable
   REDIS_HOST: redis
@@ -11,9 +12,10 @@ x-backend-env: &backend-env
   AUTH_PROVIDER_SECRET_KEY: ${AUTH_PROVIDER_SECRET_KEY:-}
   ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:-password}
-  # :8081 = the admin SPA; :8082 = the widget mock-portal, which posts its real
-  # login cross-origin to :8081/api.
-  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:8082}
+  # CORS allowlist: the admin origin (:443) plus the widget test portal (:6443),
+  # which posts its login cross-origin to the admin's /api. Prod overrides this
+  # via .env; the default mirrors .env.staging.example.
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://sv90073.hrz.uni-giessen.de,https://sv90073.hrz.uni-giessen.de:6443}
   KI_API_KEY: ${KI_API_KEY:-}
   KI_BASE_URL: ${KI_BASE_URL:-https://api.hrz.uni-giessen.de/v1}
   OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-}
