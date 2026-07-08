@@ -59,29 +59,6 @@ export function WidgetConversationsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-lg text-on-surface-variant hover:bg-secondary-container"
-              >
-                <Icon name="download" style={{ fontSize: 18 }} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-lg text-on-surface-variant hover:bg-secondary-container"
-              >
-                <Icon name="check_circle" style={{ fontSize: 18 }} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-lg border-error/40 text-error hover:bg-error/10"
-              >
-                <Icon name="delete" style={{ fontSize: 18 }} />
-              </Button>
-            </div>
           </div>
 
           {/* Messages */}
@@ -139,17 +116,6 @@ export function WidgetConversationsPage() {
           {/* Composer */}
           <div className="shrink-0 border-t border-outline-variant p-4">
             <Card className="rounded-xl">
-              <div className="flex items-center gap-1 px-3 py-2 border-b border-outline-variant">
-                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                  <Icon name="format_bold" style={{ fontSize: 16 }} />
-                </Button>
-                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                  <Icon name="format_italic" style={{ fontSize: 16 }} />
-                </Button>
-                <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                  <Icon name="link" style={{ fontSize: 16 }} />
-                </Button>
-              </div>
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -160,21 +126,7 @@ export function WidgetConversationsPage() {
                 rows={3}
                 className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none"
               />
-              <div className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                    <Icon name="attach_file" style={{ fontSize: 18 }} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                    <Icon name="undo" style={{ fontSize: 18 }} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                    <Icon name="redo" style={{ fontSize: 18 }} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="p-1.5 rounded hover:bg-secondary-container text-on-surface-variant">
-                    <Icon name="mood" style={{ fontSize: 18 }} />
-                  </Button>
-                </div>
+              <div className="flex items-center justify-end px-3 py-2">
                 <Button
                   onClick={handleSend}
                   disabled={!draft.trim()}

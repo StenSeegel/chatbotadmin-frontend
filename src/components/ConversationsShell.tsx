@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
 
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
-const PERIOD_OPTIONS = ["Letzte 7 Tage", "Letzte 30 Tage", "Letzte 3 Monate"];
 
 // ── Small dropdown (display + selectable) ─────────────────────
 
@@ -74,7 +73,6 @@ export function ConversationsShell({
 }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alle Status");
-  const [period, setPeriod] = useState("Letzte 7 Tage");
 
   const onlineUsers = CONVERSATIONS.filter((c) => c.online);
 
@@ -98,12 +96,6 @@ export function ConversationsShell({
 
           <div className="flex items-center gap-2 flex-1 justify-end flex-wrap">
             <FilterDropdown value={statusFilter} options={STATUS_OPTIONS} onChange={setStatusFilter} />
-            <FilterDropdown
-              value="Alle Widgets"
-              options={["Alle Widgets", ...(widgetName ? [widgetName] : [])]}
-              onChange={() => {}}
-            />
-            <FilterDropdown value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />
 
             <div className="relative flex-1 min-w-[200px] max-w-md">
               <Icon
@@ -119,10 +111,6 @@ export function ConversationsShell({
                 className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest"
               />
             </div>
-
-            <button className="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-secondary-container transition-colors">
-              <Icon name="tune" style={{ fontSize: 18 }} />
-            </button>
           </div>
         </div>
       </header>
@@ -137,15 +125,10 @@ export function ConversationsShell({
                 <h3 className="text-title-md font-semibold">Gespräche</h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">{filtered.length} Ergebnisse</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-1.5 rounded-lg text-on-surface-variant hover:bg-secondary-container transition-colors">
-                  <Icon name="filter_list" style={{ fontSize: 18 }} />
-                </button>
-                <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary-container/50 px-2 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  Live
-                </span>
-              </div>
+              <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary-container/50 px-2 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                Live
+              </span>
             </div>
 
             {/* Online-Nutzer (aus den Gesprächen mit Online-Status) */}

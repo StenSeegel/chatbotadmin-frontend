@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
@@ -238,14 +237,9 @@ function DonutChart() {
 
 // ── Page ──────────────────────────────────────────────────────
 
-type Period = "7 Tage" | "30 Tage" | "Letzte 3 Monate" | "Jahr";
-const PERIODS_LIST: Period[] = ["7 Tage", "30 Tage", "Letzte 3 Monate", "Jahr"];
-
 export function StatisticsPage() {
   const [chartView, setChartView] = useState<ChartView>("Woche");
   const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState<Period>("30 Tage");
-  const [periodOpen, setPeriodOpen] = useState(false);
 
   const filteredQuestions = TOP_QUESTIONS.filter((q) =>
     q.text.toLowerCase().includes(search.toLowerCase()),
@@ -260,42 +254,6 @@ export function StatisticsPage() {
           <h2 className="text-headline-md font-semibold shrink-0">Statistiken</h2>
 
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            {/* Period dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setPeriodOpen((v) => !v)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-outline-variant text-sm text-on-surface-variant hover:bg-secondary-container transition-colors"
-              >
-                {period}
-                <Icon name="expand_more" style={{ fontSize: 16 }} />
-              </button>
-
-              {periodOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setPeriodOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
-                    {PERIODS_LIST.map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          setPeriod(option);
-                          setPeriodOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-sm text-left transition-colors ${
-                          option === period
-                            ? "bg-primary-container text-on-primary-container font-medium"
-                            : "text-on-surface hover:bg-secondary-container"
-                        }`}
-                      >
-                        {option}
-                        {option === period && <Icon name="check" style={{ fontSize: 16 }} />}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
             {/* Search */}
             <div className="relative">
               <Icon
@@ -311,12 +269,6 @@ export function StatisticsPage() {
                 className="pl-9 pr-3 py-1.5 rounded-full bg-surface-container-lowest text-sm w-40"
               />
             </div>
-
-            {/* Export button */}
-            <Button className="px-4 py-1.5 rounded-full font-medium">
-              <Icon name="upload" style={{ fontSize: 18 }} />
-              Exportieren
-            </Button>
           </div>
         </div>
       </header>
@@ -450,18 +402,6 @@ export function StatisticsPage() {
           ))}
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-outline-variant px-6 py-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-on-surface-variant">
-          <span>ChatBot Admin © 2024 Platform Services</span>
-          <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-primary transition-colors">Support</a>
-            <a href="#" className="hover:text-primary transition-colors">Datenschutz</a>
-            <a href="#" className="hover:text-primary transition-colors">API Dokumentation</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
