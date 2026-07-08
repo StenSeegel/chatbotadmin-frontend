@@ -170,8 +170,6 @@
     rules: [],
     startPrompt: '',
     feedbackButtons: true,
-    maxTokens: undefined,
-    knowledgeBaseId: 'jlu/gpt-oss-20b',
   };
 
   // 3. Initialize a single widget: fetch its published config from the backend
@@ -180,7 +178,10 @@
     const widgetId = containerEl.getAttribute('data-widget-id') || 'support-bot';
     // API base on the host that served widget.js; overridable via data-api.
     const apiBase = (containerEl.getAttribute('data-api') || `${scriptOrigin}/api`).replace(/\/+$/, '');
-    const chatEndpoint = `${apiBase}/chat`;
+    // Public, per-widget chat endpoint: it is unauthenticated (the widget is
+    // embedded on public pages) and resolves the model + token cap from the
+    // widget's stored config server-side, so we only send the conversation.
+    const chatEndpoint = `${apiBase}/widgets/${encodeURIComponent(widgetId)}/chat`;
 
     // Fetch the widget config published by the admin panel. On failure we fall
     // back to defaults + data-* overrides so the widget still renders.
@@ -200,14 +201,7 @@
       icon: containerEl.getAttribute('data-icon') || sc.icon || defaultConfig.icon,
     });
 
-    // data-kb/data-model bleiben als Fallback für ältere Einbettungen ohne Backend-Config.
-    const knowledgeBaseId =
-      sc.knowledgeBaseId ||
-      containerEl.getAttribute('data-kb') ||
-      containerEl.getAttribute('data-model') ||
-      defaultConfig.knowledgeBaseId;
     const routing = sc.routing || containerEl.getAttribute('data-routing') || 'public-widget';
-    const maxTokens = activeConfig.maxTokens;
 
     // Conversation state for this widget instance (sent to the backend so the
     // model has context across turns).
@@ -633,9 +627,10 @@
     fab.addEventListener('click', toggleChat);
     closeBtn.addEventListener('click', toggleChat);
 
-    // Send the user's message (plus prior turns) to the backend and stream the
-    // assistant's reply into a new bot bubble. Talks to /api/chat exactly like
-    // the admin panel does (knowledgeBaseId + messages, SSE when stream:true).
+    // Send the user's message (plus prior turns) to the public per-widget chat
+    // endpoint and stream the assistant's reply into a new bot bubble. Only the
+    // messages are sent; the backend resolves the model + token cap from the
+    // widget's stored config and streams the answer back as SSE.
     async function fetchAnswer(userText) {
       history.push({ role: 'user', content: userText });
       const messages = systemPrompt
@@ -654,7 +649,7 @@
         const res = await fetch(chatEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ knowledgeBaseId, messages, maxTokens, stream: true, widgetId }),
+          body: JSON.stringify({ messages, stream: true }),
         });
 
         if (!res.ok || !res.body) {

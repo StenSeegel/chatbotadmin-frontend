@@ -154,8 +154,9 @@ export function WidgetConfigPage() {
       onSave={handleSave}
       onCancel={() => navigate("/")}
       onToggleStatus={async () => {
-        const newStatus: WidgetStatus = widget.status === "active" ? "paused" : "active";
-        // Status sofort lokal anzeigen.
+        const prevStatus = widget.status;
+        const newStatus: WidgetStatus = prevStatus === "active" ? "paused" : "active";
+        // Status sofort lokal anzeigen (optimistisch).
         update("status", newStatus);
         // Bereits gespeicherte Widgets sofort persistieren; neue (noch ohne ID)
         // erhalten den Status erst beim Anlegen.
@@ -164,6 +165,8 @@ export function WidgetConfigPage() {
           const persisted = await saveWidget({ ...widget, status: newStatus });
           setWidgets((current) => current.map((w) => (w.id === persisted.id ? persisted : w)));
         } catch (err) {
+          // Persistieren fehlgeschlagen → optimistische Anzeige zurücksetzen.
+          update("status", prevStatus);
           setSaveError(err instanceof Error ? err.message : "Status konnte nicht gespeichert werden");
         }
       }}

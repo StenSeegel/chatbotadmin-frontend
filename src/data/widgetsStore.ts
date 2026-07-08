@@ -1,7 +1,5 @@
-import { widgets as initialWidgets } from "./widgets";
+import { apiFetch } from "../auth/api";
 import type { Widget, WidgetConfig } from "../types/widget";
-
-const STORAGE_KEY = "chatbotadmin.widgets";
 
 /** Öffentliche, präsentationsbezogene Konfiguration (für widget.js / Standalone-Seite). */
 export interface PublicWidgetConfig {
@@ -38,65 +36,46 @@ export function createDefaultConfig(): WidgetConfig {
   };
 }
 
-/** Lädt alle Widgets aus dem LocalStorage (oder die Initialdaten). */
+/**
+ * Lädt alle Widgets vom Backend (GET /api/widgets). Quelle der Wahrheit ist das
+ * Go-Backend (internal/widgets) – dieselben Daten, die auch das eingebettete
+ * widget.js sieht.
+ */
 export async function fetchWidgets(): Promise<Widget[]> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return initialWidgets;
-
-    const parsed = JSON.parse(stored) as Widget[];
-    return parsed.map((widget) => ({
-      ...widget,
-      // Altdaten migrieren: früher hieß das Feld `kbId`. Fehlt beides, "" statt
-      // undefined, damit Consumer (z. B. ModelCombobox) nicht auf undefined stoßen.
-      knowledgeBaseId: widget.knowledgeBaseId ?? (widget as { kbId?: string }).kbId ?? "",
-      config: { ...createDefaultConfig(), ...widget.config },
-    }));
-  } catch {
-    return initialWidgets;
-  }
+  const res = await apiFetch("/api/widgets");
+  if (!res.ok) throw new Error(`Widgets konnten nicht geladen werden (HTTP ${res.status})`);
+  const data = (await res.json()) as { widgets?: Widget[] };
+  return (data.widgets ?? []).map((widget) => ({
+    ...widget,
+    // Altdaten migrieren: früher hieß das Feld `kbId`. Fehlt beides, "" statt
+    // undefined, damit Consumer (z. B. ModelCombobox) nicht auf undefined stoßen.
+    knowledgeBaseId: widget.knowledgeBaseId ?? (widget as { kbId?: string }).kbId ?? "",
+    // Defensive gegen Teil-Configs: fehlende Felder mit den Defaults auffüllen.
+    config: { ...createDefaultConfig(), ...widget.config },
+  }));
 }
 
-/** 
- * Lädt die öffentliche Konfiguration eines Widgets (für die Standalone-Seite /w/:id). 
- * Im LocalStorage-Modus suchen wir einfach in der Liste.
+/**
+ * Lädt die öffentliche Konfiguration eines Widgets (für die Standalone-Seite /w/:id)
+ * direkt vom Backend (GET /api/widgets/:id) – identisch zu dem, was widget.js abruft.
  */
 export async function fetchPublicConfig(id: string): Promise<PublicWidgetConfig | null> {
-  const all = await fetchWidgets();
-  const w = all.find((item) => item.id === id);
-  if (!w) return null;
-
-  return {
-    id: w.id,
-    status: w.status,
-    knowledgeBaseId: w.knowledgeBaseId,
-    routing: w.routing,
-    title: w.config.title,
-    greeting: w.config.greeting,
-    accentColor: w.config.accentColor,
-    position: w.config.position,
-    icon: w.icon,
-    templates: w.config.templates,
-    rules: w.config.rules.filter(r => r.enabled).map(r => r.text),
-    startPrompt: w.config.startPrompt,
-    feedbackButtons: w.config.feedbackButtons,
-    maxTokens: w.config.maxTokensPerAnswer,
-  };
+  const res = await apiFetch(`/api/widgets/${encodeURIComponent(id)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Konfiguration konnte nicht geladen werden (HTTP ${res.status})`);
+  return (await res.json()) as PublicWidgetConfig;
 }
 
-/** Speichert ein Widget im LocalStorage. */
+/** Legt ein Widget an oder aktualisiert es (PUT /api/widgets/:id). */
 export async function saveWidget(widget: Widget): Promise<Widget> {
-  const all = await fetchWidgets();
-  const index = all.findIndex((w) => w.id === widget.id);
-  
-  let updated: Widget[];
-  if (index >= 0) {
-    updated = [...all];
-    updated[index] = widget;
-  } else {
-    updated = [...all, widget];
+  const res = await apiFetch(`/api/widgets/${encodeURIComponent(widget.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(widget),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || `Speichern fehlgeschlagen (HTTP ${res.status})`);
   }
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  return widget;
+  return (await res.json()) as Widget;
 }
