@@ -477,8 +477,8 @@
     <div class="control-group">
       <label for="widget-id">Widget ID</label>
       <select id="widget-id">
-        <option value="support-bot" selected>support-bot (Support Bot)</option>
-        <option value="sales-tracker">sales-tracker (Sales Tracker)</option>
+        <option value="support-bot" selected>Support Bot</option>
+        <option value="sales-tracker">Sales Tracker</option>
         <option value="custom">Benutzerdefiniert...</option>
       </select>
     </div>
@@ -867,7 +867,9 @@
         .forEach((w) => {
           const opt = document.createElement('option');
           opt.value = w.id;
-          opt.textContent = w.name ? `${w.id} (${w.name})` : w.id;
+          // Nur den Namen anzeigen; die (jetzt als UUID vergebene) ID bleibt der
+          // interne Wert der Option und wird beim Laden des Widgets verwendet.
+          opt.textContent = w.name || w.id;
           widgetIdSelect.appendChild(opt);
         });
       const custom = document.createElement('option');

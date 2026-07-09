@@ -19,23 +19,6 @@ function emptyWidget(id: string): Widget {
   };
 }
 
-function slugify(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "") || "widget-id";
-}
-
-// Stellt sicher, dass die ID eindeutig ist: bei Kollision wird -2, -3, … angehängt.
-function makeUniqueId(base: string, existing: Widget[]): string {
-  const taken = new Set(existing.map((w) => w.id));
-  if (!taken.has(base)) return base;
-  let n = 2;
-  while (taken.has(`${base}-${n}`)) n++;
-  return `${base}-${n}`;
-}
-
 const WIDGET_BASE_URL = import.meta.env.VITE_WIDGET_BASE_URL || "https://ki-chat.uni-giessen.de";
 
 function buildEmbedCode(widgetId: string, knowledgeBaseId: string, routing: string): string {
@@ -62,21 +45,23 @@ export function WidgetConfigPage() {
   const currentUser = useCurrentUser();
   const canDelete = currentUser?.role === "superadmin";
 
-  const [widgets, setWidgets] = useState<Widget[]>([]);
-  const [widget, setWidget] = useState<Widget>(() => emptyWidget(isNew ? "" : id ?? ""));
+  // Neue Widgets erhalten sofort eine unveränderliche UUID als ID. Sie wird nur
+  // einmalig erzeugt (useState-Initializer) und bleibt danach fix – auch beim
+  // Umbenennen. Das ist der stabile Identifier für Embed-Code und /w/:id.
+  const [widget, setWidget] = useState<Widget>(() =>
+    emptyWidget(isNew ? crypto.randomUUID() : id ?? ""),
+  );
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Bestand vom Backend laden und – beim Bearbeiten – das passende Widget setzen.
+  // Beim Bearbeiten das passende Widget vom Backend laden und setzen.
   useEffect(() => {
+    if (isNew) return;
     let ignore = false;
     fetchWidgets()
       .then((list) => {
         if (ignore) return;
-        setWidgets(list);
-        if (!isNew) {
-          const found = list.find((w) => w.id === id);
-          if (found) setWidget(found);
-        }
+        const found = list.find((w) => w.id === id);
+        if (found) setWidget(found);
       })
       .catch((err: unknown) => {
         if (!ignore) setSaveError(err instanceof Error ? err.message : "Unbekannter Fehler");
@@ -109,15 +94,13 @@ export function WidgetConfigPage() {
     try {
       if (isNew) {
         if (!widget.name.trim() || !widget.knowledgeBaseId.trim()) return;
-        const newId = makeUniqueId(slugify(widget.name), widgets);
-        const saved = await saveWidget({ ...widget, id: newId });
-        setWidgets((current) => [...current, saved]);
+        const saved = await saveWidget(widget);
         setWidget(saved);
         setSaved(true);
-        navigate(`/widgets/${newId}`, { replace: true });
+        navigate(`/widgets/${saved.id}`, { replace: true });
       } else {
         const saved = await saveWidget(widget);
-        setWidgets((current) => current.map((w) => (w.id === saved.id ? saved : w)));
+        setWidget(saved);
         setSaved(true);
       }
     } catch (err) {
@@ -130,8 +113,7 @@ export function WidgetConfigPage() {
     setSaveError(null);
     try {
       await deleteWidget(widget.id);
-      // Aus der lokalen Liste entfernen und zurück zur Übersicht.
-      setWidgets((current) => current.filter((w) => w.id !== widget.id));
+      // Zurück zur Übersicht, die den Bestand neu vom Backend lädt.
       navigate("/");
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
@@ -148,7 +130,7 @@ export function WidgetConfigPage() {
     }
   };
 
-  const previewId = isNew ? slugify(widget.name) : widget.id;
+  const previewId = widget.id;
 
   return (
     <>
@@ -181,7 +163,7 @@ export function WidgetConfigPage() {
         if (isNew) return;
         try {
           const persisted = await saveWidget({ ...widget, status: newStatus });
-          setWidgets((current) => current.map((w) => (w.id === persisted.id ? persisted : w)));
+          setWidget(persisted);
         } catch (err) {
           // Persistieren fehlgeschlagen → optimistische Anzeige zurücksetzen.
           update("status", prevStatus);
