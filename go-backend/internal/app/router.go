@@ -67,6 +67,9 @@ func newRouter(d routerDeps) *http.ServeMux {
 	// must not require a token (it returns only the reduced public config).
 	mux.Handle("GET /api/widgets", jwt(d.widgets.List))
 	mux.Handle("PUT /api/widgets/{id}", jwt(d.widgets.Upsert))
+	// Deleting a widget is destructive and irreversible, so it is restricted to
+	// superadmins (RequireRole lets superadmin through implicitly).
+	mux.Handle("DELETE /api/widgets/{id}", auth.RoleChain(d.jwtMW, auth.RoleSuperAdmin)(d.widgets.Delete))
 	mux.HandleFunc("GET /api/widgets/{id}", d.widgets.PublicConfig)
 	// PUBLIC: the embedded widget.js is anonymous, so per-widget chat is not
 	// behind auth. It is scoped to the widget's stored model/limits and

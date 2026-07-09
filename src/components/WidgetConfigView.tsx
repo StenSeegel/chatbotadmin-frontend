@@ -32,11 +32,14 @@ export interface WidgetConfigViewProps {
   isNew: boolean;
   isActive: boolean;
   saved: boolean;
+  /** Nur Superadmins dürfen ein Widget löschen – blendet den Löschen-Button ein. */
+  canDelete: boolean;
   copied: "code" | "url" | null;
   embedCode: string;
   directUrl: string;
   onSave: () => void;
   onCancel: () => void;
+  onDelete: () => void;
   onToggleStatus: () => void;
   onCopy: (text: string, kind: "code" | "url") => void;
   onUpdate: <K extends keyof Widget>(key: K, value: Widget[K]) => void;
@@ -48,11 +51,13 @@ export function WidgetConfigView({
   isNew,
   isActive,
   saved,
+  canDelete,
   copied,
   embedCode,
   directUrl,
   onSave,
   onCancel,
+  onDelete,
   onToggleStatus,
   onCopy,
   onUpdate,
@@ -262,6 +267,23 @@ export function WidgetConfigView({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {!isNew && canDelete && (
+              <button
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Widget „${widget.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+                    )
+                  ) {
+                    onDelete();
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error"
+              >
+                <Icon name="delete" className="text-[18px]" />
+                Widget löschen
+              </button>
+            )}
             {!isNew && (
               <button
                 onClick={onToggleStatus}

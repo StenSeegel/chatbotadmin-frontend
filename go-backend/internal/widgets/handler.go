@@ -3,9 +3,10 @@
 // A widget is stored as a single JSONB blob (the full admin object). Three
 // endpoints expose it:
 //
-//   - GET  /api/widgets       (JWT) — full list for the admin UI
-//   - PUT  /api/widgets/{id}  (JWT) — create/update from the admin UI
-//   - GET  /api/widgets/{id}  (public) — reduced config for the embedded widget.js
+//   - GET    /api/widgets       (JWT) — full list for the admin UI
+//   - PUT    /api/widgets/{id}  (JWT) — create/update from the admin UI
+//   - DELETE /api/widgets/{id}  (superadmin) — remove a widget
+//   - GET    /api/widgets/{id}  (public) — reduced config for the embedded widget.js
 //
 // The public projection mirrors the previous Node backend (server/widgets-store.mjs):
 // Lucide icon names are mapped to Material-Symbols names and only enabled rules
@@ -30,6 +31,7 @@ type Store interface {
 	List(ctx context.Context) ([]json.RawMessage, error)
 	Get(ctx context.Context, id string) (json.RawMessage, error)
 	Upsert(ctx context.Context, id string, data []byte) (json.RawMessage, error)
+	Delete(ctx context.Context, id string) (bool, error)
 }
 
 // Handler holds the dependencies for the widget endpoints.
@@ -164,6 +166,28 @@ func (h *Handler) Upsert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, stored)
+}
+
+// Delete handles DELETE /api/widgets/{id} (superadmin) — removes a widget.
+// Returns 204 on success and 404 when no widget with that id exists. The
+// superadmin role is enforced by the router middleware, not here.
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing widget id")
+		return
+	}
+
+	existed, err := h.store.Delete(r.Context(), id)
+	if err != nil {
+		httputil.WriteInternalErrorCtx(r.Context(), w, err)
+		return
+	}
+	if !existed {
+		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "Widget nicht gefunden.")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // PublicConfig handles GET /api/widgets/{id} (public) — the reduced config for

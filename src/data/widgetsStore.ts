@@ -79,3 +79,17 @@ export async function saveWidget(widget: Widget): Promise<Widget> {
   }
   return (await res.json()) as Widget;
 }
+
+/**
+ * Löscht ein Widget (DELETE /api/widgets/:id). Nur für Superadmins erlaubt –
+ * das Backend gibt für andere Rollen 403 zurück.
+ */
+export async function deleteWidget(id: string): Promise<void> {
+  const res = await apiFetch(`/api/widgets/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || `Löschen fehlgeschlagen (HTTP ${res.status})`);
+  }
+}

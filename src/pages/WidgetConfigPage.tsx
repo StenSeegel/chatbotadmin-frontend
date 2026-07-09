@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WidgetConfigView } from "../components/WidgetConfigView";
-import { createDefaultConfig, fetchWidgets, saveWidget } from "../data/widgetsStore";
+import { createDefaultConfig, deleteWidget, fetchWidgets, saveWidget } from "../data/widgetsStore";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 import type { Widget, WidgetAccent, WidgetStatus } from "../types/widget";
 
 function emptyWidget(id: string): Widget {
@@ -58,6 +59,8 @@ export function WidgetConfigPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNew = id === "new";
+  const currentUser = useCurrentUser();
+  const canDelete = currentUser?.role === "superadmin";
 
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [widget, setWidget] = useState<Widget>(() => emptyWidget(isNew ? "" : id ?? ""));
@@ -122,6 +125,19 @@ export function WidgetConfigPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (isNew) return;
+    setSaveError(null);
+    try {
+      await deleteWidget(widget.id);
+      // Aus der lokalen Liste entfernen und zurück zur Übersicht.
+      setWidgets((current) => current.filter((w) => w.id !== widget.id));
+      navigate("/");
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
+    }
+  };
+
   const handleCopy = async (text: string, kind: "code" | "url") => {
     try {
       await navigator.clipboard.writeText(text);
@@ -148,11 +164,13 @@ export function WidgetConfigPage() {
       isNew={isNew}
       isActive={widget.status === "active"}
       saved={saved}
+      canDelete={canDelete}
       copied={copied}
       embedCode={buildEmbedCode(previewId, widget.knowledgeBaseId, widget.routing)}
       directUrl={buildDirectUrl(previewId)}
       onSave={handleSave}
       onCancel={() => navigate("/")}
+      onDelete={handleDelete}
       onToggleStatus={async () => {
         const prevStatus = widget.status;
         const newStatus: WidgetStatus = prevStatus === "active" ? "paused" : "active";

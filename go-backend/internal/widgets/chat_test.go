@@ -58,6 +58,14 @@ func (s *fakeStore) Upsert(_ context.Context, id string, data []byte) (json.RawM
 	return json.RawMessage(data), nil
 }
 
+func (s *fakeStore) Delete(_ context.Context, id string) (bool, error) {
+	if _, ok := s.data[id]; !ok {
+		return false, nil
+	}
+	delete(s.data, id)
+	return true, nil
+}
+
 // widgetJSON builds a stored-widget blob with the fields the chat path reads.
 func widgetJSON(id, kb, status string, maxTokens int) json.RawMessage {
 	b, _ := json.Marshal(map[string]any{

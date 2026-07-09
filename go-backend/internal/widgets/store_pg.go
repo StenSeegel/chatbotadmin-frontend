@@ -73,3 +73,15 @@ func (s *PGStore) Upsert(ctx context.Context, id string, data []byte) (json.RawM
 	}
 	return json.RawMessage(out), nil
 }
+
+// Delete removes the widget with the given id. It reports whether a row was
+// actually deleted so the caller can distinguish a successful delete from a
+// missing widget (404).
+func (s *PGStore) Delete(ctx context.Context, id string) (bool, error) {
+	const sql = `DELETE FROM widgets WHERE id = $1`
+	tag, err := s.pool.Exec(ctx, sql, id)
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() > 0, nil
+}
