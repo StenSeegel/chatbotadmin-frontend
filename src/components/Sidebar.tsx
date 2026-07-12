@@ -5,8 +5,10 @@ import { Icon } from "./Icon";
 import { WidgetIcon } from "./WidgetIcon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { fetchWidgets } from "../data/widgetsStore";
+import { fetchAgents } from "../data/agentsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
 import type { Widget } from "../types/widget";
+import type { Agent } from "../types/agent";
 
 interface SidebarProps {
   onLogout: () => void;
@@ -24,10 +26,17 @@ export function Sidebar({ onLogout }: SidebarProps) {
   const widgetsActive = location.pathname === "/" || location.pathname.startsWith("/widgets");
   const [widgetsOpen, setWidgetsOpen] = useState(widgetsActive);
 
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const agentsActive = location.pathname.startsWith("/agents");
+  const [agentsOpen, setAgentsOpen] = useState(agentsActive);
+
   useEffect(() => {
     fetchWidgets()
       .then(setWidgets)
       .catch(() => setWidgets([]));
+    fetchAgents()
+      .then(setAgents)
+      .catch(() => setAgents([]));
   }, []);
 
   const statistikenActive = location.pathname.startsWith("/statistiken");
@@ -44,6 +53,50 @@ export function Sidebar({ onLogout }: SidebarProps) {
         <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
       </div>
       <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/agents");
+              setAgentsOpen((v) => !v);
+            }}
+            className={`${parentClass(agentsActive)} w-full`}
+          >
+            <Icon name="psychology" />
+            <span className={agentsActive ? "font-label-sm" : "font-body-base"}>Agenten</span>
+            <Icon
+              name="expand_more"
+              className={`ml-auto shrink-0 transition-transform duration-200 ${agentsOpen ? "rotate-180" : ""}`}
+              style={{ fontSize: 20 }}
+            />
+          </button>
+
+          {agentsOpen && (
+            <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
+              {agents.map((agent) => {
+                const active = location.pathname === `/agents/${agent.id}`;
+                return (
+                  <Link
+                    key={agent.id}
+                    to={`/agents/${agent.id}`}
+                    className={
+                      active
+                        ? "flex items-center gap-3 px-3 py-2 rounded-full bg-secondary-container text-on-secondary-container transition-colors"
+                        : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant hover:bg-secondary-container transition-colors"
+                    }
+                  >
+                    <Icon name="psychology" className="text-[18px] shrink-0" />
+                    <span className="font-body-base text-sm truncate">{agent.name || "(ohne Namen)"}</span>
+                  </Link>
+                );
+              })}
+              {agents.length === 0 && (
+                <span className="px-3 py-2 text-xs text-on-surface-variant/60 italic">Noch keine Agenten</span>
+              )}
+            </div>
+          )}
+        </div>
+
         <div>
           <button
             type="button"
