@@ -226,6 +226,25 @@
         box-sizing: border-box;
       }
 
+      /* Material Symbols glyphs. Defined here (not just relied on from Google's
+         global stylesheet) because this rule now lives inside the widget's
+         shadow root, which a page-level class definition can't reach. Only the
+         @font-face stays global (registered once in document.head), since font
+         registrations apply across shadow boundaries. */
+      .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+      }
+
       /* Position setups */
       .chatbot-widget-wrapper.bottom-right { bottom: 24px; right: 24px; align-items: flex-end; }
       .chatbot-widget-wrapper.bottom-left { bottom: 24px; left: 24px; align-items: flex-start; }
@@ -558,7 +577,15 @@
       }
       .chatbot-message th { font-weight: 600; background: #f8fafc; }
     `;
-    document.head.appendChild(styleEl);
+    // Host element carrying a shadow root, so the injected styles above are
+    // fully encapsulated: the page's CSS cannot override `.chatbot-header` (or
+    // anything else in here), and the widget's own CSS cannot leak onto the
+    // page either. This is what makes the widget genuinely "bring your own
+    // CSS" self-contained, regardless of what the embedding site's stylesheets
+    // do.
+    const shadowHost = document.createElement('div');
+    const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+    shadowRoot.appendChild(styleEl);
 
     // Create Chatbot UI DOM elements inside the wrapper
     const wrapper = document.createElement('div');
@@ -593,7 +620,8 @@
       </button>
     `;
 
-    containerEl.appendChild(wrapper);
+    shadowRoot.appendChild(wrapper);
+    containerEl.appendChild(shadowHost);
 
     // Interactive Logic Elements (scoped to the wrapper element)
     const fab = wrapper.querySelector('.chatbot-fab');

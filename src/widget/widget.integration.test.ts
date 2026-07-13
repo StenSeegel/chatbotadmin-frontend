@@ -109,8 +109,18 @@ async function waitFor(assertion: () => void, timeout = 3000): Promise<void> {
   }
 }
 
+// widget.js mounts its UI inside a shadow root (for CSS encapsulation), on a
+// host div appended as the only child of the `.chatbot-widget` placeholder.
+// document.querySelector can't pierce that boundary, so tests must go through
+// the shadow root explicitly.
+function widgetShadowRoot(): ShadowRoot | null {
+  const container = document.querySelector(".chatbot-widget");
+  const host = container?.firstElementChild as (Element & { shadowRoot: ShadowRoot | null }) | null;
+  return host?.shadowRoot ?? null;
+}
+
 function $(sel: string): HTMLElement | null {
-  return document.querySelector(sel);
+  return (widgetShadowRoot()?.querySelector(sel) as HTMLElement | null) ?? null;
 }
 
 // Open the widget and submit a question through its real input + send button.
