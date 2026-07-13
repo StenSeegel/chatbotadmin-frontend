@@ -484,7 +484,9 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-        white-space: nowrap;
+        box-sizing: border-box;
+        max-width: 100%;
+        overflow-wrap: break-word;
       }
       .chatbot-chip:hover {
         background-color: ${activeConfig.accentColor}10;
