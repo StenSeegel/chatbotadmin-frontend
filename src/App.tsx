@@ -5,6 +5,8 @@ import { Sidebar } from "./components/Sidebar";
 import { TopAppBar } from "./components/TopAppBar";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardPage } from "./pages/DashboardPage";
+import { AgentsPage } from "./pages/AgentsPage";
+import { AgentConfigPage } from "./pages/AgentConfigPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { LoginPage } from "./pages/LoginPage";
 import { StandaloneWidgetPage } from "./pages/StandaloneWidgetPage";
@@ -92,6 +94,27 @@ function App() {
           <ProtectedRoute>
             <AuthenticatedLayout>
               <WidgetConversationsPage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agents"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <TopAppBar title="Agenten" />
+              <AgentsPage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agents/:id"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <AgentConfigPage />
             </AuthenticatedLayout>
           </ProtectedRoute>
         }
