@@ -93,17 +93,10 @@ docker compose up -d             # frontend + backend + Postgres + Redis + porta
 | --- | --- |
 | `GO_ENV=production` | Fail-closed token revocation; makes `ALLOWED_ORIGINS` required. |
 | `POSTGRES_PASSWORD`, `JWT_SECRET` (≥32), `AUTH_PROVIDER_SECRET_KEY` (base64 32 B) | Core secrets. |
-| `ALLOWED_ORIGINS` | The admin origin, e.g. `https://sv90073.hrz.uni-giessen.de`. CORS is backend-driven by this. |
+| `ALLOWED_ORIGINS` | The admin origin, e.g. `https://sv90073.hrz.uni-giessen.de`, **plus every external site that embeds the widget** (see note below). CORS is backend-driven by this. |
 | `ADMIN_PASSWORD`, `KI_API_KEY` | Seed admin (fallback) + HRZ model proxy. |
 | `OIDC_*` | Keycloak (JLU `jlu` realm); redirect URIs use the staging host. See AUTHENTICATION.md. |
 | `BACKEND_HTTP_PROXY`, `BACKEND_HTTPS_PROXY`, `BACKEND_NO_PROXY` | Only if the host reaches the internet via the HRZ proxy. |
-
-Embed the widget on any page:
-
-```html
-<div class="chatbot-widget" data-widget-id="support-bot" data-kb="jlu-staging-2026" data-lang="de"></div>
-<script src="https://sv90073.hrz.uni-giessen.de/widget.js" defer></script>
-```
 
 ---
 
@@ -127,3 +120,36 @@ docker compose up -d
 The only differences from staging are in the prod `.env`: `FRONTEND_IMAGE_TAG=prod`
 and `BACKEND_IMAGE_TAG=prod` (so it runs the promoted images, not `latest`), the
 production domain in `ALLOWED_ORIGINS`, and the production `OIDC_*` redirect URIs.
+
+---
+
+## Embedding the Widget
+
+Applies to any deployment (staging or production) — replace the origin below
+with that deployment's own domain:
+
+```html
+<div class="chatbot-widget" data-widget-id="support-bot" data-kb="jlu-staging-2026" data-lang="de"></div>
+<script src="https://sv90073.hrz.uni-giessen.de/widget.js" defer></script>
+```
+
+> **Embedding on a real external site (not the mock portal)** — `widget.js`
+> fetches its live config from `GET /api/widgets/{id}` cross-origin, which the
+> backend's CORS middleware (`go-backend/internal/middleware/cors.go`) only
+> allows for **exact-match origins in `ALLOWED_ORIGINS`** (scheme + host +
+> port, no wildcards). The external site's origin must be added there:
+> ```
+> ALLOWED_ORIGINS=https://sv90073.hrz.uni-giessen.de,https://sv90073.hrz.uni-giessen.de:6443,<external site origin>
+> ```
+> then `docker compose up -d backend` to pick up the change (only the backend
+> reads this var; no rebuild needed).
+>
+> **Why this fails silently:** if the origin isn't allowlisted, the browser
+> blocks the config fetch as a CORS violation, and `widget.js` swallows that
+> in a `catch` and falls back to its hardcoded generic defaults (title
+> "ChatBot Support", generic greeting/templates) — see `public/widget.js`
+> around the `fetch(`${apiBase}/widgets/...`)` call. The widget still *loads*
+> and looks functional, it just silently doesn't reflect the real, DB-configured
+> widget. There's no console error to point at this — if an embedded widget
+> looks "generic" or out of date on one site but correct on another, check
+> `ALLOWED_ORIGINS` before anything else.
