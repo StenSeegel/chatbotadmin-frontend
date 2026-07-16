@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
 )
 
@@ -35,10 +36,14 @@ func NewHandler(apiKey, baseURL string) *Handler {
 	}
 }
 
+// notConfiguredMsg is the 503 body shared by the strict ListModels and the
+// http-style chat path when KI_API_KEY is missing.
+const notConfiguredMsg = "KI_API_KEY ist nicht gesetzt. Bitte in der Backend-Konfiguration eintragen."
+
 func (h *Handler) configured(w http.ResponseWriter, r *http.Request) bool {
 	if h.apiKey == "" {
 		httputil.WriteJSONCtx(r.Context(), w, http.StatusServiceUnavailable,
-			map[string]string{"error": "KI_API_KEY ist nicht gesetzt. Bitte in der Backend-Konfiguration eintragen."})
+			map[string]string{"error": notConfiguredMsg})
 		return false
 	}
 	return true
@@ -64,23 +69,20 @@ func (h *Handler) upstream(ctx context.Context, method, path string, body []byte
 // GET /api/models
 // ---------------------------------------------------------------------------
 
-type modelInfo struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	OwnedBy string `json:"ownedBy"`
-	Created int64  `json:"created"`
-}
-
-// ListModels handles GET /api/models.
-func (h *Handler) ListModels(w http.ResponseWriter, r *http.Request) {
-	if !h.configured(w, r) {
-		return
+// ListModels implements GET /api/models (strict).
+func (h *Handler) ListModels(ctx context.Context, _ api.ListModelsRequestObject) (api.ListModelsResponseObject, error) {
+	if h.apiKey == "" {
+		return api.ListModels503JSONResponse{
+			NotConfiguredJSONResponse: api.NotConfiguredJSONResponse{Error: notConfiguredMsg},
+		}, nil
 	}
-	resp, err := h.upstream(r.Context(), http.MethodGet, "/models", nil)
+	resp, err := h.upstream(ctx, http.MethodGet, "/models", nil)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadGateway,
-			map[string]string{"error": fmt.Sprintf("Modelle konnten nicht geladen werden: %s", err.Error())})
-		return
+		return api.ListModels502JSONResponse{
+			BadGatewayJSONResponse: api.BadGatewayJSONResponse{
+				Error: fmt.Sprintf("Modelle konnten nicht geladen werden: %s", err.Error()),
+			},
+		}, nil
 	}
 	defer resp.Body.Close()
 
@@ -93,28 +95,28 @@ func (h *Handler) ListModels(w http.ResponseWriter, r *http.Request) {
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&upstream); err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadGateway,
-			map[string]string{"error": "Modelle konnten nicht gelesen werden."})
-		return
+		return api.ListModels502JSONResponse{
+			BadGatewayJSONResponse: api.BadGatewayJSONResponse{Error: "Modelle konnten nicht gelesen werden."},
+		}, nil
 	}
 
-	models := make([]modelInfo, 0, len(upstream.Data))
+	models := make([]api.ModelInfo, 0, len(upstream.Data))
 	for _, m := range upstream.Data {
-		models = append(models, modelInfo{ID: m.ID, Name: m.Name, OwnedBy: m.OwnedBy, Created: m.Created})
+		models = append(models, api.ModelInfo{Id: m.ID, Name: m.Name, OwnedBy: m.OwnedBy, Created: m.Created})
 	}
 	// Nach Anzeigename sortieren (fällt auf die ID zurück, falls kein Name).
 	sort.Slice(models, func(i, j int) bool {
 		ni, nj := models[i].Name, models[j].Name
 		if ni == "" {
-			ni = models[i].ID
+			ni = models[i].Id
 		}
 		if nj == "" {
-			nj = models[j].ID
+			nj = models[j].Id
 		}
 		return strings.ToLower(ni) < strings.ToLower(nj)
 	})
 
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, map[string]any{"models": models})
+	return api.ListModels200JSONResponse{Models: models}, nil
 }
 
 // ---------------------------------------------------------------------------

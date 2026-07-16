@@ -18,6 +18,13 @@ jobs:
   # ── Gate 1: Frontend (Lint, Typecheck/Build, Tests) ──────────────────────
   frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    # @ki4jlu/design-system kommt aus GitHub Packages (privat); .npmrc liest
+    # das Token aus NODE_AUTH_TOKEN.
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,9 +72,76 @@ jobs:
       - name: Test
         run: go test ./...
 
+  # ── Gate 3: API-Vertrag (Spec-Lint, Codegen aktuell, Breaking Changes) ───
+  # Die OpenAPI-Spec (go-backend/internal/apidocs/openapi.yaml) ist die Quelle
+  # der Wahrheit: internal/api/gen.go und src/types/api.gen.ts werden aus ihr
+  # generiert. Dieses Gate stellt sicher, dass die Spec valide ist, die
+  # generierten Dateien zur Spec passen und ein PR die API nicht unbemerkt
+  # inkompatibel ändert.
+  api-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SPEC: go-backend/internal/apidocs/openapi.yaml
+      # Für npm ci: @ki4jlu/design-system aus GitHub Packages (siehe .npmrc).
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go-backend/go.sum
+
+      - name: Lint OpenAPI spec
+        run: npx --yes @redocly/cli@2 lint "$SPEC"
+
+      - name: Check Go codegen is up to date
+        working-directory: ./go-backend
+        run: |
+          go generate ./internal/api
+          git diff --exit-code -- internal/api/gen.go \
+            || { echo "::error::internal/api/gen.go ist nicht aktuell — 'go generate ./internal/api' ausführen und committen."; exit 1; }
+
+      - name: Check TypeScript codegen is up to date
+        run: |
+          npm ci
+          npm run generate:api-types
+          git diff --exit-code -- src/types/api.gen.ts \
+            || { echo "::error::src/types/api.gen.ts ist nicht aktuell — 'npm run generate:api-types' ausführen und committen."; exit 1; }
+
+      # Breaking-Change-Erkennung nur in PRs: Spec des Basis-Branches gegen
+      # die des PRs. Schlägt nur bei echten Inkompatibilitäten (ERR) an.
+      - name: Fetch base spec (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --depth=1 origin "$GITHUB_BASE_REF"
+          git show "origin/$GITHUB_BASE_REF:$SPEC" > /tmp/base-openapi.yaml 2>/dev/null \
+            || echo "" > /tmp/base-openapi.yaml
+
+      - name: Detect breaking API changes (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ ! -s /tmp/base-openapi.yaml ]; then
+            echo "Basis-Branch hat noch keine Spec — Breaking-Check übersprungen."
+            exit 0
+          fi
+          go install github.com/oasdiff/oasdiff@latest
+          oasdiff breaking --fail-on ERR /tmp/base-openapi.yaml "$SPEC"
+
   # ── Publish: nur nach bestandenen Gates und nur auf push→main ────────────
   build-and-push:
-    needs: [ frontend, backend ]
+    needs: [ frontend, backend, api-contract ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

@@ -17,15 +17,10 @@ package agents
 import (
 	"context"
 	"encoding/json"
-	"io"
-	"net/http"
 	"strings"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 )
-
-// maxBodyBytes caps a PUT body; the agent object is small (a few KB).
-const maxBodyBytes = 1 << 20 // 1 MiB
 
 // Store is the database interface required by Handler.
 type Store interface {
@@ -54,97 +49,86 @@ func NewHandler(store Store, widgets WidgetRefs) *Handler {
 	return &Handler{store: store, widgets: widgets}
 }
 
-// agent is the subset of the stored object the backend parses (for validation).
-// Unknown fields (rules, tools, knowledge, …) are ignored on parse but
-// preserved in storage because the raw request JSON is stored verbatim.
-type agent struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Model string `json:"model"`
+// ListAgents implements GET /api/agents — returns { "agents": [ ...full... ] }.
+func (h *Handler) ListAgents(ctx context.Context, _ api.ListAgentsRequestObject) (api.ListAgentsResponseObject, error) {
+	rows, err := h.store.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	agents := make([]api.Agent, 0, len(rows))
+	for _, raw := range rows {
+		var a api.Agent
+		if err := json.Unmarshal(raw, &a); err != nil {
+			return nil, err
+		}
+		agents = append(agents, a)
+	}
+	return api.ListAgents200JSONResponse{Agents: agents}, nil
 }
 
-// List handles GET /api/agents — returns { "agents": [ ...full... ] }.
-func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.store.List(r.Context())
-	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+// UpsertAgent implements PUT /api/agents/{id} — creates or replaces an agent.
+// The typed body round-trips through api.Agent, whose AdditionalProperties
+// preserve fields the backend does not model (tools, knowledge, …), so the
+// stored JSONB keeps everything the admin UI sent.
+func (h *Handler) UpsertAgent(ctx context.Context, request api.UpsertAgentRequestObject) (api.UpsertAgentResponseObject, error) {
+	body := request.Body
+
+	if msg := validate(request.Id, body); msg != "" {
+		return api.UpsertAgent400JSONResponse{
+			BadRequestJSONResponse: api.BadRequestJSONResponse{Error: msg},
+		}, nil
 	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, map[string]any{"agents": rows})
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	stored, err := h.store.Upsert(ctx, request.Id, data)
+	if err != nil {
+		return nil, err
+	}
+	var out api.Agent
+	if err := json.Unmarshal(stored, &out); err != nil {
+		return nil, err
+	}
+	return api.UpsertAgent200JSONResponse(out), nil
 }
 
-// Upsert handles PUT /api/agents/{id} — creates or replaces an agent.
-func (h *Handler) Upsert(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing agent id")
-		return
-	}
-
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
-	if err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "request body too large or unreadable")
-		return
-	}
-
-	var parsed agent
-	if err := json.Unmarshal(body, &parsed); err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "invalid JSON body")
-		return
-	}
-
-	if msg := validate(id, &parsed); msg != "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, msg)
-		return
-	}
-
-	stored, err := h.store.Upsert(r.Context(), id, body)
-	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
-	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, stored)
-}
-
-// Delete handles DELETE /api/agents/{id} (superadmin) — removes an agent.
-// Returns 409 when the agent is still referenced by one or more widgets, 404
-// when no agent with that id exists, and 204 on success. The superadmin role is
-// enforced by the router middleware, not here.
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing agent id")
-		return
-	}
-
+// DeleteAgent implements DELETE /api/agents/{id} (superadmin) — removes an
+// agent. Returns 409 when the agent is still referenced by one or more
+// widgets, 404 when no agent with that id exists, and 204 on success. The
+// superadmin role is enforced by the spec middleware (bearerJWT scope), not
+// here.
+func (h *Handler) DeleteAgent(ctx context.Context, request api.DeleteAgentRequestObject) (api.DeleteAgentResponseObject, error) {
 	// Guard: refuse to orphan a widget that still points at this agent.
-	used, err := h.widgets.CountByAgent(r.Context(), id)
+	used, err := h.widgets.CountByAgent(ctx, request.Id)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
 	if used > 0 {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusConflict,
-			"Agent wird noch von einem oder mehreren Widgets verwendet und kann nicht gelöscht werden.")
-		return
+		return api.DeleteAgent409JSONResponse{
+			Error: "Agent wird noch von einem oder mehreren Widgets verwendet und kann nicht gelöscht werden.",
+		}, nil
 	}
 
-	existed, err := h.store.Delete(r.Context(), id)
+	existed, err := h.store.Delete(ctx, request.Id)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
 	if !existed {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "Agent nicht gefunden.")
-		return
+		return api.DeleteAgent404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "Agent nicht gefunden."},
+		}, nil
 	}
-	w.WriteHeader(http.StatusNoContent)
+	return api.DeleteAgent204Response{}, nil
 }
 
-// validate enforces the invariants the verbatim upsert needs: the body id must
-// match the URL, and the essential fields must be present.
-func validate(id string, a *agent) string {
-	if a.ID != id {
+// validate enforces the invariants the verbatim upsert needs beyond what the
+// schema already guarantees: the body id must match the URL, and the required
+// fields must be non-blank (the schema only requires their presence).
+func validate(id string, a *api.Agent) string {
+	if a.Id != id {
 		return "Agent-id im Body muss zur URL passen."
 	}
 	if strings.TrimSpace(a.Name) == "" {

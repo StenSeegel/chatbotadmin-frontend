@@ -1,12 +1,12 @@
 // Package widgets provides handlers for managing chatbot widget configurations.
 //
-// A widget is stored as a single JSONB blob (the full admin object). Three
-// endpoints expose it:
+// A widget is stored as a single JSONB blob (the full admin object). Endpoints:
 //
-//   - GET    /api/widgets       (JWT) — full list for the admin UI
-//   - PUT    /api/widgets/{id}  (JWT) — create/update from the admin UI
-//   - DELETE /api/widgets/{id}  (superadmin) — remove a widget
-//   - GET    /api/widgets/{id}  (public) — reduced config for the embedded widget.js
+//   - GET    /api/widgets           (JWT) — full list for the admin UI
+//   - PUT    /api/widgets/{id}      (JWT) — create/update from the admin UI
+//   - DELETE /api/widgets/{id}      (superadmin) — remove a widget
+//   - GET    /api/widgets/{id}      (public) — reduced config for the embedded widget.js
+//   - POST   /api/widgets/{id}/chat (public) — per-widget chat (chat.go, mounted manually)
 //
 // The public projection mirrors the previous Node backend (server/widgets-store.mjs):
 // Lucide icon names are mapped to Material-Symbols names and only enabled rules
@@ -16,14 +16,13 @@ package widgets
 import (
 	"context"
 	"encoding/json"
-	"io"
-	"net/http"
 	"strings"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 )
 
-// maxBodyBytes caps a PUT body; the widget object is small (a few KB).
+// maxBodyBytes caps the public chat endpoint's body reads (chat.go); admin
+// bodies are capped globally by the spec middleware.
 const maxBodyBytes = 1 << 20 // 1 MiB
 
 // Store is the database interface required by Handler.
@@ -115,7 +114,7 @@ type widgetRule struct {
 
 // widgetConfig holds the presentation/behaviour fields relevant to the backend.
 // Unknown fields (rate limits, etc.) are ignored on parse but preserved in
-// storage because the raw request JSON is stored verbatim.
+// storage because the stored JSON keeps every field the admin UI sent.
 type widgetConfig struct {
 	StartPrompt        string       `json:"startPrompt"`
 	Templates          []string     `json:"templates"`
@@ -128,10 +127,10 @@ type widgetConfig struct {
 	Position           string       `json:"position"`
 }
 
-// widget is the subset of the stored object the backend parses (for validation
-// and the public projection). Config is a pointer so a missing "config" key can
-// be told apart from an empty one. AgentID (Ebene 1) links the widget to the
-// agent that provides its brain; empty on widgets not yet migrated/linked.
+// widget is the subset of the stored object the backend parses for the public
+// projection and the chat path. Config is a pointer so a missing "config" key
+// can be told apart from an empty one. AgentID (Ebene 1) links the widget to
+// the agent that provides its brain; empty on widgets not yet migrated/linked.
 type widget struct {
 	ID              string        `json:"id"`
 	AgentID         string        `json:"agentId"`
@@ -141,25 +140,6 @@ type widget struct {
 	Icon            string        `json:"icon"`
 	Name            string        `json:"name"`
 	Config          *widgetConfig `json:"config"`
-}
-
-// publicConfig is what the embedded widget.js consumes. Shape matches the
-// previous Node backend so no frontend/widget.js change is needed.
-type publicConfig struct {
-	ID              string   `json:"id"`
-	Status          string   `json:"status"`
-	KnowledgeBaseID string   `json:"knowledgeBaseId"`
-	Routing         string   `json:"routing"`
-	Title           string   `json:"title"`
-	Greeting        string   `json:"greeting"`
-	AccentColor     string   `json:"accentColor"`
-	Position        string   `json:"position"`
-	Icon            string   `json:"icon"`
-	Templates       []string `json:"templates"`
-	Rules           []string `json:"rules"`
-	StartPrompt     string   `json:"startPrompt"`
-	FeedbackButtons bool     `json:"feedbackButtons"`
-	MaxTokens       *int     `json:"maxTokens,omitempty"`
 }
 
 // iconMap translates Lucide icon names (admin UI) to Material-Symbols names
@@ -184,113 +164,104 @@ func mapIcon(name string) string {
 	return "smart_toy"
 }
 
-// List handles GET /api/widgets (admin) — returns { "widgets": [ ...full... ] }.
-func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.store.List(r.Context())
+// ListWidgets implements GET /api/widgets (admin) — returns { "widgets": [ ...full... ] }.
+func (h *Handler) ListWidgets(ctx context.Context, _ api.ListWidgetsRequestObject) (api.ListWidgetsResponseObject, error) {
+	rows, err := h.store.List(ctx)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, map[string]any{"widgets": rows})
+	widgets := make([]api.Widget, 0, len(rows))
+	for _, raw := range rows {
+		var w api.Widget
+		if err := json.Unmarshal(raw, &w); err != nil {
+			return nil, err
+		}
+		widgets = append(widgets, w)
+	}
+	return api.ListWidgets200JSONResponse{Widgets: widgets}, nil
 }
 
-// Upsert handles PUT /api/widgets/{id} (admin) — creates or replaces a widget.
-func (h *Handler) Upsert(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing widget id")
-		return
+// UpsertWidget implements PUT /api/widgets/{id} (admin) — creates or replaces
+// a widget. The typed body round-trips through api.Widget, whose
+// AdditionalProperties (on the widget and its config) preserve fields the
+// backend does not model, so the stored JSONB keeps everything the admin UI
+// sent. Status enum and config presence are enforced by the spec middleware.
+func (h *Handler) UpsertWidget(ctx context.Context, request api.UpsertWidgetRequestObject) (api.UpsertWidgetResponseObject, error) {
+	body := request.Body
+
+	if msg := validate(request.Id, body); msg != "" {
+		return api.UpsertWidget400JSONResponse{
+			BadRequestJSONResponse: api.BadRequestJSONResponse{Error: msg},
+		}, nil
 	}
 
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+	data, err := json.Marshal(body)
 	if err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "request body too large or unreadable")
-		return
+		return nil, err
 	}
 
-	var parsed widget
-	if err := json.Unmarshal(body, &parsed); err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "invalid JSON body")
-		return
-	}
-
-	if msg := validate(id, &parsed); msg != "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, msg)
-		return
-	}
-
-	stored, err := h.store.Upsert(r.Context(), id, body)
+	stored, err := h.store.Upsert(ctx, request.Id, data)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, stored)
+	var out api.Widget
+	if err := json.Unmarshal(stored, &out); err != nil {
+		return nil, err
+	}
+	return api.UpsertWidget200JSONResponse(out), nil
 }
 
-// Delete handles DELETE /api/widgets/{id} (superadmin) — removes a widget.
-// Returns 204 on success and 404 when no widget with that id exists. The
-// superadmin role is enforced by the router middleware, not here.
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing widget id")
-		return
-	}
-
-	existed, err := h.store.Delete(r.Context(), id)
+// DeleteWidget implements DELETE /api/widgets/{id} (superadmin) — removes a
+// widget. Returns 204 on success and 404 when no widget with that id exists.
+// The superadmin role is enforced by the spec middleware (bearerJWT scope),
+// not here.
+func (h *Handler) DeleteWidget(ctx context.Context, request api.DeleteWidgetRequestObject) (api.DeleteWidgetResponseObject, error) {
+	existed, err := h.store.Delete(ctx, request.Id)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
 	if !existed {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "Widget nicht gefunden.")
-		return
+		return api.DeleteWidget404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "Widget nicht gefunden."},
+		}, nil
 	}
-	w.WriteHeader(http.StatusNoContent)
+	return api.DeleteWidget204Response{}, nil
 }
 
-// PublicConfig handles GET /api/widgets/{id} (public) — the reduced config for
-// the embedded widget.js. 404 when the widget does not exist.
-func (h *Handler) PublicConfig(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-
-	raw, err := h.store.Get(r.Context(), id)
+// GetPublicWidgetConfig implements GET /api/widgets/{id} (public) — the
+// reduced config for the embedded widget.js. 404 when the widget does not
+// exist.
+func (h *Handler) GetPublicWidgetConfig(ctx context.Context, request api.GetPublicWidgetConfigRequestObject) (api.GetPublicWidgetConfigResponseObject, error) {
+	raw, err := h.store.Get(ctx, request.Id)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
 	if raw == nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "Widget nicht gefunden.")
-		return
+		return api.GetPublicWidgetConfig404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "Widget nicht gefunden."},
+		}, nil
 	}
 
 	var wgt widget
 	if err := json.Unmarshal(raw, &wgt); err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
-	brain, err := h.resolveBrain(r.Context(), wgt)
+	brain, err := h.resolveBrain(ctx, wgt)
 	if err != nil {
-		httputil.WriteInternalErrorCtx(r.Context(), w, err)
-		return
+		return nil, err
 	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, toPublic(wgt, brain))
+	return api.GetPublicWidgetConfig200JSONResponse(toPublic(wgt, brain)), nil
 }
 
-// validate enforces the invariants the wipe-prone raw upsert needs: the body id
-// must match the URL, and the essential fields must be present and sane.
-func validate(id string, wgt *widget) string {
-	if wgt.ID != id {
+// validate enforces the invariants the verbatim upsert needs beyond what the
+// schema already guarantees: the body id must match the URL, and name must be
+// non-blank (the schema only requires its presence).
+func validate(id string, wgt *api.Widget) string {
+	if wgt.Id != id {
 		return "Widget-id im Body muss zur URL passen."
 	}
 	if strings.TrimSpace(wgt.Name) == "" {
 		return "name is required"
-	}
-	if wgt.Status != "active" && wgt.Status != "paused" {
-		return "status must be \"active\" or \"paused\""
-	}
-	if wgt.Config == nil {
-		return "config is required"
 	}
 	return ""
 }
@@ -300,7 +271,7 @@ func validate(id string, wgt *widget) string {
 // widget itself (the front, Ebene 3); the brain fields (model, system prompt,
 // rules, token cap) come from the resolved agent (Ebene 1). The wire shape is
 // unchanged, so widget.js and the standalone page need no changes.
-func toPublic(wgt widget, brain agentBrain) publicConfig {
+func toPublic(wgt widget, brain agentBrain) api.WidgetPublicConfig {
 	cfg := wgt.Config
 	if cfg == nil {
 		cfg = &widgetConfig{}
@@ -324,10 +295,10 @@ func toPublic(wgt widget, brain agentBrain) publicConfig {
 		maxTokens = &mt
 	}
 
-	return publicConfig{
-		ID:              wgt.ID,
-		Status:          wgt.Status,
-		KnowledgeBaseID: brain.Model,
+	return api.WidgetPublicConfig{
+		Id:              wgt.ID,
+		Status:          api.WidgetPublicConfigStatus(wgt.Status),
+		KnowledgeBaseId: brain.Model,
 		Routing:         wgt.Routing,
 		Title:           cfg.Title,
 		Greeting:        cfg.Greeting,

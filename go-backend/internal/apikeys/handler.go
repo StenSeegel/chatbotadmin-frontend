@@ -5,15 +5,13 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
-	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
 )
 
 const (
@@ -59,67 +57,44 @@ func NewHandler(store Store) *Handler {
 	return &Handler{store: store}
 }
 
-// createRequest is the parsed body for POST /api/api-keys.
-type createRequest struct {
-	Name      string     `json:"name"`
-	ExpiresAt *time.Time `json:"expiresAt"`
-}
-
-// createResponse is returned on successful key creation (includes plaintext key).
-type createResponse struct {
-	ID        string     `json:"id"`
-	Name      string     `json:"name"`
-	Key       string     `json:"key"`
-	KeyPrefix string     `json:"keyPrefix"`
-	ExpiresAt *time.Time `json:"expiresAt"`
-	CreatedAt time.Time  `json:"createdAt"`
-}
-
-// CreateApiKey handles POST /api/api-keys.
-func (h *Handler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
+// CreateApiKey implements POST /api/api-keys. Name presence/length is enforced
+// by the spec middleware.
+func (h *Handler) CreateApiKey(ctx context.Context, request api.CreateApiKeyRequestObject) (api.CreateApiKeyResponseObject, error) {
 	user := auth.UserFromContext(ctx)
 	if user == nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
-		return
+		return api.CreateApiKey401JSONResponse{
+			UnauthorizedJSONResponse: api.UnauthorizedJSONResponse{Error: "authentication required"},
+		}, nil
 	}
 
-	var body createRequest
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
-		return
-	}
-
-	name := strings.TrimSpace(body.Name)
-	if name == "" || len(name) > 100 {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "name is required and must be 1-100 characters"})
-		return
+	name := strings.TrimSpace(request.Body.Name)
+	if name == "" {
+		return api.CreateApiKey400JSONResponse{
+			BadRequestJSONResponse: api.BadRequestJSONResponse{Error: "name is required and must be 1-100 characters"},
+		}, nil
 	}
 
 	count, err := h.store.CountApiKeysByUser(ctx, user.ID)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to count existing keys"})
-		return
+		return nil, err
 	}
 	if count >= maxKeysPerUser {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "maximum number of API keys (10) reached"})
-		return
+		return api.CreateApiKey400JSONResponse{
+			BadRequestJSONResponse: api.BadRequestJSONResponse{Error: "maximum number of API keys (10) reached"},
+		}, nil
 	}
 
 	// Generate key: "jrag_" + 32 hex chars (16 random bytes).
 	rawBytes := make([]byte, keyRandomBytes)
 	if _, err := rand.Read(rawBytes); err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to generate key"})
-		return
+		return nil, err
 	}
 	plaintext := keyPrefix + hex.EncodeToString(rawBytes)
 	prefix := plaintext[:13]
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(plaintext), 10)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to hash key"})
-		return
+		return nil, err
 	}
 
 	row, err := h.store.CreateApiKey(ctx, ApiKeyCreate{
@@ -127,72 +102,68 @@ func (h *Handler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
 		Name:      name,
 		KeyHash:   string(hash),
 		KeyPrefix: prefix,
-		ExpiresAt: body.ExpiresAt,
+		ExpiresAt: request.Body.ExpiresAt,
 	})
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to create API key"})
-		return
+		return nil, err
 	}
 
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusCreated, createResponse{
-		ID:        row.ID,
-		Name:      row.Name,
-		Key:       plaintext,
-		KeyPrefix: row.KeyPrefix,
-		ExpiresAt: row.ExpiresAt,
-		CreatedAt: row.CreatedAt,
-	})
+	return api.CreateApiKey201JSONResponse{
+		Id:         row.ID,
+		Name:       row.Name,
+		Key:        plaintext,
+		KeyPrefix:  row.KeyPrefix,
+		LastUsedAt: row.LastUsedAt,
+		ExpiresAt:  row.ExpiresAt,
+		CreatedAt:  row.CreatedAt,
+	}, nil
 }
 
-// ListApiKeys handles GET /api/api-keys.
-func (h *Handler) ListApiKeys(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
+// ListApiKeys implements GET /api/api-keys.
+func (h *Handler) ListApiKeys(ctx context.Context, _ api.ListApiKeysRequestObject) (api.ListApiKeysResponseObject, error) {
 	user := auth.UserFromContext(ctx)
 	if user == nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
-		return
+		return api.ListApiKeys401JSONResponse{
+			UnauthorizedJSONResponse: api.UnauthorizedJSONResponse{Error: "authentication required"},
+		}, nil
 	}
 
 	rows, err := h.store.GetApiKeysByUser(ctx, user.ID)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to list API keys"})
-		return
+		return nil, err
 	}
 
-	if rows == nil {
-		rows = []ApiKeyRow{}
+	keys := make([]api.ApiKey, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, api.ApiKey{
+			Id:         row.ID,
+			Name:       row.Name,
+			KeyPrefix:  row.KeyPrefix,
+			LastUsedAt: row.LastUsedAt,
+			ExpiresAt:  row.ExpiresAt,
+			CreatedAt:  row.CreatedAt,
+		})
 	}
-
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, rows)
+	return api.ListApiKeys200JSONResponse(keys), nil
 }
 
-// DeleteApiKey handles DELETE /api/api-keys/{id}.
-func (h *Handler) DeleteApiKey(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
+// DeleteApiKey implements DELETE /api/api-keys/{id}.
+func (h *Handler) DeleteApiKey(ctx context.Context, request api.DeleteApiKeyRequestObject) (api.DeleteApiKeyResponseObject, error) {
 	user := auth.UserFromContext(ctx)
 	if user == nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
-		return
+		return api.DeleteApiKey401JSONResponse{
+			UnauthorizedJSONResponse: api.UnauthorizedJSONResponse{Error: "authentication required"},
+		}, nil
 	}
 
-	keyID := r.PathValue("id")
-	if keyID == "" {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "missing key id"})
-		return
-	}
-
-	deleted, err := h.store.DeleteApiKey(ctx, keyID, user.ID)
+	deleted, err := h.store.DeleteApiKey(ctx, request.Id, user.ID)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "failed to delete API key"})
-		return
+		return nil, err
 	}
-
 	if !deleted {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusNotFound, map[string]string{"error": "API key not found"})
-		return
+		return api.DeleteApiKey404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "API key not found"},
+		}, nil
 	}
-
-	w.WriteHeader(http.StatusNoContent)
+	return api.DeleteApiKey204Response{}, nil
 }

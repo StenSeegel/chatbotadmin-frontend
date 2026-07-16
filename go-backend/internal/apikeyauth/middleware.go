@@ -4,7 +4,7 @@ package apikeyauth
 
 import (
 	"context"
-	"net/http"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
 	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
 	"github.com/stenseegel/chatbotadmin-backend/internal/safego"
 )
@@ -65,91 +64,68 @@ func NewMiddleware(store Store) *Middleware {
 	}
 }
 
-// Authenticate is an HTTP middleware that validates the Bearer token as a
-// JustRAG API key and populates the request context with auth.Claims on
-// success. On failure it responds with 401 JSON.
-func (m *Middleware) Authenticate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// Verify validates token as a JustRAG API key and returns the owning user's
+// claims, or a client-safe error (its message is what an HTTP 401 body should
+// carry). It performs no HTTP handling and never rejects a request itself:
+// enforcement is the spec-validation middleware's job (internal/specmw),
+// which calls Verify through its credential-extraction step.
+func (m *Middleware) Verify(ctx context.Context, token string) (*auth.Claims, error) {
+	if !strings.HasPrefix(token, tokenPrefix) {
+		logctx.From(ctx).Warn("auth.apikey_format_invalid")
+		return nil, errors.New("invalid API key format")
+	}
 
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "missing or invalid Authorization header")
-			return
+	if len(token) < prefixLen {
+		logctx.From(ctx).Warn("auth.apikey_format_invalid", "reason", "too_short")
+		return nil, errors.New("invalid API key")
+	}
+
+	prefix := token[:prefixLen]
+
+	candidates, err := m.store.GetApiKeysByPrefix(ctx, prefix)
+	if err != nil {
+		logctx.From(ctx).Warn("auth.apikey_lookup_failed", "prefix", prefix, "error", err.Error())
+		return nil, errors.New("invalid API key")
+	}
+	if len(candidates) == 0 {
+		logctx.From(ctx).Warn("auth.apikey_unknown_prefix", "prefix", prefix)
+		return nil, errors.New("invalid API key")
+	}
+
+	var matched *ApiKeyCandidate
+	for i := range candidates {
+		if bcrypt.CompareHashAndPassword([]byte(candidates[i].KeyHash), []byte(token)) == nil {
+			matched = &candidates[i]
+			break
 		}
+	}
+	if matched == nil {
+		logctx.From(ctx).Warn("auth.apikey_mismatch", "prefix", prefix)
+		return nil, errors.New("invalid API key")
+	}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+	// Check expiry.
+	if matched.ExpiresAt != nil && time.Now().After(*matched.ExpiresAt) {
+		logctx.From(ctx).Warn("auth.apikey_expired", "key_id", matched.ID, "user_id", matched.UserID)
+		return nil, errors.New("API key has expired")
+	}
 
-		if !strings.HasPrefix(token, tokenPrefix) {
-			logctx.From(ctx).Warn("auth.apikey_format_invalid")
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key format")
-			return
-		}
+	// Load the owning user.
+	user, err := m.store.GetUserByID(ctx, matched.UserID)
+	if err != nil || user == nil {
+		logctx.From(ctx).Warn("auth.apikey_user_missing", "key_id", matched.ID, "user_id", matched.UserID, "error", errString(err))
+		return nil, errors.New("invalid API key")
+	}
 
-		if len(token) < prefixLen {
-			logctx.From(ctx).Warn("auth.apikey_format_invalid", "reason", "too_short")
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
+	// Throttled last-used update (at most once per minute per key).
+	m.maybeUpdateLastUsed(ctx, matched.ID)
 
-		prefix := token[:prefixLen]
-
-		candidates, err := m.store.GetApiKeysByPrefix(ctx, prefix)
-		if err != nil {
-			logctx.From(ctx).Warn("auth.apikey_lookup_failed", "prefix", prefix, "error", err.Error())
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
-		if len(candidates) == 0 {
-			logctx.From(ctx).Warn("auth.apikey_unknown_prefix", "prefix", prefix)
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
-
-		var matched *ApiKeyCandidate
-		for i := range candidates {
-			if bcrypt.CompareHashAndPassword([]byte(candidates[i].KeyHash), []byte(token)) == nil {
-				matched = &candidates[i]
-				break
-			}
-		}
-		if matched == nil {
-			logctx.From(ctx).Warn("auth.apikey_mismatch", "prefix", prefix)
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
-
-		// Check expiry.
-		if matched.ExpiresAt != nil && time.Now().After(*matched.ExpiresAt) {
-			logctx.From(ctx).Warn("auth.apikey_expired", "key_id", matched.ID, "user_id", matched.UserID)
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "API key has expired")
-			return
-		}
-
-		// Load the owning user.
-		user, err := m.store.GetUserByID(ctx, matched.UserID)
-		if err != nil || user == nil {
-			logctx.From(ctx).Warn("auth.apikey_user_missing", "key_id", matched.ID, "user_id", matched.UserID, "error", errString(err))
-			httputil.WriteErrorCtx(ctx, w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
-
-		// Throttled last-used update (at most once per minute per key).
-		m.maybeUpdateLastUsed(ctx, matched.ID)
-
-		// Inject claims into context — same shape as JWT auth.
-		claims := &auth.Claims{
-			ID:       user.ID,
-			Username: user.Username,
-			Role:     user.Role,
-		}
-		ctx = auth.WithUser(ctx, claims)
-		// Expose the resolved user ID to the outer access-log middleware
-		// — see logctx.UserIDCapture and the JWT-auth equivalent.
-		logctx.SetCapturedUserID(ctx, user.ID)
-		logctx.From(ctx).Info("auth.apikey_validated", "key_id", matched.ID, "user_id", user.ID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	logctx.From(ctx).Info("auth.apikey_validated", "key_id", matched.ID, "user_id", user.ID)
+	return &auth.Claims{
+		ID:       user.ID,
+		Username: user.Username,
+		Role:     user.Role,
+	}, nil
 }
 
 // errString returns err.Error() when non-nil, otherwise the empty string —

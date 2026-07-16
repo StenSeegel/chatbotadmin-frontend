@@ -71,7 +71,7 @@ func RunServer(cfg *config.Config, version string) error {
 	widgetsH := widgets.NewHandler(widgetStore, agentStore, proxyH)
 	agentsH := agents.NewHandler(agentStore, widgetStore)
 
-	mux := newRouter(routerDeps{
+	mux, err := newRouter(routerDeps{
 		auth:     authH,
 		users:    usersH,
 		apiKeys:  apiKeysH,
@@ -82,6 +82,9 @@ func RunServer(cfg *config.Config, version string) error {
 		apiKeyMW: apiKeyMW,
 		version:  version,
 	})
+	if err != nil {
+		return err
+	}
 
 	handler := middleware.CORS(cfg.AllowedOrigins)(middleware.RequestContext(mux))
 
