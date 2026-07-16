@@ -1,0 +1,1107 @@
+# OpenAPI description of the CampusAgents backend — the SINGLE SOURCE OF TRUTH
+# for the API contract:
+#   - internal/api is GENERATED from it (go generate ./...); routes, parameters,
+#     and request/response types that drift from this file become compile errors.
+#   - Request validation and auth enforcement happen against it at runtime
+#     (security: bearerJWT / apiKey; scopes name required roles, e.g. superadmin).
+#   - Scalar renders it at GET /api/docs; the frontend generates TS types from it.
+# Pinned to OpenAPI 3.0.3 (not 3.1): oapi-codegen's parser (kin-openapi)
+# supports 3.0 only.
+openapi: 3.0.3
+info:
+  title: CampusAgents API
+  version: "1.0"
+  description: |
+    Backend API of the CampusAgents admin portal and the embedded chat widget.
+
+    ## Authentication
+
+    Most endpoints require a **JWT** obtained from `POST /api/auth/login` (or
+    via the OIDC SSO flow), sent as `Authorization: Bearer <token>`. Tokens
+    expire after 24 h; `POST /api/auth/refresh` rotates them.
+
+    `GET /api/models` and `POST /api/chat` alternatively accept a **JustRAG
+    API key** (`Authorization: Bearer jrag_…`) created via `POST /api/api-keys`.
+
+    The widget endpoints marked *public* are consumed unauthenticated by the
+    embedded `widget.js` on third-party pages.
+servers:
+  - url: /
+    description: Same origin (nginx proxies /api/ to the backend)
+
+# JWT is the default; public endpoints opt out with `security: []`, the
+# model-proxy endpoints additionally accept a jrag_ API key, and a scope on
+# bearerJWT names the required role (e.g. superadmin).
+security:
+  - bearerJWT: []
+
+tags:
+  - name: Health
+  - name: Auth
+    description: Local login, token lifecycle, and the OIDC SSO broker.
+  - name: Users
+  - name: API keys
+    description: Personal API keys (`jrag_…`) for programmatic access to the model proxy.
+  - name: Agents
+    description: The reusable "brain" (model, system prompt, rules, token cap) referenced by widgets.
+  - name: Widgets
+    description: Chatbot widget configurations and the public endpoints used by the embedded widget.js.
+  - name: Model proxy
+    description: Server-side proxy to the HRZ OpenAI-compatible endpoint (the upstream API key never reaches the browser).
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      operationId: healthz
+      security: []
+      responses:
+        "200":
+          description: Server is up.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Local username/password login
+      description: |
+        Issues a 24 h JWT. Local password login is disabled for everyone —
+        with no breakglass — while an OIDC provider is active or
+        `DISABLE_LOCAL_AUTH=true`; SSO logins go through
+        `/api/auth/oidc/login` instead. Failed attempts are rate-limited
+        per IP.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: Invalid username or password.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out (revoke the presented JWT)
+      description: Blacklists the presented token's JTI until its natural expiry.
+      operationId: logout
+      responses:
+        "200":
+          description: Token revoked (idempotent).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+                    example: Logged out
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate the JWT
+      description: Issues a fresh 24 h token and revokes the presented one.
+      operationId: refreshToken
+      responses:
+        "200":
+          description: New token issued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/auth/providers:
+    get:
+      tags: [Auth]
+      summary: List active auth providers (public)
+      description: |
+        No-secret projection of the configured auth providers, consumed by the
+        login page to decide which sign-in options to render.
+      operationId: listAuthProviders
+      security: []
+      responses:
+        "200":
+          description: Active providers and whether local password login is offered.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [providers, localAuthEnabled]
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicProvider"
+                  localAuthEnabled:
+                    type: boolean
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/auth/oidc/login:
+    get:
+      tags: [Auth]
+      summary: Start the OIDC SSO flow (browser redirect)
+      description: |
+        Redirects the browser to the configured IdP's authorization endpoint.
+        Not an API call — open in a browser.
+      operationId: oidcLogin
+      security: []
+      parameters:
+        - name: return_to
+          in: query
+          required: false
+          description: |
+            Origin to return to after login (validated against the CORS
+            allowlist; used by the cross-origin widget-test portal).
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to the IdP authorization endpoint.
+
+  /api/auth/oidc/callback:
+    get:
+      tags: [Auth]
+      summary: OIDC redirect URI (browser redirect)
+      description: |
+        Completes the code exchange, provisions/looks up the user, and
+        redirects back to the app with the JWT in the URL fragment. Called by
+        the IdP, not by API clients.
+      operationId: oidcCallback
+      security: []
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect back to the app with `#token=…` on success.
+
+  /api/auth/oidc/logout:
+    get:
+      tags: [Auth]
+      summary: RP-initiated OIDC logout (browser redirect)
+      description: |
+        Revokes the local session (an optional Bearer token is read from the
+        request itself) and redirects to the IdP's end-session endpoint, which
+        then returns to the app.
+      operationId: oidcLogout
+      security: []
+      responses:
+        "302":
+          description: Redirect to the IdP end-session endpoint (or straight back to the app).
+    post:
+      tags: [Auth]
+      summary: OIDC back-channel logout (IdP to server)
+      description: |
+        OpenID Connect Back-Channel Logout 1.0. The IdP POSTs a signed
+        `logout_token`; the matching user's JWTs are revoked. Server-to-server
+        only — never called by browsers or API clients.
+      operationId: oidcBackchannelLogout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [logout_token]
+              properties:
+                logout_token:
+                  type: string
+                  description: Signed JWT per the Back-Channel Logout spec.
+      responses:
+        "200":
+          description: Logout token accepted (returned even when no local session matched).
+        "400":
+          description: Invalid or missing logout_token.
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/users/{id}:
+    get:
+      tags: [Users]
+      summary: Fetch a user
+      description: |
+        `{id}` resolves as UUID → username → search term. The user themselves
+        and admins/superadmins receive the full profile; other authenticated
+        users get the limited projection (no email, role, or timestamps).
+      operationId: getUser
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      responses:
+        "200":
+          description: The user (full or limited view depending on the caller's role).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/User"
+                  - $ref: "#/components/schemas/UserLimited"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [Users]
+      summary: Update a user's profile
+      description: Only the user themselves or an admin/superadmin may update a profile.
+      operationId: updateUser
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  maxLength: 50
+                lastName:
+                  type: string
+                  maxLength: 50
+                email:
+                  type: string
+                  description: Must contain "@".
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: The updated user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/api-keys:
+    get:
+      tags: [API keys]
+      summary: List the caller's API keys
+      operationId: listApiKeys
+      responses:
+        "200":
+          description: The caller's keys (plaintext key is never included).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKey"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [API keys]
+      summary: Create an API key
+      description: |
+        Returns the plaintext `jrag_…` key **once**; only a bcrypt hash is
+        stored. Limited to 10 keys per user.
+      operationId: createApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                expiresAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Optional expiry; omit or null for a non-expiring key.
+      responses:
+        "201":
+          description: Key created. Store `key` now — it cannot be retrieved again.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiKey"
+                  - type: object
+                    required: [key]
+                    properties:
+                      key:
+                        type: string
+                        description: The full plaintext key. Shown only in this response.
+                        example: jrag_9f86d081884c7d659a2feaa0c55ad015
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/api-keys/{id}:
+    delete:
+      tags: [API keys]
+      summary: Delete one of the caller's API keys
+      operationId: deleteApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Key deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/agents:
+    get:
+      tags: [Agents]
+      summary: List all agents (admin UI)
+      operationId: listAgents
+      responses:
+        "200":
+          description: All agents, as stored (full JSON objects).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [agents]
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Agent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/agents/{id}:
+    put:
+      tags: [Agents]
+      summary: Create or replace an agent
+      description: |
+        The request JSON is stored verbatim (unknown fields are preserved);
+        the backend only validates that the body `id` matches the URL and
+        that `name` and `model` are present.
+      operationId: upsertAgent
+      parameters:
+        - $ref: "#/components/parameters/AgentID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Agent"
+      responses:
+        "200":
+          description: The stored agent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [Agents]
+      summary: Delete an agent (superadmin only)
+      description: Refused with 409 while any widget still references the agent.
+      operationId: deleteAgent
+      security:
+        - bearerJWT: [superadmin]
+      parameters:
+        - $ref: "#/components/parameters/AgentID"
+      responses:
+        "204":
+          description: Agent deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The agent is still referenced by one or more widgets.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/widgets:
+    get:
+      tags: [Widgets]
+      summary: List all widgets (admin UI)
+      operationId: listWidgets
+      responses:
+        "200":
+          description: All widgets, as stored (full JSON objects).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [widgets]
+                properties:
+                  widgets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Widget"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/widgets/{id}:
+    get:
+      tags: [Widgets]
+      summary: Public widget config (consumed by widget.js)
+      description: |
+        **Public.** Reduced projection for the embedded widget: presentation
+        fields come from the widget, brain fields (model, start prompt, rules,
+        token cap) from its linked agent. Secrets and admin-only fields are
+        never included.
+      operationId: getPublicWidgetConfig
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/WidgetID"
+      responses:
+        "200":
+          description: The public widget configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetPublicConfig"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      tags: [Widgets]
+      summary: Create or replace a widget
+      description: |
+        The request JSON is stored verbatim (unknown fields are preserved);
+        the backend validates the id match, `name`, `status`, and that
+        `config` is present.
+      operationId: upsertWidget
+      parameters:
+        - $ref: "#/components/parameters/WidgetID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Widget"
+      responses:
+        "200":
+          description: The stored widget.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Widget"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [Widgets]
+      summary: Delete a widget (superadmin only)
+      operationId: deleteWidget
+      security:
+        - bearerJWT: [superadmin]
+      parameters:
+        - $ref: "#/components/parameters/WidgetID"
+      responses:
+        "204":
+          description: Widget deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/widgets/{id}/chat:
+    post:
+      tags: [Widgets]
+      summary: Widget chat (public, rate-limited)
+      description: |
+        **Public.** Chat endpoint used by the embedded widget. The model and
+        token cap come from the widget's linked agent — never from the
+        client. Rate-limited to 30 requests/minute per IP. With
+        `stream: true` the response is a Server-Sent-Events stream.
+      operationId: widgetChat
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/WidgetID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ChatMessage"
+                stream:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: |
+            Non-streaming: a single JSON reply. Streaming: an SSE stream of
+            `data: {"content": "…"}` chunks terminated by
+            `data: {"done": true, "finishReason": …}`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE frames as described above.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: The widget is paused.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: Per-IP rate limit exceeded (Retry-After is set).
+          headers:
+            Retry-After:
+              schema:
+                type: string
+              description: Seconds to wait before retrying.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/models:
+    get:
+      tags: [Model proxy]
+      summary: List available upstream models
+      description: Accepts a JWT **or** a `jrag_` API key. Sorted by display name.
+      operationId: listModels
+      security:
+        - bearerJWT: []
+        - apiKey: []
+      responses:
+        "200":
+          description: Models available at the upstream endpoint.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [models]
+                properties:
+                  models:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ModelInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+        "503":
+          $ref: "#/components/responses/NotConfigured"
+
+  /api/chat:
+    post:
+      tags: [Model proxy]
+      summary: Chat completion (authenticated)
+      description: |
+        Accepts a JWT **or** a `jrag_` API key. Model and token cap are taken
+        from the request body. With `stream: true` the response is a
+        Server-Sent-Events stream.
+      operationId: chat
+      security:
+        - bearerJWT: []
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                model:
+                  type: string
+                  description: Upstream model id. Either `model` or `knowledgeBaseId` is required.
+                knowledgeBaseId:
+                  type: string
+                  description: Legacy alias for `model`.
+                messages:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ChatMessage"
+                maxTokens:
+                  type: integer
+                  minimum: 1
+                  description: Optional completion token cap.
+                stream:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: |
+            Non-streaming: a single JSON reply. Streaming: an SSE stream of
+            `data: {"content": "…"}` chunks terminated by
+            `data: {"done": true, "finishReason": …}`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE frames as described above.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+        "503":
+          $ref: "#/components/responses/NotConfigured"
+
+components:
+  securitySchemes:
+    bearerJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        24 h JWT from `POST /api/auth/login` or the OIDC flow. Where an
+        operation lists a scope (e.g. `superadmin`), the JWT's role claim
+        must match it.
+    apiKey:
+      type: http
+      scheme: bearer
+      description: |
+        JustRAG API key (`jrag_…`) from `POST /api/api-keys`. Accepted only by
+        `GET /api/models` and `POST /api/chat`.
+
+  parameters:
+    UserID:
+      name: id
+      in: path
+      required: true
+      description: User UUID, username, or search term.
+      schema:
+        type: string
+    AgentID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    WidgetID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Malformed request or failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Missing, invalid, expired, or revoked credentials.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Authenticated, but the caller's role does not permit this action.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: No resource with this id.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalError:
+      description: Unexpected server error (details are sanitized).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadGateway:
+      description: The upstream model endpoint failed or returned an unreadable response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotConfigured:
+      description: KI_API_KEY is not configured on the backend.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    PublicProvider:
+      type: object
+      description: No-secret projection of an auth provider, for the login page.
+      required: [id, type, name]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: oidc
+        name:
+          type: string
+
+    ModelInfo:
+      type: object
+      required: [id, name, ownedBy, created]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ownedBy:
+          type: string
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp.
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    LoginResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+          description: JWT, valid 24 h.
+        user:
+          type: object
+          required: [id, username, role, authMethod]
+          properties:
+            id:
+              type: string
+            username:
+              type: string
+            role:
+              $ref: "#/components/schemas/Role"
+            authMethod:
+              type: string
+              description: How this account authenticates (e.g. local, oidc). Empty on refresh.
+
+    Role:
+      type: string
+      enum: [user, admin, superadmin]
+
+    User:
+      type: object
+      description: Full profile — returned to the user themselves and to admins.
+      required: [id, username, role, createdAt]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        createdAt:
+          type: string
+          format: date-time
+
+    UserLimited:
+      type: object
+      description: Limited projection — returned to other authenticated users.
+      required: [id, username]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    ApiKey:
+      type: object
+      required: [id, name, keyPrefix, lastUsedAt, expiresAt, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        keyPrefix:
+          type: string
+          description: First 13 characters of the key, for display.
+          example: jrag_9f86d081
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Agent:
+      type: object
+      description: |
+        Stored verbatim as JSONB — fields beyond the ones listed here (rules,
+        tools, knowledge, …) are preserved untouched.
+      required: [id, name, model]
+      properties:
+        id:
+          type: string
+          description: Must match the `{id}` in the URL on PUT.
+        name:
+          type: string
+        model:
+          type: string
+          description: Upstream model id this agent runs on.
+        systemPrompt:
+          type: string
+        maxTokens:
+          type: integer
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/WidgetRule"
+      additionalProperties: true
+
+    WidgetRule:
+      type: object
+      properties:
+        text:
+          type: string
+        enabled:
+          type: boolean
+      additionalProperties: true
+
+    Widget:
+      type: object
+      description: |
+        Stored verbatim as JSONB — fields beyond the ones listed here are
+        preserved untouched. `agentId` links the widget to the agent that
+        provides its brain.
+      required: [id, name, status, config]
+      properties:
+        id:
+          type: string
+          description: Must match the `{id}` in the URL on PUT.
+        agentId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, paused]
+        icon:
+          type: string
+          description: Lucide icon name (mapped to Material Symbols for the public config).
+        routing:
+          type: string
+        knowledgeBaseId:
+          type: string
+          description: Legacy model id, used only by widgets not yet linked to an agent.
+        config:
+          type: object
+          properties:
+            title:
+              type: string
+            greeting:
+              type: string
+            accentColor:
+              type: string
+            position:
+              type: string
+            templates:
+              type: array
+              items:
+                type: string
+            startPrompt:
+              type: string
+              description: Legacy system prompt (agent takes precedence).
+            rules:
+              type: array
+              items:
+                $ref: "#/components/schemas/WidgetRule"
+              description: Legacy rules (agent takes precedence).
+            feedbackButtons:
+              type: boolean
+            maxTokensPerAnswer:
+              type: integer
+              description: Legacy token cap (agent takes precedence).
+          additionalProperties: true
+      additionalProperties: true
+
+    WidgetPublicConfig:
+      type: object
+      description: Reduced projection consumed by the embedded widget.js.
+      required:
+        [id, status, knowledgeBaseId, routing, title, greeting, accentColor,
+         position, icon, templates, rules, startPrompt, feedbackButtons]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [active, paused]
+        knowledgeBaseId:
+          type: string
+          description: Resolved model id (from the linked agent, or legacy field).
+        routing:
+          type: string
+        title:
+          type: string
+        greeting:
+          type: string
+        accentColor:
+          type: string
+        position:
+          type: string
+        icon:
+          type: string
+          description: Material Symbols icon name.
+        templates:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            type: string
+          description: Texts of the enabled rules only.
+        startPrompt:
+          type: string
+        feedbackButtons:
+          type: boolean
+        maxTokens:
+          type: integer
+          description: Present only when the resolved token cap is > 0.
+
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant]
+        content:
+          type: string
+
+    ChatResponse:
+      type: object
+      required: [reply, finishReason]
+      properties:
+        reply:
+          type: string
+        finishReason:
+          type: string
+          nullable: true
+          description: Upstream finish reason (e.g. stop, length).
