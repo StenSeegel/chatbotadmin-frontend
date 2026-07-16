@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Icon } from "./Icon";
+import { Check, ChevronDown, Search } from "lucide-react";
 import { Button, Input } from "@ki4jlu/design-system";
 import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
 
@@ -26,7 +26,7 @@ function FilterDropdown({
         className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-outline-variant font-body-base text-sm text-on-surface-variant hover:bg-secondary-container transition-colors whitespace-nowrap"
       >
         {value}
-        <Icon name="expand_more" style={{ fontSize: 16 }} />
+        <ChevronDown style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
       </Button>
       {open && (
         <>
@@ -47,7 +47,7 @@ function FilterDropdown({
                 }`}
               >
                 {option}
-                {option === value && <Icon name="check" style={{ fontSize: 16 }} />}
+                {option === value && <Check style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />}
               </Button>
             ))}
           </div>
@@ -100,10 +100,12 @@ export function ConversationsShell({
             <FilterDropdown value={statusFilter} options={STATUS_OPTIONS} onChange={setStatusFilter} />
 
             <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Icon
-                name="search"
+              <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
                 style={{ fontSize: 18 }}
+                width="1em"
+                height="1em"
+                aria-hidden
               />
               <Input
                 type="text"

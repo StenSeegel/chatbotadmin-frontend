@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type AuthUser } from "../auth/AuthContext";
-import { Icon } from "../components/Icon";
+import { CircleAlert } from "lucide-react";
 import { Button } from "@ki4jlu/design-system";
 
 type ParsedCallback = { token: string; user: AuthUser } | { error: string };
@@ -55,7 +55,7 @@ export function AuthCallbackPage() {
     return (
       <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
         <div className="w-full max-w-sm text-center">
-          <Icon name="error" className="text-error mb-4" style={{ fontSize: 40 }} />
+          <CircleAlert className="text-error mb-4" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
           <h1 className="text-headline-md font-bold text-error mb-2">Anmeldung fehlgeschlagen</h1>
           <p className="text-sm text-on-surface-variant mb-6">{error}</p>
           <Button onClick={() => navigate("/login", { replace: true })}>

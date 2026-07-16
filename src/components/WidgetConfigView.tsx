@@ -5,7 +5,30 @@ import { Card } from "@ki4jlu/design-system";
 import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
 import { Label } from "@ki4jlu/design-system";
-import { Icon } from "./Icon";
+import {
+  ArrowLeft,
+  Brain,
+  Check,
+  ChevronDown,
+  CirclePause,
+  CirclePlay,
+  Code,
+  Copy,
+  ExternalLink,
+  Eye,
+  Gauge,
+  Info,
+  MessagesSquare,
+  Palette,
+  Plus,
+  RefreshCw,
+  Send,
+  SlidersHorizontal,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Markdown } from "./Markdown";
 import { Toggle } from "./Toggle";
 import { ICON_OPTIONS, POSITION_OPTIONS } from "./widgetOptions";
@@ -227,7 +250,7 @@ export function WidgetConfigView({
               aria-label="Zurück zur Übersicht"
               className="rounded-lg"
             >
-              <Icon name="arrow_back" className="text-[20px]" />
+              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
 
             <div className="min-w-0">
@@ -276,7 +299,7 @@ export function WidgetConfigView({
                 }}
                 className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error"
               >
-                <Icon name="delete" className="text-[18px]" />
+                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Konnektor löschen
               </Button>
             )}
@@ -291,7 +314,11 @@ export function WidgetConfigView({
                     : "border-primary text-primary hover:bg-primary/10"
                 }`}
               >
-                <Icon name={isActive ? "pause_circle" : "play_circle"} className="text-[18px]" />
+                {isActive ? (
+                  <CirclePause className="text-[18px]" width="1em" height="1em" aria-hidden />
+                ) : (
+                  <CirclePlay className="text-[18px]" width="1em" height="1em" aria-hidden />
+                )}
                 {isActive ? "Konnektor deaktivieren" : "Konnektor aktivieren"}
               </Button>
             )}
@@ -319,7 +346,7 @@ export function WidgetConfigView({
           <Card className="p-6 space-y-stack-sm">
             {isNew ? (
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="tune" className="text-primary" />
+                <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
                 Grundeinstellungen
               </h3>
             ) : (
@@ -331,12 +358,12 @@ export function WidgetConfigView({
                 className="w-full flex items-center justify-between gap-2 text-left p-0 whitespace-normal hover:bg-transparent"
               >
                 <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                  <Icon name="tune" className="text-primary" />
+                  <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
                   Grundeinstellungen
                 </h3>
                 <span className="flex items-center gap-1 text-xs text-on-surface-variant">
                   {basicsOpen ? "Einklappen" : "Bearbeiten"}
-                  <Icon name="expand_more" className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} width="1em" height="1em" aria-hidden />
                 </span>
               </Button>
             )}
@@ -396,7 +423,7 @@ export function WidgetConfigView({
                         ))}
                       </select>
                       <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                        <Icon name="psychology" className="text-[14px]" />
+                        <Brain className="text-[14px]" width="1em" height="1em" aria-hidden />
                         Die Denkschicht (Modell, System-Prompt, Regeln) kommt aus dem Agenten.
                         {selectedAgent && (
                           <Link to={`/agents/${selectedAgent.id}`} className="text-primary hover:underline">
@@ -428,7 +455,7 @@ export function WidgetConfigView({
           {/* Vorlagen & Verhalten des Konnektors — Front-Belange (nicht Agent-Verhalten) */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="forum" className="text-primary" />
+              <MessagesSquare className="text-primary" width="1em" height="1em" aria-hidden />
               Vorlagen &amp; Verhalten
             </h3>
 
@@ -448,7 +475,7 @@ export function WidgetConfigView({
                   onClick={() => onUpdateConfig("templates", [...widget.config.templates, ""])}
                   className="p-0 flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                 >
-                  <Icon name="add" className="text-[16px]" />
+                  <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Vorlage hinzufügen
                 </Button>
               </div>
@@ -479,7 +506,7 @@ export function WidgetConfigView({
                         aria-label="Vorlage entfernen"
                         className="rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
                       >
-                        <Icon name="delete" className="text-[18px]" />
+                        <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                       </Button>
                     </div>
                   ))}
@@ -489,7 +516,7 @@ export function WidgetConfigView({
 
             {/* Hinweis: System-Prompt & Regeln leben im Agenten */}
             <div className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-              <Icon name="psychology" className="text-primary text-[16px] mt-0.5" />
+              <Brain className="text-primary text-[16px] mt-0.5" width="1em" height="1em" aria-hidden />
               <span>
                 System-Prompt und Regeln werden im Agenten konfiguriert
                 {selectedAgent ? (
@@ -524,7 +551,7 @@ export function WidgetConfigView({
           {/* Rate Limits */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="speed" className="text-primary" />
+              <Gauge className="text-primary" width="1em" height="1em" aria-hidden />
               Rate Limits
             </h3>
 
@@ -556,13 +583,13 @@ export function WidgetConfigView({
           {/* Output — Widget-Code */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="code" className="text-primary" />
+              <Code className="text-primary" width="1em" height="1em" aria-hidden />
               Output — Einbettung
             </h3>
 
             {isNew && (
               <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                <Icon name="info" className="text-[14px]" />
+                <Info className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Vorschau — ID wird nach dem Erstellen vergeben.
               </p>
             )}
@@ -580,7 +607,11 @@ export function WidgetConfigView({
                   onClick={() => onCopy(embedCode, "code")}
                   className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-md text-xs hover:bg-surface-container-high transition-colors"
                 >
-                  <Icon name={copied === "code" ? "check" : "content_copy"} className="text-[14px]" />
+                  {copied === "code" ? (
+                    <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
+                  ) : (
+                    <Copy className="text-[14px]" width="1em" height="1em" aria-hidden />
+                  )}
                   {copied === "code" ? "Kopiert" : "Kopieren"}
                 </Button>
               </div>
@@ -602,7 +633,11 @@ export function WidgetConfigView({
                   aria-label="URL kopieren"
                   className="rounded-lg"
                 >
-                  <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
+                  {copied === "url" ? (
+                    <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
+                  ) : (
+                    <Copy className="text-[18px]" width="1em" height="1em" aria-hidden />
+                  )}
                 </Button>
                 {!isNew && (
                   <Button
@@ -617,7 +652,7 @@ export function WidgetConfigView({
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <Icon name="open_in_new" className="text-[18px]" />
+                      <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
                     </a>
                   </Button>
                 )}
@@ -628,7 +663,7 @@ export function WidgetConfigView({
           {/* Erscheinungsbild */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="palette" className="text-primary" />
+              <Palette className="text-primary" width="1em" height="1em" aria-hidden />
               Erscheinungsbild
             </h3>
 
@@ -718,7 +753,7 @@ export function WidgetConfigView({
           <Card className="p-6 space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="visibility" className="text-primary" />
+                <Eye className="text-primary" width="1em" height="1em" aria-hidden />
                 Vorschau
               </h3>
               <Button
@@ -727,7 +762,7 @@ export function WidgetConfigView({
                 onClick={handlePreviewReset}
                 className="p-0 hover:bg-transparent flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
               >
-                <Icon name="refresh" className="text-[14px]" />
+                <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
               </Button>
             </div>
@@ -773,7 +808,7 @@ export function WidgetConfigView({
                     aria-label="Chat schließen"
                     className="p-0.5 rounded text-white hover:bg-white/20 transition-colors shrink-0"
                   >
-                    <Icon name="close" className="text-[18px]" />
+                    <X className="text-[18px]" width="1em" height="1em" aria-hidden />
                   </Button>
                 </div>
 
@@ -800,7 +835,7 @@ export function WidgetConfigView({
                               msg.feedback === "up" ? "text-primary" : "text-on-surface-variant/50 hover:text-primary"
                             }`}
                           >
-                            <Icon name="thumb_up" className="text-[14px]" />
+                            <ThumbsUp className="text-[14px]" width="1em" height="1em" aria-hidden />
                           </Button>
                           <Button
                             type="button"
@@ -812,7 +847,7 @@ export function WidgetConfigView({
                               msg.feedback === "down" ? "text-error" : "text-on-surface-variant/50 hover:text-error"
                             }`}
                           >
-                            <Icon name="thumb_down" className="text-[14px]" />
+                            <ThumbsDown className="text-[14px]" width="1em" height="1em" aria-hidden />
                           </Button>
                         </div>
                       )}
@@ -876,7 +911,7 @@ export function WidgetConfigView({
                     className="p-2 rounded-full text-white disabled:opacity-40 transition-opacity shrink-0"
                     style={{ backgroundColor: widget.config.accentColor }}
                   >
-                    <Icon name="send" className="text-[16px]" />
+                    <Send className="text-[16px]" width="1em" height="1em" aria-hidden />
                   </Button>
                 </div>
               </div>

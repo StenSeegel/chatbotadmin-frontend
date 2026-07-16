@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { Icon } from "../components/Icon";
+import {
+  Clock,
+  MessagesSquare,
+  Search,
+  Star,
+  TrendingDown,
+  TrendingUp,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { Button, Card, Input } from "@ki4jlu/design-system";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -8,9 +17,16 @@ type ChartView = "Tag" | "Woche" | "Monat";
 
 // ── Mock data ─────────────────────────────────────────────────
 
-const KPI_CARDS = [
+const KPI_CARDS: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+  delta: string;
+  sub: string;
+  positive: boolean;
+}[] = [
   {
-    icon: "forum",
+    icon: MessagesSquare,
     value: "3 842",
     label: "Gespräche gesamt",
     delta: "+14 %",
@@ -18,7 +34,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "person",
+    icon: User,
     value: "1 924",
     label: "Eindeutige Nutzer",
     delta: "+9 %",
@@ -26,7 +42,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "schedule",
+    icon: Clock,
     value: "1,4 s",
     label: "Ø Antwortzeit",
     delta: "-0,3 s",
@@ -34,7 +50,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "star",
+    icon: Star,
     value: "4,6",
     label: "Ø Bewertung",
     delta: "+0,2",
@@ -256,10 +272,12 @@ export function StatisticsPage() {
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {/* Search */}
             <div className="relative">
-              <Icon
-                name="search"
+              <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10"
                 style={{ fontSize: 18 }}
+                width="1em"
+                height="1em"
+                aria-hidden
               />
               <Input
                 type="text"
@@ -277,33 +295,37 @@ export function StatisticsPage() {
       <main className="flex-1 p-6 space-y-6 max-w-container-max mx-auto w-full">
         {/* KPI row */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {KPI_CARDS.map((kpi, i) => (
-            <Card
-              key={i}
-              className="rounded-2xl shadow-none p-5 flex flex-col gap-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
-                  <Icon name={kpi.icon} className="text-on-primary-container" style={{ fontSize: 20 }} />
+          {KPI_CARDS.map((kpi, i) => {
+            const KpiIcon = kpi.icon;
+            const TrendIcon = kpi.positive ? TrendingUp : TrendingDown;
+            return (
+              <Card
+                key={i}
+                className="rounded-2xl shadow-none p-5 flex flex-col gap-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+                    <KpiIcon className="text-on-primary-container" style={{ fontSize: 20 }} width="1em" height="1em" aria-hidden />
+                  </div>
+                  <span
+                    className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      kpi.positive
+                        ? "bg-success-container text-on-success-container"
+                        : "bg-error-container text-on-error-container"
+                    }`}
+                  >
+                    <TrendIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
+                    {kpi.delta}
+                  </span>
                 </div>
-                <span
-                  className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    kpi.positive
-                      ? "bg-success-container text-on-success-container"
-                      : "bg-error-container text-on-error-container"
-                  }`}
-                >
-                  <Icon name={kpi.positive ? "trending_up" : "trending_down"} style={{ fontSize: 14 }} />
-                  {kpi.delta}
-                </span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{kpi.value}</p>
-                <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
-              </div>
-              <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
-            </Card>
-          ))}
+                <div>
+                  <p className="text-2xl font-bold">{kpi.value}</p>
+                  <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
+                </div>
+                <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Bar chart */}
@@ -381,7 +403,7 @@ export function StatisticsPage() {
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
                 <span className="flex items-center gap-1 text-xs font-semibold text-on-success-container bg-success-container px-2 py-0.5 rounded-full">
-                  <Icon name="trending_up" style={{ fontSize: 13 }} />
+                  <TrendingUp style={{ fontSize: 13 }} width="1em" height="1em" aria-hidden />
                   {period.trend}
                 </span>
               </div>

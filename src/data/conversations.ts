@@ -1,6 +1,8 @@
 // Demo-Daten für Gesprächsprotokolle eines Widgets (Mini-Dashboard + Detailansicht).
 // Wird von WidgetDashboardPage (Übersicht) und WidgetConversationsPage (Detail) geteilt.
 
+import { FileText, Link, type LucideIcon } from "lucide-react";
+
 export type ConversationStatus = "Offen" | "Neu" | "Gelöst";
 
 export interface Message {
@@ -8,7 +10,7 @@ export interface Message {
   author: string;
   time: string;
   text: string;
-  sources?: { label: string; icon: string }[];
+  sources?: { label: string; icon: LucideIcon }[];
 }
 
 export interface RatingBreakdown {
@@ -118,8 +120,8 @@ export const CONVERSATIONS: Conversation[] = [
         time: "14:32",
         text: "Die Justus-Liebig-Universität Gießen (JLU) ist eine der ältesten Universitäten Deutschlands, gegründet 1607. Mit über 26.000 Studierenden bietet sie ein breites Spektrum an Studiengängen in Natur-, Geistes-, Sozial- und Rechtswissenschaften sowie Medizin und Agrarwissenschaften.",
         sources: [
-          { label: "uni-giessen.de/about", icon: "link" },
-          { label: "Geschichte der JLU", icon: "description" },
+          { label: "uni-giessen.de/about", icon: Link },
+          { label: "Geschichte der JLU", icon: FileText },
         ],
       },
     ],
@@ -160,7 +162,7 @@ export const CONVERSATIONS: Conversation[] = [
         author: "JLU Assistent",
         time: "13:15",
         text: "Die Bewerbung erfolgt online über das Bewerbungsportal der JLU. Für zulassungsbeschränkte Fächer läuft die Bewerbung über hochschulstart.de, für zulassungsfreie Fächer direkt über das JLU-Portal.",
-        sources: [{ label: "uni-giessen.de/bewerbung", icon: "link" }],
+        sources: [{ label: "uni-giessen.de/bewerbung", icon: Link }],
       },
     ],
   },
@@ -194,7 +196,7 @@ export const CONVERSATIONS: Conversation[] = [
         author: "JLU Assistent",
         time: "11:04",
         text: "Die JLU bietet über 100 Studiengänge in elf Fachbereichen an – von Medizin und Rechtswissenschaft über Agrarwissenschaften bis zu Geistes- und Naturwissenschaften.",
-        sources: [{ label: "uni-giessen.de/studienangebot", icon: "description" }],
+        sources: [{ label: "uni-giessen.de/studienangebot", icon: FileText }],
       },
     ],
   },

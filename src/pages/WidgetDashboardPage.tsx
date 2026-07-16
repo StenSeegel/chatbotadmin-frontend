@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card, Input } from "@ki4jlu/design-system";
-import { Icon } from "../components/Icon";
+import { Search } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
 import {
@@ -59,10 +59,12 @@ export function WidgetDashboardPage() {
             </span>
           </div>
           <div className="relative">
-            <Icon
-              name="search"
+            <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
               style={{ fontSize: 18 }}
+              width="1em"
+              height="1em"
+              aria-hidden
             />
             <Input
               type="text"

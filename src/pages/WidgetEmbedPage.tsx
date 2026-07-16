@@ -3,7 +3,19 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
-import { Icon } from "../components/Icon";
+import {
+  ArrowLeft,
+  Check,
+  CircleAlert,
+  CircleCheck,
+  CirclePause,
+  Copy,
+  ExternalLink,
+  HelpCircle,
+  LoaderCircle,
+  Send,
+  type LucideIcon,
+} from "lucide-react";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -118,7 +130,11 @@ function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; on
         onClick={onCopy}
         className="absolute top-2.5 right-2.5 flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition-colors"
       >
-        <Icon name={copied ? "check" : "content_copy"} className="text-[14px]" />
+        {copied ? (
+          <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
+        ) : (
+          <Copy className="text-[14px]" width="1em" height="1em" aria-hidden />
+        )}
         {copied ? "Kopiert" : "Code kopieren"}
       </Button>
       <pre className="overflow-x-auto p-4 pr-28 font-mono text-xs leading-relaxed">
@@ -231,7 +247,7 @@ export function WidgetEmbedPage() {
     <div className="flex items-center gap-3 mb-2">
       <Button asChild variant="outline" size="icon" className="rounded-lg">
         <Link to="/" aria-label="Zurück zur Übersicht">
-          <Icon name="arrow_back" className="text-[20px]" />
+          <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
         </Link>
       </Button>
       <div className="min-w-0">
@@ -259,7 +275,7 @@ export function WidgetEmbedPage() {
       <main className="flex-grow p-gutter max-w-3xl mx-auto w-full space-y-stack-lg">
         {header}
         <div className="flex items-center gap-2 text-on-surface-variant text-sm">
-          <Icon name="progress_activity" className="text-[18px] animate-spin" />
+          <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
           Wird geladen…
         </div>
       </main>
@@ -276,7 +292,8 @@ export function WidgetEmbedPage() {
   const kbAssigned = widget.knowledgeBaseId.trim() !== "";
 
   // Wiederverwendbarer Status-Chip.
-  const chip = (tone: "success" | "warning" | "error" | "muted" | "loading", icon: string, text: string): ReactNode => {
+  const chip = (tone: "success" | "warning" | "error" | "muted" | "loading", icon: LucideIcon, text: string): ReactNode => {
+    const ChipIcon = icon;
     const toneClass =
       tone === "success" ? "text-success"
       : tone === "warning" ? "text-warning"
@@ -284,7 +301,7 @@ export function WidgetEmbedPage() {
       : "text-on-surface-variant";
     return (
       <span className={`inline-flex items-center gap-1 ${toneClass}`}>
-        <Icon name={icon} className={`text-[16px] ${tone === "loading" ? "animate-spin" : ""}`} />
+        <ChipIcon className={`text-[16px] ${tone === "loading" ? "animate-spin" : ""}`} width="1em" height="1em" aria-hidden />
         {text}
       </span>
     );
@@ -294,19 +311,21 @@ export function WidgetEmbedPage() {
   //  • Widget-Status  → widget.status (aktiv/pausiert)
   //  • Knowledge-Base → ob eine KB zugewiesen ist und sie in /api/models existiert
   //  • Backend        → ob der /api/models-Abruf erfolgreich war
+  // Hinweis: Der Icon-Name "warning" fehlte im alten Icon-Shim und fiel dort auf
+  // HelpCircle zurück — das Verhalten wird hier bewusst 1:1 beibehalten.
   const kbNode: ReactNode =
-    !kbAssigned ? chip("error", "error", "Keine KB zugewiesen")
-    : apiStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
+    !kbAssigned ? chip("error", CircleAlert, "Keine KB zugewiesen")
+    : apiStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
     : apiStatus === "ok" && !kbIds.has(widget.knowledgeBaseId)
-      ? chip("warning", "warning", `${kbDisplay} — nicht gefunden`)
-    : chip("success", "check_circle", kbDisplay);
+      ? chip("warning", HelpCircle, `${kbDisplay} — nicht gefunden`)
+    : chip("success", CircleCheck, kbDisplay);
 
   const checks: { label: string; node: ReactNode }[] = [
     {
       label: "Widget-Status",
       node: widget.status === "active"
-        ? chip("success", "check_circle", "Aktiv")
-        : chip("warning", "pause_circle", "Pausiert"),
+        ? chip("success", CircleCheck, "Aktiv")
+        : chip("warning", CirclePause, "Pausiert"),
     },
     {
       label: "Knowledge-Base",
@@ -315,16 +334,16 @@ export function WidgetEmbedPage() {
     {
       label: "Backend erreichbar",
       node:
-        apiStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
-        : apiStatus === "ok" ? chip("success", "check_circle", "OK")
-        : chip("error", "error", "Nicht erreichbar"),
+        apiStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
+        : apiStatus === "ok" ? chip("success", CircleCheck, "OK")
+        : chip("error", CircleAlert, "Nicht erreichbar"),
     },
     {
       label: "Testseite erreichbar",
       node:
-        siteStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
-        : siteStatus === "ok" ? chip("success", "check_circle", "Erreichbar")
-        : chip("error", "error", "Nicht erreichbar"),
+        siteStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
+        : siteStatus === "ok" ? chip("success", CircleCheck, "Erreichbar")
+        : chip("error", CircleAlert, "Nicht erreichbar"),
     },
   ];
 
@@ -398,7 +417,7 @@ export function WidgetEmbedPage() {
                 rel="noopener noreferrer"
                 aria-label="URL öffnen"
               >
-                <Icon name="open_in_new" className="text-[18px]" />
+                <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
               </a>
             </Button>
             <Button
@@ -409,7 +428,11 @@ export function WidgetEmbedPage() {
               aria-label="URL kopieren"
               className="shrink-0 rounded-lg"
             >
-              <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
+              {copied === "url" ? (
+                <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
+              ) : (
+                <Copy className="text-[18px]" width="1em" height="1em" aria-hidden />
+              )}
             </Button>
           </div>
         </div>
@@ -440,7 +463,7 @@ export function WidgetEmbedPage() {
           className="mt-2 w-full rounded-xl px-4 py-3 bg-surface-container-high hover:bg-surface-container-highest"
         >
           <a href={testUrl} target="_blank" rel="noopener noreferrer">
-            <Icon name="send" className="text-[18px]" />
+            <Send className="text-[18px]" width="1em" height="1em" aria-hidden />
             Testseite öffnen
           </a>
         </Button>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
-import { Icon } from "../components/Icon";
+import { Send } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
 import { CONVERSATIONS, type Message } from "../data/conversations";
@@ -81,15 +81,18 @@ export function WidgetConversationsPage() {
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
                       {m.sources && m.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {m.sources.map((s, si) => (
-                            <span
-                              key={si}
-                              className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary-container/40 border border-outline-variant rounded-lg px-2.5 py-1"
-                            >
-                              <Icon name={s.icon} style={{ fontSize: 14 }} />
-                              {s.label}
-                            </span>
-                          ))}
+                          {m.sources.map((s, si) => {
+                            const SourceIcon = s.icon;
+                            return (
+                              <span
+                                key={si}
+                                className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary-container/40 border border-outline-variant rounded-lg px-2.5 py-1"
+                              >
+                                <SourceIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
+                                {s.label}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </Card>
@@ -132,7 +135,7 @@ export function WidgetConversationsPage() {
                   disabled={!draft.trim()}
                   className="px-5 py-2"
                 >
-                  <Icon name="send" style={{ fontSize: 16 }} />
+                  <Send style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
                   Senden
                 </Button>
               </div>

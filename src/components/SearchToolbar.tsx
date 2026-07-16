@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "./Icon";
+import { ArrowUpDown, Check, ListFilter, Search, type LucideIcon } from "lucide-react";
 import { Button, Input } from "@ki4jlu/design-system";
 import type { WidgetStatus } from "../types/widget";
 
@@ -20,7 +20,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ];
 
 interface ToolbarDropdownProps<T extends string> {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   options: { value: T; label: string }[];
   value: T;
@@ -28,7 +28,7 @@ interface ToolbarDropdownProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-function ToolbarDropdown<T extends string>({ icon, label, options, value, defaultValue, onChange }: ToolbarDropdownProps<T>) {
+function ToolbarDropdown<T extends string>({ icon: IconCmp, label, options, value, defaultValue, onChange }: ToolbarDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const isActive = value !== defaultValue;
@@ -58,7 +58,7 @@ function ToolbarDropdown<T extends string>({ icon, label, options, value, defaul
             : "border-outline-variant text-on-surface hover:bg-surface-container-high"
         }`}
       >
-        <Icon name={icon} className="text-[16px]" />
+        <IconCmp className="text-[16px]" width="1em" height="1em" aria-hidden />
         {label}
         {isActive && <span className="font-mono">({options.find((option) => option.value === value)?.label})</span>}
       </Button>
@@ -79,7 +79,7 @@ function ToolbarDropdown<T extends string>({ icon, label, options, value, defaul
               }`}
             >
               {option.label}
-              {value === option.value && <Icon name="check" className="text-[16px]" />}
+              {value === option.value && <Check className="text-[16px]" width="1em" height="1em" aria-hidden />}
             </Button>
           ))}
         </div>
@@ -108,9 +108,11 @@ export function SearchToolbar({
   return (
     <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
       <div className="relative group w-full lg:max-w-sm">
-        <Icon
-          name="search"
+        <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors text-[18px]"
+          width="1em"
+          height="1em"
+          aria-hidden
         />
         <Input
           className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest shadow-sm"
@@ -122,7 +124,7 @@ export function SearchToolbar({
       </div>
       <div className="flex gap-2 w-full lg:w-auto">
         <ToolbarDropdown
-          icon="filter_list"
+          icon={ListFilter}
           label="Filter"
           options={FILTER_OPTIONS}
           value={statusFilter}
@@ -130,7 +132,7 @@ export function SearchToolbar({
           onChange={onStatusFilterChange}
         />
         <ToolbarDropdown
-          icon="sort"
+          icon={ArrowUpDown}
           label="Sortieren"
           options={SORT_OPTIONS}
           value={sortOption}

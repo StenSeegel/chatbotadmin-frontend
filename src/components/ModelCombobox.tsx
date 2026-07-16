@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "@ki4jlu/design-system";
-import { Icon } from "./Icon";
+import { Bot, Check, ChevronDown, CircleAlert, LoaderCircle } from "lucide-react";
 import { fetchModels, type LanguageModel } from "../data/models";
 
 interface ModelComboboxProps {
@@ -174,9 +174,11 @@ export function ModelCombobox({
           aria-label="Knowledge-Bases anzeigen"
           className="absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
         >
-          <Icon
-            name="expand_more"
+          <ChevronDown
             className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
+            width="1em"
+            height="1em"
+            aria-hidden
           />
         </Button>
       </div>
@@ -189,7 +191,7 @@ export function ModelCombobox({
         >
           {loading && (
             <div className="flex items-center gap-2 px-3 py-2 text-sm text-on-surface-variant">
-              <Icon name="progress_activity" className="text-[18px] animate-spin" />
+              <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
               Modelle werden geladen…
             </div>
           )}
@@ -197,7 +199,7 @@ export function ModelCombobox({
           {!loading && error && (
             <div className="px-3 py-2">
               <p className="text-sm text-error flex items-center gap-1.5">
-                <Icon name="error" className="text-[18px]" />
+                <CircleAlert className="text-[18px]" width="1em" height="1em" aria-hidden />
                 {error}
               </p>
               <Button
@@ -238,10 +240,10 @@ export function ModelCombobox({
                 } ${m.id === value ? "text-primary" : "text-on-surface"}`}
               >
                 <span className="flex items-center gap-2 min-w-0">
-                  <Icon name="smart_toy" className="text-[18px] shrink-0 text-on-surface-variant" />
+                  <Bot className="text-[18px] shrink-0 text-on-surface-variant" width="1em" height="1em" aria-hidden />
                   <span className="truncate">{m.name || m.id}</span>
                 </span>
-                {m.id === value && <Icon name="check" className="text-[18px] shrink-0" />}
+                {m.id === value && <Check className="text-[18px] shrink-0" width="1em" height="1em" aria-hidden />}
               </Button>
             ))}
         </div>

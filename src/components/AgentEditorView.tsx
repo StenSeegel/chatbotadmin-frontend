@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
-import { Icon } from "./Icon";
+import {
+  ArrowLeft,
+  Brain,
+  Check,
+  HelpCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Send,
+  Trash2,
+  Waypoints,
+  Wrench,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Markdown } from "./Markdown";
 import { ModelCombobox } from "./ModelCombobox";
 import { Label } from "@ki4jlu/design-system";
@@ -9,6 +23,14 @@ import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 import { Input, Textarea } from "@ki4jlu/design-system";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import type { Agent, AgentRule } from "../types/agent";
+
+/** Platzhalter-Kacheln für „Tools & Wissen" (Post-MVP). menu_book hatte im
+ *  Icon-Shim keine Zuordnung und fiel auf HelpCircle zurück — beibehalten. */
+const TOOL_PLACEHOLDERS: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Wrench, title: "Native Tools", desc: "Interne Aktionen" },
+  { icon: Waypoints, title: "MCP Tools", desc: "Aus globalem Registry" },
+  { icon: HelpCircle, title: "Wissen (RAG)", desc: "Noch keine Quellen" },
+];
 
 interface TestMessage {
   role: "bot" | "user";
@@ -158,7 +180,7 @@ export function AgentEditorView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
           <div className="flex items-center gap-3 min-w-0">
             <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht" className="rounded-lg">
-              <Icon name="arrow_back" className="text-[20px]" />
+              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
             <div className="min-w-0">
               {isNew ? (
@@ -166,7 +188,7 @@ export function AgentEditorView({
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <Icon name="psychology" className="text-primary text-[22px]" />
+                    <Brain className="text-primary text-[22px]" width="1em" height="1em" aria-hidden />
                     <h2 className="font-headline-md text-headline-md text-on-surface truncate">{agent.name}</h2>
                   </div>
                   <p className="font-mono text-xs text-on-surface-variant truncate">Agent-ID: {agent.id}</p>
@@ -190,7 +212,7 @@ export function AgentEditorView({
                 title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
                 className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-error"
               >
-                <Icon name="delete" className="text-[18px]" />
+                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Agent löschen
               </Button>
             )}
@@ -212,7 +234,7 @@ export function AgentEditorView({
         <div className="lg:col-span-2 space-y-stack-lg">
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="psychology" className="text-primary" />
+              <Brain className="text-primary" width="1em" height="1em" aria-hidden />
               Denkschicht
             </h3>
 
@@ -274,7 +296,7 @@ export function AgentEditorView({
                   onClick={() => onUpdate("rules", [...agent.rules, { text: "", enabled: true } satisfies AgentRule])}
                   className="flex items-center gap-1 p-0 text-xs text-primary hover:underline"
                 >
-                  <Icon name="add" className="text-[16px]" />
+                  <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Regel hinzufügen
                 </Button>
               </div>
@@ -294,7 +316,7 @@ export function AgentEditorView({
                         }`}
                         aria-label={rule.enabled ? "Deaktivieren" : "Aktivieren"}
                       >
-                        {rule.enabled && <Icon name="check" className="text-[14px]" />}
+                        {rule.enabled && <Check className="text-[14px]" width="1em" height="1em" aria-hidden />}
                       </button>
                       <Input
                         value={rule.text}
@@ -312,7 +334,7 @@ export function AgentEditorView({
                         aria-label="Regel entfernen"
                         className="shrink-0 p-1 text-on-surface-variant hover:bg-transparent hover:text-error transition-colors"
                       >
-                        <Icon name="close" className="text-[16px]" />
+                        <X className="text-[16px]" width="1em" height="1em" aria-hidden />
                       </Button>
                     </div>
                   ))}
@@ -324,17 +346,13 @@ export function AgentEditorView({
           {/* Tools & Wissen — MVP-Platzhalter (Ebene 1) */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="build" className="text-primary" />
+              <Wrench className="text-primary" width="1em" height="1em" aria-hidden />
               Tools & Wissen
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-stack-sm">
-              {[
-                { icon: "build", title: "Native Tools", desc: "Interne Aktionen" },
-                { icon: "hub", title: "MCP Tools", desc: "Aus globalem Registry" },
-                { icon: "menu_book", title: "Wissen (RAG)", desc: "Noch keine Quellen" },
-              ].map((ph) => (
+              {TOOL_PLACEHOLDERS.map((ph) => (
                 <div key={ph.title} className="border border-dashed border-outline-variant rounded-lg p-4 text-center bg-surface">
-                  <Icon name={ph.icon} className="text-on-surface-variant text-[22px]" />
+                  <ph.icon className="text-on-surface-variant text-[22px]" width="1em" height="1em" aria-hidden />
                   <p className="font-semibold text-sm mt-1">{ph.title}</p>
                   <p className="text-xs text-on-surface-variant">{ph.desc}</p>
                   <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wide bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded-full">
@@ -351,7 +369,7 @@ export function AgentEditorView({
           <Card className="p-6 space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="chat" className="text-primary" />
+                <MessageSquare className="text-primary" width="1em" height="1em" aria-hidden />
                 Test-Chat
               </h3>
               <Button
@@ -360,7 +378,7 @@ export function AgentEditorView({
                 onClick={handleReset}
                 className="flex items-center gap-1 p-0 text-xs text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
               >
-                <Icon name="refresh" className="text-[14px]" />
+                <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
               </Button>
             </div>
@@ -413,7 +431,7 @@ export function AgentEditorView({
                   aria-label="Senden"
                   className="p-2 rounded-full bg-primary text-on-primary disabled:opacity-40 transition-opacity shrink-0"
                 >
-                  <Icon name="send" className="text-[16px]" />
+                  <Send className="text-[16px]" width="1em" height="1em" aria-hidden />
                 </Button>
               </div>
             </div>

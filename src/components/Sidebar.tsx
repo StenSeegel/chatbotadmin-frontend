@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { Icon } from "./Icon";
+import { Bot, Brain, ChartColumn, ChevronDown, ExternalLink, LogOut, Waypoints } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
 import { Button, ThemeToggle } from "@ki4jlu/design-system";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -50,7 +50,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 p-4 bg-surface-container-low border-r border-outline-variant z-50">
       <div className="flex items-center gap-3 mb-10 px-2">
-        <Icon name="smart_toy" className="text-primary" style={{ fontSize: 32 }} />
+        <Bot className="text-primary" style={{ fontSize: 32 }} width="1em" height="1em" aria-hidden />
         <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
       </div>
       <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
@@ -64,12 +64,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
             }}
             className={`${parentClass(agentsActive)} justify-start w-full font-body-base text-body-base`}
           >
-            <Icon name="psychology" />
+            <Brain width="1em" height="1em" aria-hidden />
             <span className={agentsActive ? "font-label-sm" : "font-body-base"}>Agenten</span>
-            <Icon
-              name="expand_more"
+            <ChevronDown
               className={`ml-auto shrink-0 transition-transform duration-200 ${agentsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
+              width="1em"
+              height="1em"
+              aria-hidden
             />
           </Button>
 
@@ -87,7 +89,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
                         : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant hover:bg-secondary-container transition-colors"
                     }
                   >
-                    <Icon name="psychology" className="text-[18px] shrink-0" />
+                    <Brain className="text-[18px] shrink-0" width="1em" height="1em" aria-hidden />
                     <span className="font-body-base text-sm truncate">{agent.name || "(ohne Namen)"}</span>
                   </Link>
                 );
@@ -109,12 +111,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
             }}
             className={`${parentClass(widgetsActive)} justify-start w-full font-body-base text-body-base`}
           >
-            <Icon name="hub" />
+            <Waypoints width="1em" height="1em" aria-hidden />
             <span className={widgetsActive ? "font-label-sm" : "font-body-base"}>Konnektoren</span>
-            <Icon
-              name="expand_more"
+            <ChevronDown
               className={`ml-auto shrink-0 transition-transform duration-200 ${widgetsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
+              width="1em"
+              height="1em"
+              aria-hidden
             />
           </Button>
 
@@ -142,7 +146,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </div>
 
         <Link to="/statistiken" className={parentClass(statistikenActive)}>
-          <Icon name="bar_chart" />
+          <ChartColumn width="1em" height="1em" aria-hidden />
           <span className={statistikenActive ? "font-label-sm" : "font-body-base"}>Statistiken</span>
         </Link>
       </nav>
@@ -162,7 +166,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
                   onClick={() => setMenuOpen(false)}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-secondary-container transition-colors border-b border-outline-variant"
                 >
-                  <Icon name="open_in_new" style={{ fontSize: 18 }} />
+                  <ExternalLink style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
                   Mock-Widget-Portal
                 </a>
               )}
@@ -174,7 +178,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
                 }}
                 className="flex w-full items-center justify-start gap-3 px-4 py-3 rounded-none font-body-base text-sm text-error hover:bg-secondary-container transition-colors"
               >
-                <Icon name="logout" style={{ fontSize: 18 }} />
+                <LogOut style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
                 Abmelden
               </Button>
             </div>
@@ -199,7 +203,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               {user?.role ?? "authentifiziert"}
             </span>
           </div>
-          <Icon name="expand_more" className="text-on-surface-variant shrink-0" style={{ fontSize: 18 }} />
+          <ChevronDown className="text-on-surface-variant shrink-0" style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
         </Button>
       </div>
     </aside>
