@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@ki4jlu/design-system";
+import { Button, CodeBlock } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
@@ -352,6 +352,7 @@ export function WidgetConfigView({
                 variant="ghost"
                 onClick={() => setBasicsOpen((o) => !o)}
                 aria-expanded={basicsOpen}
+                // eslint-disable-next-line design-system/layout-only-classname -- Abschnitts-Header mit mehrzeiliger Beschreibung, bewusst umbruchsfähig
                 className="w-full justify-between text-left p-0 whitespace-normal"
               >
                 <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
@@ -592,25 +593,7 @@ export function WidgetConfigView({
 
             <div className="flex flex-col gap-1">
               <Label>Einbettungscode</Label>
-              <div className="relative">
-                <pre className="w-full overflow-x-auto px-4 py-3 bg-surface border border-outline-variant rounded-lg font-mono text-xs leading-relaxed whitespace-pre">
-                  {embedCode}
-                </pre>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onCopy(embedCode, "code")}
-                  className="absolute top-2 right-2 px-2 py-1 bg-surface-container-lowest"
-                >
-                  {copied === "code" ? (
-                    <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
-                  ) : (
-                    <Copy className="text-[14px]" width="1em" height="1em" aria-hidden />
-                  )}
-                  {copied === "code" ? "Kopiert" : "Kopieren"}
-                </Button>
-              </div>
+              <CodeBlock code={embedCode} copyLabel="Kopieren" copiedLabel="Kopiert" />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -619,6 +602,7 @@ export function WidgetConfigView({
                 <Input
                   readOnly
                   value={directUrl}
+                  // eslint-disable-next-line design-system/layout-only-classname -- URL ist Code-Inhalt: Monospace bewusst
                   className="font-mono text-xs"
                 />
                 <Button
@@ -698,6 +682,7 @@ export function WidgetConfigView({
                   <Input
                     value={widget.config.accentColor}
                     onChange={(e) => onUpdateConfig("accentColor", e.target.value)}
+                    // eslint-disable-next-line design-system/layout-only-classname -- Hex-Wert ist Code-Inhalt: Monospace bewusst
                     className="font-mono text-sm"
                   />
                 </div>
@@ -800,6 +785,7 @@ export function WidgetConfigView({
                     size="icon"
                     onClick={() => setPreviewOpen(false)}
                     aria-label="Chat schließen"
+                    // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
                     className="p-0.5 rounded text-white hover:bg-white/20 shrink-0"
                   >
                     <X className="text-[18px]" width="1em" height="1em" aria-hidden />
@@ -825,6 +811,7 @@ export function WidgetConfigView({
                             size="icon"
                             onClick={() => handlePreviewFeedback(i, "up")}
                             aria-label="Hilfreich"
+                            // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
                             className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "up" ? "text-primary" : "text-on-surface-variant/50 hover:text-primary"
                             }`}
@@ -837,6 +824,7 @@ export function WidgetConfigView({
                             size="icon"
                             onClick={() => handlePreviewFeedback(i, "down")}
                             aria-label="Nicht hilfreich"
+                            // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
                             className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "down" ? "text-error" : "text-on-surface-variant/50 hover:text-error"
                             }`}
@@ -869,6 +857,7 @@ export function WidgetConfigView({
                         variant="outline"
                         size="sm"
                         onClick={() => handlePreviewSend(tpl)}
+                        // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
                         className="px-2 py-0.5 rounded-full bg-surface-container-lowest text-[10px] font-medium cursor-pointer"
                         style={{ borderColor: widget.config.accentColor, color: widget.config.accentColor }}
                       >
@@ -889,6 +878,7 @@ export function WidgetConfigView({
                       }
                     }}
                     placeholder="Nachricht eingeben…"
+                    // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
                     className="flex-1 px-3 py-1.5 rounded-full text-xs focus:ring-2 min-w-0"
                     style={{
                       borderColor: widget.config.accentColor,

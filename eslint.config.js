@@ -27,6 +27,7 @@ export default defineConfig([
     rules: {
       'design-system/no-hardcoded-colors': 'error',
       'design-system/no-raw-ui-elements': 'warn',
+      'design-system/layout-only-classname': 'warn',
     },
   },
 ])

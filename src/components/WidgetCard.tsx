@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
-import { Brain, Code, MessageSquare, Settings, type LucideIcon } from "lucide-react";
+import { Brain, Code, Settings, type LucideIcon } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
 
@@ -15,12 +15,12 @@ const statusClasses: Record<Widget["status"], { badge: string; dot: string; labe
   paused: { badge: "bg-surface-container-highest text-on-surface-variant", dot: "bg-on-surface-variant", label: "Pause" },
 };
 
-// Die drei identischen Footer-Buttons (Einstellungen / Chatbox / Einbetten).
-// `path` wird an `/widgets/${id}` angehängt; `wrap` steuert break-words vs. truncate.
-const footerActions: { path: string; icon: LucideIcon; label: string; wrap: boolean; tight: boolean }[] = [
-  { path: "", icon: Settings, label: "Einstellungen", wrap: true, tight: true },
-  { path: "/gespraeche", icon: MessageSquare, label: "Chatbox", wrap: false, tight: false },
-  { path: "/einbetten", icon: Code, label: "Einbetten", wrap: false, tight: false },
+// Footer-Buttons (`path` wird an `/widgets/${id}` angehängt). Die Chatbox ist
+// bewusst keine Karten-Aktion mehr — Gespräche sind über die Sidebar-Subnavigation
+// erreichbar, und drei Buttons passen nicht ohne Verkleinerungs-Hacks in die Karte.
+const footerActions: { path: string; icon: LucideIcon; label: string }[] = [
+  { path: "", icon: Settings, label: "Einstellungen" },
+  { path: "/einbetten", icon: Code, label: "Einbetten" },
 ];
 
 interface WidgetCardProps {
@@ -71,20 +71,12 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 mt-auto">
+      <div className="grid grid-cols-2 gap-2 mt-auto">
         {footerActions.map((action) => (
-          <Button
-            key={action.path}
-            asChild
-            variant="outline"
-            size="sm"
-            className={`flex-col gap-1 min-w-0 w-full px-1 py-1.5${action.tight ? " leading-tight" : ""}`}
-          >
+          <Button key={action.path} asChild variant="outline" size="sm" className="w-full">
             <Link to={`/widgets/${widget.id}${action.path}`}>
               <action.icon className="text-sm" width="1em" height="1em" aria-hidden />
-              <span className={`w-full text-center ${action.wrap ? "break-words" : "truncate"}`}>
-                {action.label}
-              </span>
+              {action.label}
             </Link>
           </Button>
         ))}
