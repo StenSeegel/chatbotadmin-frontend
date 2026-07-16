@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Input } from "@ki4jlu/design-system";
+import { Button, Input, MenuItem } from "@ki4jlu/design-system";
 import { Bot, Check, ChevronDown, CircleAlert, LoaderCircle } from "lucide-react";
 import { fetchModels, type LanguageModel } from "../data/models";
 
@@ -224,27 +224,25 @@ export function ModelCombobox({
           {!loading &&
             !error &&
             filtered.map((m, i) => (
-              <Button
+              <MenuItem
                 key={m.id}
                 type="button"
-                variant="ghost"
                 role="option"
                 aria-selected={m.id === value}
+                selected={m.id === value}
+                highlighted={i === highlight}
                 // Verhindert, dass der Klick das Feld unfokussiert (onBlur) –
                 // sonst würde commitText vor select() greifen.
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => select(m)}
-                className={`w-full flex items-center justify-between gap-2 rounded-none px-3 py-2 text-left text-sm transition-colors ${
-                  i === highlight ? "bg-surface-container-high" : "hover:bg-surface-container-low"
-                } ${m.id === value ? "text-primary" : "text-on-surface"}`}
               >
-                <span className="flex items-center gap-2 min-w-0">
+                <span className="flex min-w-0 items-center gap-2">
                   <Bot className="text-[18px] shrink-0 text-on-surface-variant" width="1em" height="1em" aria-hidden />
                   <span className="truncate">{m.name || m.id}</span>
                 </span>
-                {m.id === value && <Check className="text-[18px] shrink-0" width="1em" height="1em" aria-hidden />}
-              </Button>
+                {m.id === value && <Check className="ml-auto text-[18px]" width="1em" height="1em" aria-hidden />}
+              </MenuItem>
             ))}
         </div>
       )}

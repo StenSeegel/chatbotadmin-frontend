@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Bot, Brain, ChartColumn, ChevronDown, ExternalLink, LogOut, Waypoints } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
-import { Button, NavItem, ThemeToggle } from "@ki4jlu/design-system";
+import { Button, MenuItem, NavItem, ThemeToggle } from "@ki4jlu/design-system";
 import { fetchWidgets } from "../data/widgetsStore";
 import { fetchAgents } from "../data/agentsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -141,36 +141,39 @@ export function Sidebar({ onLogout }: SidebarProps) {
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
             <div className="absolute bottom-full left-2 right-2 mb-2 z-50 rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
               {isAdmin && (
-                <a
-                  href={widgetPortalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-secondary-container transition-colors border-b border-outline-variant"
-                >
-                  <ExternalLink style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
-                  Mock-Widget-Portal
-                </a>
+                <MenuItem asChild className="border-b border-outline-variant px-4 py-3">
+                  <a
+                    href={widgetPortalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <ExternalLink style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
+                    Mock-Widget-Portal
+                  </a>
+                </MenuItem>
               )}
-              <Button
-                variant="ghost"
+              <MenuItem
+                type="button"
+                variant="destructive"
+                className="px-4 py-3"
                 onClick={() => {
                   setMenuOpen(false);
                   onLogout();
                 }}
-                className="flex w-full items-center justify-start gap-3 px-4 py-3 rounded-none font-body-base text-sm text-error hover:bg-secondary-container transition-colors"
               >
                 <LogOut style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
                 Abmelden
-              </Button>
+              </MenuItem>
             </div>
           </>
         )}
 
         <Button
           variant="ghost"
+          size="sm"
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center justify-start gap-3 px-2 py-1 w-full rounded-lg font-body-base text-body-base hover:bg-secondary-container transition-colors"
+          className="w-full justify-start gap-3"
         >
           <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-surface shadow-sm shrink-0">
             <span className="text-on-primary-container text-sm font-semibold">

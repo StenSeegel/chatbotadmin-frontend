@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpDown, Check, ListFilter, Search, type LucideIcon } from "lucide-react";
-import { Button, Input } from "@ki4jlu/design-system";
+import { Button, Input, MenuItem } from "@ki4jlu/design-system";
 import type { WidgetStatus } from "../types/widget";
 
 export type StatusFilter = "all" | WidgetStatus;
@@ -66,21 +66,20 @@ function ToolbarDropdown<T extends string>({ icon: IconCmp, label, options, valu
       {isOpen && (
         <div className="absolute right-0 mt-1 w-44 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-md z-10 overflow-hidden">
           {options.map((option) => (
-            <Button
+            <MenuItem
               key={option.value}
               type="button"
-              variant="ghost"
+              selected={value === option.value}
               onClick={() => {
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-label-sm text-left hover:bg-surface-container-high transition-colors ${
-                value === option.value ? "text-primary" : "text-on-surface"
-              }`}
             >
               {option.label}
-              {value === option.value && <Check className="text-[16px]" width="1em" height="1em" aria-hidden />}
-            </Button>
+              {value === option.value && (
+                <Check className="ml-auto text-[16px]" width="1em" height="1em" aria-hidden />
+              )}
+            </MenuItem>
           ))}
         </div>
       )}
