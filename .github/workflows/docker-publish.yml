@@ -197,6 +197,11 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
+          # Registry-Token für npm (GitHub Packages, @ki4jlu/design-system) —
+          # als BuildKit-Secret, landet nicht im Image. Das Backend-Image
+          # ignoriert es.
+          secrets: |
+            node_auth_token=${{ secrets.GITHUB_TOKEN }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
