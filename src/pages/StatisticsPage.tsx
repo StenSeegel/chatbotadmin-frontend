@@ -9,7 +9,7 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react";
-import { Button, Card, Input } from "@ki4jlu/design-system";
+import { Badge, Button, Card, Input } from "@ki4jlu/design-system";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -307,16 +307,10 @@ export function StatisticsPage() {
                   <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
                     <KpiIcon className="text-on-primary-container" style={{ fontSize: 20 }} width="1em" height="1em" aria-hidden />
                   </div>
-                  <span
-                    className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      kpi.positive
-                        ? "bg-success-container text-on-success-container"
-                        : "bg-error-container text-on-error-container"
-                    }`}
-                  >
+                  <Badge tone={kpi.positive ? "success" : "error"}>
                     <TrendIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
                     {kpi.delta}
-                  </span>
+                  </Badge>
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{kpi.value}</p>
@@ -402,10 +396,10 @@ export function StatisticsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
-                <span className="flex items-center gap-1 text-xs font-semibold text-on-success-container bg-success-container px-2 py-0.5 rounded-full">
+                <Badge tone="success">
                   <TrendingUp style={{ fontSize: 13 }} width="1em" height="1em" aria-hidden />
                   {period.trend}
-                </span>
+                </Badge>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

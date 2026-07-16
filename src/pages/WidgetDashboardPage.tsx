@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Card, Input } from "@ki4jlu/design-system";
+import { Badge, Card, Input } from "@ki4jlu/design-system";
 import { Search } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
 import {
   CONVERSATIONS,
   DASHBOARD_STATS,
-  STATUS_STYLES,
+  STATUS_TONES,
   TOP_QUESTIONS,
 } from "../data/conversations";
 
@@ -104,9 +104,9 @@ export function WidgetDashboardPage() {
                     {c.initials}
                   </span>
                   <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}>
+                  <Badge tone={STATUS_TONES[c.status]}>
                     {c.status}
-                  </span>
+                  </Badge>
                 </Link>
               ))}
               {recent.length === 0 && (

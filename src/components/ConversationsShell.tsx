@@ -1,8 +1,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
-import { Button, Input, MenuItem } from "@ki4jlu/design-system";
-import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
+import { Badge, Button, Input, MenuItem } from "@ki4jlu/design-system";
+import { CONVERSATIONS, STATUS_TONES } from "../data/conversations";
 
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
 
@@ -178,9 +178,9 @@ export function ConversationsShell({
                     {c.preview}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}>
+                    <Badge tone={STATUS_TONES[c.status]}>
                       {c.status}
-                    </span>
+                    </Badge>
                     <span className="text-xs text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">
                       {c.channel}
                     </span>

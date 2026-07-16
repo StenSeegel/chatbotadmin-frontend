@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button } from "@ki4jlu/design-system";
+import { Badge, Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
 import {
@@ -11,7 +11,7 @@ import {
   CirclePause,
   Copy,
   ExternalLink,
-  HelpCircle,
+  TriangleAlert,
   LoaderCircle,
   Send,
   type LucideIcon,
@@ -294,16 +294,12 @@ export function WidgetEmbedPage() {
   // Wiederverwendbarer Status-Chip.
   const chip = (tone: "success" | "warning" | "error" | "muted" | "loading", icon: LucideIcon, text: string): ReactNode => {
     const ChipIcon = icon;
-    const toneClass =
-      tone === "success" ? "text-success"
-      : tone === "warning" ? "text-warning"
-      : tone === "error" ? "text-error"
-      : "text-on-surface-variant";
+    const badgeTone = tone === "muted" || tone === "loading" ? "neutral" : tone;
     return (
-      <span className={`inline-flex items-center gap-1 ${toneClass}`}>
+      <Badge appearance="text" tone={badgeTone}>
         <ChipIcon className={`text-[16px] ${tone === "loading" ? "animate-spin" : ""}`} width="1em" height="1em" aria-hidden />
         {text}
-      </span>
+      </Badge>
     );
   };
 
@@ -311,13 +307,11 @@ export function WidgetEmbedPage() {
   //  • Widget-Status  → widget.status (aktiv/pausiert)
   //  • Knowledge-Base → ob eine KB zugewiesen ist und sie in /api/models existiert
   //  • Backend        → ob der /api/models-Abruf erfolgreich war
-  // Hinweis: Der Icon-Name "warning" fehlte im alten Icon-Shim und fiel dort auf
-  // HelpCircle zurück — das Verhalten wird hier bewusst 1:1 beibehalten.
   const kbNode: ReactNode =
     !kbAssigned ? chip("error", CircleAlert, "Keine KB zugewiesen")
     : apiStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
     : apiStatus === "ok" && !kbIds.has(widget.knowledgeBaseId)
-      ? chip("warning", HelpCircle, `${kbDisplay} — nicht gefunden`)
+      ? chip("warning", TriangleAlert, `${kbDisplay} — nicht gefunden`)
     : chip("success", CircleCheck, kbDisplay);
 
   const checks: { label: string; node: ReactNode }[] = [

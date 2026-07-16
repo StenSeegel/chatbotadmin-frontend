@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Brain,
   Check,
-  HelpCircle,
+  BookSearch,
   MessageSquare,
   Plus,
   RefreshCw,
@@ -24,12 +24,11 @@ import { Input, Textarea } from "@ki4jlu/design-system";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import type { Agent, AgentRule } from "../types/agent";
 
-/** Platzhalter-Kacheln für „Tools & Wissen" (Post-MVP). menu_book hatte im
- *  Icon-Shim keine Zuordnung und fiel auf HelpCircle zurück — beibehalten. */
+/** Platzhalter-Kacheln für „Tools & Wissen" (Post-MVP). */
 const TOOL_PLACEHOLDERS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: Wrench, title: "Native Tools", desc: "Interne Aktionen" },
   { icon: Waypoints, title: "MCP Tools", desc: "Aus globalem Registry" },
-  { icon: HelpCircle, title: "Wissen (RAG)", desc: "Noch keine Quellen" },
+  { icon: BookSearch, title: "Wissen (RAG)", desc: "Noch keine Quellen" },
 ];
 
 interface TestMessage {

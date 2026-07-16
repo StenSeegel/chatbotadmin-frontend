@@ -68,10 +68,11 @@ export const TOP_QUESTIONS: TopQuestion[] = [
   { text: "Bewerbung", count: 98 },
 ];
 
-export const STATUS_STYLES: Record<ConversationStatus, string> = {
-  Offen: "bg-primary-container text-on-primary-container",
-  Neu: "bg-secondary-container text-on-secondary-container",
-  Gelöst: "bg-success-container text-on-success-container",
+// Badge-Töne je Status (gerendert mit <Badge tone={...}> aus dem Design-System).
+export const STATUS_TONES: Record<ConversationStatus, "primary" | "secondary" | "success"> = {
+  Offen: "primary",
+  Neu: "secondary",
+  Gelöst: "success",
 };
 
 const DEFAULT_BREAKDOWN: RatingBreakdown[] = [
