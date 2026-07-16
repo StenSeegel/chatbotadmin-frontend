@@ -18,6 +18,13 @@ jobs:
   # ── Gate 1: Frontend (Lint, Typecheck/Build, Tests) ──────────────────────
   frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    # @ki4jlu/design-system kommt aus GitHub Packages (privat); .npmrc liest
+    # das Token aus NODE_AUTH_TOKEN.
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -73,8 +80,13 @@ jobs:
   # inkompatibel ändert.
   api-contract:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     env:
       SPEC: go-backend/internal/apidocs/openapi.yaml
+      # Für npm ci: @ki4jlu/design-system aus GitHub Packages (siehe .npmrc).
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
