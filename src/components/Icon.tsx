@@ -55,6 +55,11 @@ import {
   Bold,
   Italic,
   FileText,
+  Ban,
+  Brain,
+  Pencil,
+  Waypoints,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -68,6 +73,11 @@ const ICONS: Record<string, LucideIcon> = {
   add: Plus,
   arrow_back: ArrowLeft,
   bar_chart: ChartColumn,
+  block: Ban,
+  build: Wrench,
+  edit: Pencil,
+  hub: Waypoints,
+  psychology: Brain,
   chat: MessageSquare,
   check: Check,
   close: X,
