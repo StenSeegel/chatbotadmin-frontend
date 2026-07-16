@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Bot, Brain, ChartColumn, ChevronDown, ExternalLink, LogOut, Waypoints } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
-import { Button, ThemeToggle } from "@ki4jlu/design-system";
+import { Button, NavItem, ThemeToggle } from "@ki4jlu/design-system";
 import { fetchWidgets } from "../data/widgetsStore";
 import { fetchAgents } from "../data/agentsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -41,12 +41,6 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
   const statistikenActive = location.pathname.startsWith("/statistiken");
 
-  // hover:bg-primary keeps the active row's bg stable (Button's ghost variant adds hover:bg-surface-container-high)
-  const parentClass = (active: boolean) =>
-    active
-      ? "flex items-center gap-4 px-4 py-3 bg-primary hover:bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
-      : "flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-secondary-container rounded-full transition-all duration-200 ease-in-out";
-
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 p-4 bg-surface-container-low border-r border-outline-variant z-50">
       <div className="flex items-center gap-3 mb-10 px-2">
@@ -55,17 +49,16 @@ export function Sidebar({ onLogout }: SidebarProps) {
       </div>
       <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
         <div>
-          <Button
+          <NavItem
             type="button"
-            variant="ghost"
+            active={agentsActive}
             onClick={() => {
               navigate("/agents");
               setAgentsOpen((v) => !v);
             }}
-            className={`${parentClass(agentsActive)} justify-start w-full font-body-base text-body-base`}
           >
             <Brain width="1em" height="1em" aria-hidden />
-            <span className={agentsActive ? "font-label-sm" : "font-body-base"}>Agenten</span>
+            <span>Agenten</span>
             <ChevronDown
               className={`ml-auto shrink-0 transition-transform duration-200 ${agentsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
@@ -73,25 +66,19 @@ export function Sidebar({ onLogout }: SidebarProps) {
               height="1em"
               aria-hidden
             />
-          </Button>
+          </NavItem>
 
           {agentsOpen && (
             <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
               {agents.map((agent) => {
                 const active = location.pathname === `/agents/${agent.id}`;
                 return (
-                  <Link
-                    key={agent.id}
-                    to={`/agents/${agent.id}`}
-                    className={
-                      active
-                        ? "flex items-center gap-3 px-3 py-2 rounded-full bg-secondary-container text-on-secondary-container transition-colors"
-                        : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant hover:bg-secondary-container transition-colors"
-                    }
-                  >
-                    <Brain className="text-[18px] shrink-0" width="1em" height="1em" aria-hidden />
-                    <span className="font-body-base text-sm truncate">{agent.name || "(ohne Namen)"}</span>
-                  </Link>
+                  <NavItem key={agent.id} asChild level="sub" active={active}>
+                    <Link to={`/agents/${agent.id}`}>
+                      <Brain className="text-[18px]" width="1em" height="1em" aria-hidden />
+                      <span className="truncate">{agent.name || "(ohne Namen)"}</span>
+                    </Link>
+                  </NavItem>
                 );
               })}
               {agents.length === 0 && (
@@ -102,17 +89,16 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </div>
 
         <div>
-          <Button
+          <NavItem
             type="button"
-            variant="ghost"
+            active={widgetsActive}
             onClick={() => {
               navigate("/");
               setWidgetsOpen((v) => !v);
             }}
-            className={`${parentClass(widgetsActive)} justify-start w-full font-body-base text-body-base`}
           >
             <Waypoints width="1em" height="1em" aria-hidden />
-            <span className={widgetsActive ? "font-label-sm" : "font-body-base"}>Konnektoren</span>
+            <span>Konnektoren</span>
             <ChevronDown
               className={`ml-auto shrink-0 transition-transform duration-200 ${widgetsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
@@ -120,35 +106,31 @@ export function Sidebar({ onLogout }: SidebarProps) {
               height="1em"
               aria-hidden
             />
-          </Button>
+          </NavItem>
 
           {widgetsOpen && (
             <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
               {widgets.map((widget) => {
                 const active = location.pathname === `/widgets/${widget.id}/gespraeche`;
                 return (
-                  <Link
-                    key={widget.id}
-                    to={`/widgets/${widget.id}/gespraeche`}
-                    className={
-                      active
-                        ? "flex items-center gap-3 px-3 py-2 rounded-full bg-secondary-container text-on-secondary-container transition-colors"
-                        : "flex items-center gap-3 px-3 py-2 rounded-full text-on-surface-variant hover:bg-secondary-container transition-colors"
-                    }
-                  >
-                    <WidgetIcon name={widget.icon} size={18} className="shrink-0" />
-                    <span className="font-body-base text-sm truncate">{widget.name}</span>
-                  </Link>
+                  <NavItem key={widget.id} asChild level="sub" active={active}>
+                    <Link to={`/widgets/${widget.id}/gespraeche`}>
+                      <WidgetIcon name={widget.icon} size={18} className="shrink-0" />
+                      <span className="truncate">{widget.name}</span>
+                    </Link>
+                  </NavItem>
                 );
               })}
             </div>
           )}
         </div>
 
-        <Link to="/statistiken" className={parentClass(statistikenActive)}>
-          <ChartColumn width="1em" height="1em" aria-hidden />
-          <span className={statistikenActive ? "font-label-sm" : "font-body-base"}>Statistiken</span>
-        </Link>
+        <NavItem asChild active={statistikenActive}>
+          <Link to="/statistiken">
+            <ChartColumn width="1em" height="1em" aria-hidden />
+            <span>Statistiken</span>
+          </Link>
+        </NavItem>
       </nav>
       <div className="mt-auto pt-4 border-t border-outline-variant relative">
         <div className="mb-3 flex justify-center">
