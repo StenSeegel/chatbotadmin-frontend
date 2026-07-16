@@ -2,11 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../auth/api";
 import { useAuth } from "../auth/AuthContext";
-import { Icon } from "../components/Icon";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
+import { Bot, LogIn } from "lucide-react";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 
 interface PublicProvider {
   id: string;
@@ -100,7 +100,7 @@ export function LoginPage() {
     <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-2 mb-8">
-          <Icon name="smart_toy" className="text-primary" style={{ fontSize: 40 }} />
+          <Bot className="text-primary" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
           <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
           <p className="text-on-surface-variant font-body-base text-sm">
             Melden Sie sich an, um fortzufahren
@@ -122,7 +122,7 @@ export function LoginPage() {
 
           {showOidcButton && oidcProvider && (
             <Button type="button" onClick={loginWithSSO} className="w-full">
-              <Icon name="login" className="text-[18px]" />
+              <LogIn className="text-[18px]" width="1em" height="1em" aria-hidden />
               Anmelden mit {oidcProvider.name}
             </Button>
           )}

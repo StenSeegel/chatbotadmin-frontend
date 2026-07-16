@@ -1,8 +1,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Icon } from "./Icon";
-import { Input } from "@/components/ui/input";
-import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
+import { Check, ChevronDown, Search } from "lucide-react";
+import { Badge, Button, Input, MenuItem } from "@ki4jlu/design-system";
+import { CONVERSATIONS, STATUS_TONES } from "../data/conversations";
 
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
 
@@ -20,33 +20,29 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-outline-variant text-sm text-on-surface-variant hover:bg-secondary-container transition-colors whitespace-nowrap"
-      >
+      <Button variant="outline" size="sm" onClick={() => setOpen((v) => !v)}>
         {value}
-        <Icon name="expand_more" style={{ fontSize: 16 }} />
-      </button>
+        <ChevronDown style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
+      </Button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full mt-1 z-50 min-w-full w-max rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
             {options.map((option) => (
-              <button
+              <MenuItem
                 key={option}
+                type="button"
+                selected={option === value}
                 onClick={() => {
                   onChange(option);
                   setOpen(false);
                 }}
-                className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                  option === value
-                    ? "bg-primary-container text-on-primary-container font-medium"
-                    : "text-on-surface hover:bg-secondary-container"
-                }`}
               >
                 {option}
-                {option === value && <Icon name="check" style={{ fontSize: 16 }} />}
-              </button>
+                {option === value && (
+                  <Check className="ml-auto" style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
+                )}
+              </MenuItem>
             ))}
           </div>
         </>
@@ -98,17 +94,19 @@ export function ConversationsShell({
             <FilterDropdown value={statusFilter} options={STATUS_OPTIONS} onChange={setStatusFilter} />
 
             <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Icon
-                name="search"
+              <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
                 style={{ fontSize: 18 }}
+                width="1em"
+                height="1em"
+                aria-hidden
               />
               <Input
                 type="text"
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest"
+                className="pl-9"
               />
             </div>
           </div>
@@ -125,10 +123,10 @@ export function ConversationsShell({
                 <h3 className="text-title-md font-semibold">Gespräche</h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">{filtered.length} Ergebnisse</p>
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary-container/50 px-2 py-1 rounded-full">
+              <Badge tone="primary">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 Live
-              </span>
+              </Badge>
             </div>
 
             {/* Online-Nutzer (aus den Gesprächen mit Online-Status) */}
@@ -176,9 +174,9 @@ export function ConversationsShell({
                     {c.preview}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}>
+                    <Badge tone={STATUS_TONES[c.status]}>
                       {c.status}
-                    </span>
+                    </Badge>
                     <span className="text-xs text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">
                       {c.channel}
                     </span>

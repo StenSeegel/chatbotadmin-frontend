@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Icon } from "../components/Icon";
+import { Button, Textarea } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Send } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
 import { CONVERSATIONS, type Message } from "../data/conversations";
@@ -77,19 +77,22 @@ export function WidgetConversationsPage() {
                     <p className="text-xs text-on-surface-variant mb-1">
                       {m.author} • {m.time}
                     </p>
-                    <Card className="rounded-2xl rounded-tl-sm px-4 py-3">
+                    <Card className="px-4 py-3">
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
                       {m.sources && m.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {m.sources.map((s, si) => (
-                            <span
-                              key={si}
-                              className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary-container/40 border border-outline-variant rounded-lg px-2.5 py-1"
-                            >
-                              <Icon name={s.icon} style={{ fontSize: 14 }} />
-                              {s.label}
-                            </span>
-                          ))}
+                          {m.sources.map((s, si) => {
+                            const SourceIcon = s.icon;
+                            return (
+                              <span
+                                key={si}
+                                className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary-container/40 border border-outline-variant rounded-lg px-2.5 py-1"
+                              >
+                                <SourceIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
+                                {s.label}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </Card>
@@ -115,8 +118,9 @@ export function WidgetConversationsPage() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-outline-variant p-4">
-            <Card className="rounded-xl">
-              <textarea
+            <Card>
+              <Textarea
+                variant="inline"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -124,15 +128,11 @@ export function WidgetConversationsPage() {
                 }}
                 placeholder="Antwortnachricht eingeben..."
                 rows={3}
-                className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none"
+                className="resize-none px-4 py-3"
               />
               <div className="flex items-center justify-end px-3 py-2">
-                <Button
-                  onClick={handleSend}
-                  disabled={!draft.trim()}
-                  className="px-5 py-2"
-                >
-                  <Icon name="send" style={{ fontSize: 16 }} />
+                <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
+                  <Send style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
                   Senden
                 </Button>
               </div>

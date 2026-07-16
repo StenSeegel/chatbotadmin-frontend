@@ -1,11 +1,34 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Icon } from "./Icon";
+import { Button, CodeBlock } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
+import { Label } from "@ki4jlu/design-system";
+import {
+  ArrowLeft,
+  Brain,
+  Check,
+  ChevronDown,
+  CirclePause,
+  CirclePlay,
+  Code,
+  Copy,
+  ExternalLink,
+  Eye,
+  Gauge,
+  Info,
+  MessagesSquare,
+  Palette,
+  Plus,
+  RefreshCw,
+  Send,
+  SlidersHorizontal,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Markdown } from "./Markdown";
 import { Toggle } from "./Toggle";
 import { ICON_OPTIONS, POSITION_OPTIONS } from "./widgetOptions";
@@ -225,9 +248,8 @@ export function WidgetConfigView({
               size="icon"
               onClick={onCancel}
               aria-label="Zurück zur Übersicht"
-              className="rounded-lg"
             >
-              <Icon name="arrow_back" className="text-[20px]" />
+              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
 
             <div className="min-w-0">
@@ -262,7 +284,9 @@ export function WidgetConfigView({
 
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
-              <button
+              <Button
+                variant="destructive-outline"
+                size="sm"
                 onClick={() => {
                   if (
                     window.confirm(
@@ -272,24 +296,29 @@ export function WidgetConfigView({
                     onDelete();
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error"
               >
-                <Icon name="delete" className="text-[18px]" />
+                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Konnektor löschen
-              </button>
+              </Button>
             )}
             {!isNew && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={onToggleStatus}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors ${
+                className={
                   isActive
                     ? "border-error text-error hover:bg-error-container"
                     : "border-primary text-primary hover:bg-primary/10"
-                }`}
+                }
               >
-                <Icon name={isActive ? "pause_circle" : "play_circle"} className="text-[18px]" />
+                {isActive ? (
+                  <CirclePause className="text-[18px]" width="1em" height="1em" aria-hidden />
+                ) : (
+                  <CirclePlay className="text-[18px]" width="1em" height="1em" aria-hidden />
+                )}
                 {isActive ? "Konnektor deaktivieren" : "Konnektor aktivieren"}
-              </button>
+              </Button>
             )}
             <Button variant="outline" onClick={onCancel}>
               Abbrechen
@@ -297,7 +326,6 @@ export function WidgetConfigView({
             <Button
               onClick={onSave}
               disabled={saved || (isNew && (!widget.name.trim() || !widget.agentId))}
-              className="shadow-sm"
             >
               {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
             </Button>
@@ -315,25 +343,27 @@ export function WidgetConfigView({
           <Card className="p-6 space-y-stack-sm">
             {isNew ? (
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="tune" className="text-primary" />
+                <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
                 Grundeinstellungen
               </h3>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setBasicsOpen((o) => !o)}
                 aria-expanded={basicsOpen}
-                className="w-full flex items-center justify-between gap-2 text-left"
+                // eslint-disable-next-line design-system/layout-only-classname -- Abschnitts-Header mit mehrzeiliger Beschreibung, bewusst umbruchsfähig
+                className="w-full justify-between text-left p-0 whitespace-normal"
               >
                 <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                  <Icon name="tune" className="text-primary" />
+                  <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
                   Grundeinstellungen
                 </h3>
                 <span className="flex items-center gap-1 text-xs text-on-surface-variant">
                   {basicsOpen ? "Einklappen" : "Bearbeiten"}
-                  <Icon name="expand_more" className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} width="1em" height="1em" aria-hidden />
                 </span>
-              </button>
+              </Button>
             )}
 
             {basicsOpen && (
@@ -391,7 +421,7 @@ export function WidgetConfigView({
                         ))}
                       </select>
                       <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                        <Icon name="psychology" className="text-[14px]" />
+                        <Brain className="text-[14px]" width="1em" height="1em" aria-hidden />
                         Die Denkschicht (Modell, System-Prompt, Regeln) kommt aus dem Agenten.
                         {selectedAgent && (
                           <Link to={`/agents/${selectedAgent.id}`} className="text-primary hover:underline">
@@ -423,7 +453,7 @@ export function WidgetConfigView({
           {/* Vorlagen & Verhalten des Konnektors — Front-Belange (nicht Agent-Verhalten) */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="forum" className="text-primary" />
+              <MessagesSquare className="text-primary" width="1em" height="1em" aria-hidden />
               Vorlagen &amp; Verhalten
             </h3>
 
@@ -436,15 +466,16 @@ export function WidgetConfigView({
                     ({widget.config.templates.length}/4)
                   </span>
                 </Label>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   disabled={widget.config.templates.length >= 4}
                   onClick={() => onUpdateConfig("templates", [...widget.config.templates, ""])}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                  className="p-0"
                 >
-                  <Icon name="add" className="text-[16px]" />
+                  <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Vorlage hinzufügen
-                </button>
+                </Button>
               </div>
 
               {widget.config.templates.length === 0 ? (
@@ -463,7 +494,6 @@ export function WidgetConfigView({
                           onUpdateConfig("templates", updated);
                         }}
                         placeholder={`Vorlage ${i + 1}`}
-                        className="text-sm"
                       />
                       <Button
                         type="button"
@@ -471,9 +501,9 @@ export function WidgetConfigView({
                         size="icon"
                         onClick={() => onUpdateConfig("templates", widget.config.templates.filter((_, j) => j !== i))}
                         aria-label="Vorlage entfernen"
-                        className="rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
+                        className="text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
                       >
-                        <Icon name="delete" className="text-[18px]" />
+                        <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                       </Button>
                     </div>
                   ))}
@@ -483,7 +513,7 @@ export function WidgetConfigView({
 
             {/* Hinweis: System-Prompt & Regeln leben im Agenten */}
             <div className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
-              <Icon name="psychology" className="text-primary text-[16px] mt-0.5" />
+              <Brain className="text-primary text-[16px] mt-0.5" width="1em" height="1em" aria-hidden />
               <span>
                 System-Prompt und Regeln werden im Agenten konfiguriert
                 {selectedAgent ? (
@@ -518,7 +548,7 @@ export function WidgetConfigView({
           {/* Rate Limits */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="speed" className="text-primary" />
+              <Gauge className="text-primary" width="1em" height="1em" aria-hidden />
               Rate Limits
             </h3>
 
@@ -528,6 +558,7 @@ export function WidgetConfigView({
                   <Label htmlFor={id}>{label}</Label>
                   <span className="font-mono text-sm">{widget.config[key]}</span>
                 </div>
+                {/* eslint-disable-next-line design-system/no-raw-ui-elements -- range slider; Input covers text-like inputs only */}
                 <input
                   id={id}
                   type="range"
@@ -549,32 +580,20 @@ export function WidgetConfigView({
           {/* Output — Widget-Code */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="code" className="text-primary" />
+              <Code className="text-primary" width="1em" height="1em" aria-hidden />
               Output — Einbettung
             </h3>
 
             {isNew && (
               <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                <Icon name="info" className="text-[14px]" />
+                <Info className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Vorschau — ID wird nach dem Erstellen vergeben.
               </p>
             )}
 
             <div className="flex flex-col gap-1">
               <Label>Einbettungscode</Label>
-              <div className="relative">
-                <pre className="w-full overflow-x-auto px-4 py-3 bg-surface border border-outline-variant rounded-lg font-mono text-xs leading-relaxed whitespace-pre">
-                  {embedCode}
-                </pre>
-                <button
-                  type="button"
-                  onClick={() => onCopy(embedCode, "code")}
-                  className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-md text-xs hover:bg-surface-container-high transition-colors"
-                >
-                  <Icon name={copied === "code" ? "check" : "content_copy"} className="text-[14px]" />
-                  {copied === "code" ? "Kopiert" : "Kopieren"}
-                </button>
-              </div>
+              <CodeBlock code={embedCode} copyLabel="Kopieren" copiedLabel="Kopiert" />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -583,6 +602,7 @@ export function WidgetConfigView({
                 <Input
                   readOnly
                   value={directUrl}
+                  // eslint-disable-next-line design-system/layout-only-classname -- URL ist Code-Inhalt: Monospace bewusst
                   className="font-mono text-xs"
                 />
                 <Button
@@ -591,9 +611,12 @@ export function WidgetConfigView({
                   size="icon"
                   onClick={() => onCopy(directUrl, "url")}
                   aria-label="URL kopieren"
-                  className="rounded-lg"
                 >
-                  <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
+                  {copied === "url" ? (
+                    <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
+                  ) : (
+                    <Copy className="text-[18px]" width="1em" height="1em" aria-hidden />
+                  )}
                 </Button>
                 {!isNew && (
                   <Button
@@ -601,14 +624,13 @@ export function WidgetConfigView({
                     variant="outline"
                     size="icon"
                     aria-label="URL öffnen"
-                    className="rounded-lg"
                   >
                     <a
                       href={directUrl}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <Icon name="open_in_new" className="text-[18px]" />
+                      <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
                     </a>
                   </Button>
                 )}
@@ -619,7 +641,7 @@ export function WidgetConfigView({
           {/* Erscheinungsbild */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="palette" className="text-primary" />
+              <Palette className="text-primary" width="1em" height="1em" aria-hidden />
               Erscheinungsbild
             </h3>
 
@@ -649,6 +671,7 @@ export function WidgetConfigView({
                   Akzentfarbe
                 </Label>
                 <div className="flex items-center gap-2">
+                  {/* eslint-disable-next-line design-system/no-raw-ui-elements -- native color picker swatch, not a text input */}
                   <input
                     id="appearance-color"
                     type="color"
@@ -659,7 +682,8 @@ export function WidgetConfigView({
                   <Input
                     value={widget.config.accentColor}
                     onChange={(e) => onUpdateConfig("accentColor", e.target.value)}
-                    className="px-3 font-mono text-sm"
+                    // eslint-disable-next-line design-system/layout-only-classname -- Hex-Wert ist Code-Inhalt: Monospace bewusst
+                    className="font-mono text-sm"
                   />
                 </div>
               </div>
@@ -685,18 +709,20 @@ export function WidgetConfigView({
               <Label>Icon</Label>
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map((iconName) => (
-                  <button
+                  <Button
                     key={iconName}
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => onUpdate("icon", iconName)}
-                    className={`w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-colors ${
+                    className={`w-11 h-11 rounded-xl border-2 ${
                       widget.icon === iconName
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-outline-variant text-on-surface-variant hover:border-primary/50 hover:text-primary"
+                        ? "border-primary bg-primary/10 hover:bg-primary/10 text-primary"
+                        : "border-outline-variant text-on-surface-variant hover:bg-transparent hover:border-primary/50 hover:text-primary"
                     }`}
                   >
                     <WidgetIcon name={iconName} size={22} />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -706,31 +732,34 @@ export function WidgetConfigView({
           <Card className="p-6 space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="visibility" className="text-primary" />
+                <Eye className="text-primary" width="1em" height="1em" aria-hidden />
                 Vorschau
               </h3>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handlePreviewReset}
-                className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
               >
-                <Icon name="refresh" className="text-[14px]" />
+                <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
-              </button>
+              </Button>
             </div>
 
             <div className="relative h-[420px] rounded-lg border border-outline-variant bg-surface overflow-hidden">
               {/* Geschlossener Zustand: nur der Chat-Button an der eingestellten Position. */}
               {!previewOpen && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setPreviewOpen(true)}
                   aria-label="Chat öffnen"
-                  className={`absolute w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-transform hover:scale-105 ${previewPositionClass}`}
+                  className={`absolute w-14 h-14 rounded-full shadow-lg text-white transition-transform hover:scale-105 ${previewPositionClass}`}
                   style={{ backgroundColor: widget.config.accentColor }}
                 >
                   <WidgetIcon name={widget.icon || "Bot"} size={26} />
-                </button>
+                </Button>
               )}
 
               {/* Geöffneter Zustand: das Chat-Fenster. */}
@@ -750,14 +779,17 @@ export function WidgetConfigView({
                       {widget.routing}
                     </span>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setPreviewOpen(false)}
                     aria-label="Chat schließen"
-                    className="p-0.5 rounded hover:bg-white/20 transition-colors shrink-0"
+                    // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
+                    className="p-0.5 rounded text-white hover:bg-white/20 shrink-0"
                   >
-                    <Icon name="close" className="text-[18px]" />
-                  </button>
+                    <X className="text-[18px]" width="1em" height="1em" aria-hidden />
+                  </Button>
                 </div>
 
                 <div ref={messagesRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-surface-container-low">
@@ -773,26 +805,32 @@ export function WidgetConfigView({
                       </div>
                       {msg.role === "bot" && i > 0 && !msg.notice && widget.config.feedbackButtons && (
                         <div className="flex items-center gap-1 mt-1">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePreviewFeedback(i, "up")}
                             aria-label="Hilfreich"
-                            className={`p-0.5 rounded transition-colors ${
+                            // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
+                            className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "up" ? "text-primary" : "text-on-surface-variant/50 hover:text-primary"
                             }`}
                           >
-                            <Icon name="thumb_up" className="text-[14px]" />
-                          </button>
-                          <button
+                            <ThumbsUp className="text-[14px]" width="1em" height="1em" aria-hidden />
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePreviewFeedback(i, "down")}
                             aria-label="Nicht hilfreich"
-                            className={`p-0.5 rounded transition-colors ${
+                            // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
+                            className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "down" ? "text-error" : "text-on-surface-variant/50 hover:text-error"
                             }`}
                           >
-                            <Icon name="thumb_down" className="text-[14px]" />
-                          </button>
+                            <ThumbsDown className="text-[14px]" width="1em" height="1em" aria-hidden />
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -813,21 +851,24 @@ export function WidgetConfigView({
                 {previewMessages.length === 1 && widget.config.templates.filter(Boolean).length > 0 && (
                   <div className="flex flex-wrap justify-start gap-1 px-2 pt-1 pb-1 shrink-0 bg-surface-container-low">
                     {widget.config.templates.filter(Boolean).map((tpl, i) => (
-                      <button
+                      <Button
                         key={i}
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => handlePreviewSend(tpl)}
-                        className="px-2 py-0.5 rounded-full border bg-surface-container-lowest text-[10px] font-medium cursor-pointer transition-colors hover:bg-surface-container-high"
+                        // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
+                        className="px-2 py-0.5 rounded-full bg-surface-container-lowest text-[10px] font-medium cursor-pointer"
                         style={{ borderColor: widget.config.accentColor, color: widget.config.accentColor }}
                       >
                         {tpl}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
 
                 <div className="flex items-center gap-1 p-2 border-t border-outline-variant shrink-0">
-                  <input
+                  <Input
                     value={previewDraft}
                     onChange={(e) => setPreviewDraft(e.target.value)}
                     onKeyDown={(e) => {
@@ -837,22 +878,25 @@ export function WidgetConfigView({
                       }
                     }}
                     placeholder="Nachricht eingeben…"
-                    className="flex-1 px-3 py-1.5 bg-surface border rounded-full text-xs outline-none focus:ring-2 min-w-0"
+                    // eslint-disable-next-line design-system/layout-only-classname -- Vorschau simuliert das eingebettete widget.js
+                    className="flex-1 px-3 py-1.5 rounded-full text-xs focus:ring-2 min-w-0"
                     style={{
                       borderColor: widget.config.accentColor,
                       "--tw-ring-color": widget.config.accentColor,
                     } as CSSProperties}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handlePreviewSend(previewDraft)}
                     disabled={!previewDraft.trim() || previewTyping}
                     aria-label="Senden"
-                    className="p-2 rounded-full text-white disabled:opacity-40 transition-opacity shrink-0"
+                    className="text-white shrink-0"
                     style={{ backgroundColor: widget.config.accentColor }}
                   >
-                    <Icon name="send" className="text-[16px]" />
-                  </button>
+                    <Send className="text-[16px]" width="1em" height="1em" aria-hidden />
+                  </Button>
                 </div>
               </div>
               )}

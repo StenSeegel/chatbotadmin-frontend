@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { Icon } from "./Icon";
+import { Ban } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return (
       <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
         <div className="w-full max-w-sm text-center">
-          <Icon name="block" className="text-error mb-4" style={{ fontSize: 40 }} />
+          <Ban className="text-error mb-4" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
           <h2 className="text-headline-md font-bold text-on-surface mb-2">Zugriff verweigert</h2>
           <p className="text-sm text-on-surface-variant">
             Sie benötigen die Rolle <strong>{requiredRole}</strong>, um auf diese Seite zuzugreifen.

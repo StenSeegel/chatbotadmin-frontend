@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useParams } from "react-router-dom";
 import { Bot, Send, ThumbsDown, ThumbsUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, Input } from "@ki4jlu/design-system";
 import { Markdown } from "../components/Markdown";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import { fetchPublicConfig, type PublicWidgetConfig } from "../data/widgetsStore";
@@ -188,26 +188,26 @@ export function StandaloneWidgetPage() {
 
               {config.feedbackButtons && msg.role === "bot" && !msg.notice ? (
                 <div className="flex gap-1 mt-1 ml-1 text-on-surface-variant">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     aria-label="Hilfreich"
                     onClick={() => setFeedback(i, "up")}
-                    className={`p-1 rounded transition-colors hover:text-on-surface ${
-                      msg.feedback === "up" ? "text-primary" : ""
-                    }`}
+                    className={msg.feedback === "up" ? "text-primary" : undefined}
                   >
                     <ThumbsUp size={15} />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     aria-label="Nicht hilfreich"
                     onClick={() => setFeedback(i, "down")}
-                    className={`p-1 rounded transition-colors hover:text-on-surface ${
-                      msg.feedback === "down" ? "text-primary" : ""
-                    }`}
+                    className={msg.feedback === "down" ? "text-primary" : undefined}
                   >
                     <ThumbsDown size={15} />
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </div>
@@ -225,15 +225,16 @@ export function StandaloneWidgetPage() {
           {onlyGreeting && isActive && config.templates.length ? (
             <div className="flex flex-wrap gap-2 pt-1">
               {config.templates.map((tpl) => (
-                <button
+                <Button
                   key={tpl}
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleSend(tpl)}
-                  className="rounded-full border bg-surface px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-container"
                   style={{ color: accent, borderColor: `${accent}66` }}
                 >
                   {tpl}
-                </button>
+                </Button>
               ))}
             </div>
           ) : null}
@@ -249,19 +250,20 @@ export function StandaloneWidgetPage() {
                 handleSend(draft);
               }}
             >
-              <input
+              <Input
                 type="text"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Frage eingeben…"
                 autoComplete="off"
-                className="flex-1 rounded-full border border-outline-variant bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary"
+                className="flex-1"
               />
               <Button
                 type="submit"
+                size="icon"
                 disabled={!draft.trim() || typing}
                 aria-label="Senden"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white p-0 disabled:opacity-50"
+                className="shrink-0 text-white"
                 style={{ backgroundColor: accent }}
               >
                 <Send size={18} />

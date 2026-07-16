@@ -1,14 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Icon } from "./Icon";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import {
+  ArrowLeft,
+  Brain,
+  Check,
+  BookSearch,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Send,
+  Trash2,
+  Waypoints,
+  Wrench,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Markdown } from "./Markdown";
 import { ModelCombobox } from "./ModelCombobox";
-import { Label } from "@/components/ui/label";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Label } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
+import { Input, Textarea } from "@ki4jlu/design-system";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import type { Agent, AgentRule } from "../types/agent";
+
+/** Platzhalter-Kacheln für „Tools & Wissen" (Post-MVP). */
+const TOOL_PLACEHOLDERS: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: Wrench, title: "Native Tools", desc: "Interne Aktionen" },
+  { icon: Waypoints, title: "MCP Tools", desc: "Aus globalem Registry" },
+  { icon: BookSearch, title: "Wissen (RAG)", desc: "Noch keine Quellen" },
+];
 
 interface TestMessage {
   role: "bot" | "user";
@@ -157,8 +178,8 @@ export function AgentEditorView({
       <header className="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-30">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht" className="rounded-lg">
-              <Icon name="arrow_back" className="text-[20px]" />
+            <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht">
+              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
             <div className="min-w-0">
               {isNew ? (
@@ -166,7 +187,7 @@ export function AgentEditorView({
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <Icon name="psychology" className="text-primary text-[22px]" />
+                    <Brain className="text-primary text-[22px]" width="1em" height="1em" aria-hidden />
                     <h2 className="font-headline-md text-headline-md text-on-surface truncate">{agent.name}</h2>
                   </div>
                   <p className="font-mono text-xs text-on-surface-variant truncate">Agent-ID: {agent.id}</p>
@@ -177,7 +198,9 @@ export function AgentEditorView({
 
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
-              <button
+              <Button
+                variant="destructive-outline"
+                size="sm"
                 onClick={() => {
                   if (deleteBlocked) return;
                   if (window.confirm(`Agent „${agent.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
@@ -186,17 +209,15 @@ export function AgentEditorView({
                 }}
                 disabled={deleteBlocked}
                 title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-error"
               >
-                <Icon name="delete" className="text-[18px]" />
+                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Agent löschen
-              </button>
+              </Button>
             )}
             <Button variant="outline" onClick={onCancel}>Abbrechen</Button>
             <Button
               onClick={onSave}
               disabled={saved || (isNew && (!agent.name.trim() || !agent.model.trim()))}
-              className="shadow-sm"
             >
               {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
             </Button>
@@ -210,7 +231,7 @@ export function AgentEditorView({
         <div className="lg:col-span-2 space-y-stack-lg">
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="psychology" className="text-primary" />
+              <Brain className="text-primary" width="1em" height="1em" aria-hidden />
               Denkschicht
             </h3>
 
@@ -229,7 +250,6 @@ export function AgentEditorView({
                   value={agent.model}
                   onChange={(value) => onUpdate("model", value)}
                   placeholder="Modell-ID eingeben…"
-                  className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -237,6 +257,7 @@ export function AgentEditorView({
                   <Label htmlFor="agent-max-tokens">Max. Tokens pro Antwort</Label>
                   <span className="font-mono text-sm">{agent.maxTokens}</span>
                 </div>
+                {/* eslint-disable-next-line design-system/no-raw-ui-elements -- range slider; Input only covers text-like fields */}
                 <input
                   id="agent-max-tokens"
                   type="range"
@@ -252,12 +273,12 @@ export function AgentEditorView({
 
             <div className="flex flex-col gap-1">
               <Label htmlFor="agent-system-prompt">System-Prompt</Label>
-              <textarea
+              <Textarea
                 id="agent-system-prompt"
                 rows={5}
                 value={agent.systemPrompt}
                 onChange={(e) => onUpdate("systemPrompt", e.target.value)}
-                className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm resize-y"
+                className="resize-y"
               />
             </div>
 
@@ -265,14 +286,15 @@ export function AgentEditorView({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label>Regeln</Label>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={() => onUpdate("rules", [...agent.rules, { text: "", enabled: true } satisfies AgentRule])}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  className="p-0"
                 >
-                  <Icon name="add" className="text-[16px]" />
+                  <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Regel hinzufügen
-                </button>
+                </Button>
               </div>
 
               {agent.rules.length === 0 ? (
@@ -281,6 +303,7 @@ export function AgentEditorView({
                 <div className="divide-y divide-outline-variant/30 border border-outline-variant rounded-lg overflow-hidden">
                   {agent.rules.map((rule, i) => (
                     <div key={i} className="flex items-center gap-3 px-3 py-2 bg-surface hover:bg-surface-container-low transition-colors">
+                      {/* eslint-disable-next-line design-system/no-raw-ui-elements -- custom checkbox toggle; no Checkbox component in the design system and Button padding/hover styles don't fit */}
                       <button
                         type="button"
                         onClick={() => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, enabled: !r.enabled } : r)))}
@@ -289,24 +312,27 @@ export function AgentEditorView({
                         }`}
                         aria-label={rule.enabled ? "Deaktivieren" : "Aktivieren"}
                       >
-                        {rule.enabled && <Icon name="check" className="text-[14px]" />}
+                        {rule.enabled && <Check className="text-[14px]" width="1em" height="1em" aria-hidden />}
                       </button>
-                      <input
+                      <Input
                         value={rule.text}
                         onChange={(e) => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, text: e.target.value } : r)))}
                         placeholder="Neue Regel..."
-                        className={`flex-1 bg-transparent text-sm outline-none ${
+                        variant="inline"
+                        className={`flex-1 ${
                           rule.enabled ? "text-on-surface" : "text-on-surface-variant line-through"
                         }`}
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => onUpdate("rules", agent.rules.filter((_, j) => j !== i))}
                         aria-label="Regel entfernen"
-                        className="shrink-0 p-1 text-on-surface-variant hover:text-error transition-colors"
+                        className="shrink-0"
                       >
-                        <Icon name="close" className="text-[16px]" />
-                      </button>
+                        <X className="text-[16px]" width="1em" height="1em" aria-hidden />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -317,17 +343,13 @@ export function AgentEditorView({
           {/* Tools & Wissen — MVP-Platzhalter (Ebene 1) */}
           <Card className="p-6 space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-              <Icon name="build" className="text-primary" />
+              <Wrench className="text-primary" width="1em" height="1em" aria-hidden />
               Tools & Wissen
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-stack-sm">
-              {[
-                { icon: "build", title: "Native Tools", desc: "Interne Aktionen" },
-                { icon: "hub", title: "MCP Tools", desc: "Aus globalem Registry" },
-                { icon: "menu_book", title: "Wissen (RAG)", desc: "Noch keine Quellen" },
-              ].map((ph) => (
+              {TOOL_PLACEHOLDERS.map((ph) => (
                 <div key={ph.title} className="border border-dashed border-outline-variant rounded-lg p-4 text-center bg-surface">
-                  <Icon name={ph.icon} className="text-on-surface-variant text-[22px]" />
+                  <ph.icon className="text-on-surface-variant text-[22px]" width="1em" height="1em" aria-hidden />
                   <p className="font-semibold text-sm mt-1">{ph.title}</p>
                   <p className="text-xs text-on-surface-variant">{ph.desc}</p>
                   <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wide bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded-full">
@@ -344,17 +366,18 @@ export function AgentEditorView({
           <Card className="p-6 space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
-                <Icon name="chat" className="text-primary" />
+                <MessageSquare className="text-primary" width="1em" height="1em" aria-hidden />
                 Test-Chat
               </h3>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handleReset}
-                className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
               >
-                <Icon name="refresh" className="text-[14px]" />
+                <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
-              </button>
+              </Button>
             </div>
             <p className="text-xs text-on-surface-variant">
               Testet den reinen Agenten – System-Prompt und aktive Regeln werden gesendet. Vorlagen &amp; Design gehören zum Konnektor.
@@ -385,7 +408,7 @@ export function AgentEditorView({
               </div>
 
               <div className="flex items-center gap-1 p-2 border-t border-outline-variant shrink-0 bg-surface-container-lowest">
-                <input
+                <Input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
@@ -395,17 +418,18 @@ export function AgentEditorView({
                     }
                   }}
                   placeholder="Nachricht eingeben…"
-                  className="flex-1 px-3 py-1.5 bg-surface border border-outline-variant rounded-full text-xs outline-none focus:ring-2 focus:ring-primary min-w-0"
+                  className="flex-1 min-w-0"
                 />
-                <button
+                <Button
                   type="button"
+                  size="icon"
                   onClick={() => handleSend(draft)}
                   disabled={!draft.trim() || typing}
                   aria-label="Senden"
-                  className="p-2 rounded-full bg-primary text-on-primary disabled:opacity-40 transition-opacity shrink-0"
+                  className="shrink-0"
                 >
-                  <Icon name="send" className="text-[16px]" />
-                </button>
+                  <Send className="text-[16px]" width="1em" height="1em" aria-hidden />
+                </Button>
               </div>
             </div>
           </Card>

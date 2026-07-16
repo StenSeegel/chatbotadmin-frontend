@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Icon } from "./Icon";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Brain, Code, Settings, type LucideIcon } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
 
@@ -15,12 +15,12 @@ const statusClasses: Record<Widget["status"], { badge: string; dot: string; labe
   paused: { badge: "bg-surface-container-highest text-on-surface-variant", dot: "bg-on-surface-variant", label: "Pause" },
 };
 
-// Die drei identischen Footer-Buttons (Einstellungen / Chatbox / Einbetten).
-// `path` wird an `/widgets/${id}` angehängt; `wrap` steuert break-words vs. truncate.
-const footerActions: { path: string; icon: string; label: string; wrap: boolean; tight: boolean }[] = [
-  { path: "", icon: "settings", label: "Einstellungen", wrap: true, tight: true },
-  { path: "/gespraeche", icon: "chat", label: "Chatbox", wrap: false, tight: false },
-  { path: "/einbetten", icon: "code", label: "Einbetten", wrap: false, tight: false },
+// Footer-Buttons (`path` wird an `/widgets/${id}` angehängt). Die Chatbox ist
+// bewusst keine Karten-Aktion mehr — Gespräche sind über die Sidebar-Subnavigation
+// erreichbar, und drei Buttons passen nicht ohne Verkleinerungs-Hacks in die Karte.
+const footerActions: { path: string; icon: LucideIcon; label: string }[] = [
+  { path: "", icon: Settings, label: "Einstellungen" },
+  { path: "/einbetten", icon: Code, label: "Einbetten" },
 ];
 
 interface WidgetCardProps {
@@ -49,7 +49,7 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
       <div className="mb-3">
         <h4 className="font-headline-md text-base font-bold">{widget.name}</h4>
         <div className="flex items-center gap-2 text-on-surface-variant mt-1">
-          <Icon name="psychology" className="text-sm" />
+          <Brain className="text-sm" width="1em" height="1em" aria-hidden />
           <span className="font-label-sm text-xs truncate">{agentName || "kein Agent"}</span>
         </div>
       </div>
@@ -71,20 +71,12 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 mt-auto">
+      <div className="grid grid-cols-2 gap-2 mt-auto">
         {footerActions.map((action) => (
-          <Button
-            key={action.path}
-            asChild
-            variant="outline"
-            size="sm"
-            className={`flex-col gap-1 min-w-0 w-full px-1 py-1.5 font-mono text-[10px]${action.tight ? " leading-tight" : ""}`}
-          >
+          <Button key={action.path} asChild variant="outline" size="sm" className="w-full">
             <Link to={`/widgets/${widget.id}${action.path}`}>
-              <Icon name={action.icon} className="text-sm" />
-              <span className={`w-full text-center ${action.wrap ? "break-words" : "truncate"}`}>
-                {action.label}
-              </span>
+              <action.icon className="text-sm" width="1em" height="1em" aria-hidden />
+              {action.label}
             </Link>
           </Button>
         ))}

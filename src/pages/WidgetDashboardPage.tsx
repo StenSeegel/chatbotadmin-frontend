@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Icon } from "../components/Icon";
+import { Badge, Card, Input } from "@ki4jlu/design-system";
+import { Search } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
 import {
   CONVERSATIONS,
   DASHBOARD_STATS,
-  STATUS_STYLES,
+  STATUS_TONES,
   TOP_QUESTIONS,
 } from "../data/conversations";
 
@@ -50,7 +50,7 @@ export function WidgetDashboardPage() {
     <ConversationsShell widgetId={id} widgetName={widgetName}>
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-surface-container-low/30">
         {/* Bot header card */}
-        <Card className="rounded-2xl p-6 space-y-4">
+        <Card className="p-6 space-y-4">
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-success shrink-0" />
             <h2 className="text-title-lg font-bold">{widgetName ?? "Widget"}</h2>
@@ -59,17 +59,19 @@ export function WidgetDashboardPage() {
             </span>
           </div>
           <div className="relative">
-            <Icon
-              name="search"
+            <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
               style={{ fontSize: 18 }}
+              width="1em"
+              height="1em"
+              aria-hidden
             />
-            <input
+            <Input
               type="text"
               placeholder="Suchen..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-outline-variant text-sm bg-surface-container-low focus:outline-none focus:border-primary"
+              className="pl-9"
             />
           </div>
         </Card>
@@ -77,7 +79,7 @@ export function WidgetDashboardPage() {
         {/* KPI row */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {kpis.map((kpi) => (
-            <Card key={kpi.label} className="rounded-2xl p-5">
+            <Card key={kpi.label} className="p-5">
               <p className="text-sm text-on-surface-variant">{kpi.label}</p>
               <p className={`text-2xl font-bold mt-2 ${kpi.accent ? "text-primary" : "text-on-surface"}`}>
                 {kpi.value}
@@ -89,7 +91,7 @@ export function WidgetDashboardPage() {
         {/* Zuletzt aktiv + Top-Fragen */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Zuletzt aktiv */}
-          <Card className="rounded-2xl p-6">
+          <Card className="p-6">
             <h3 className="text-title-md font-semibold mb-4">Zuletzt aktiv</h3>
             <div className="space-y-1">
               {recent.map((c) => (
@@ -102,9 +104,9 @@ export function WidgetDashboardPage() {
                     {c.initials}
                   </span>
                   <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}>
+                  <Badge tone={STATUS_TONES[c.status]}>
                     {c.status}
-                  </span>
+                  </Badge>
                 </Link>
               ))}
               {recent.length === 0 && (
@@ -114,7 +116,7 @@ export function WidgetDashboardPage() {
           </Card>
 
           {/* Top-Fragen */}
-          <Card className="rounded-2xl p-6">
+          <Card className="p-6">
             <h3 className="text-title-md font-semibold mb-4">Top-Fragen</h3>
             <div className="space-y-4">
               {TOP_QUESTIONS.map((q) => (

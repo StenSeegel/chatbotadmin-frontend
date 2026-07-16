@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "./Icon";
+import { Button, Input, MenuItem } from "@ki4jlu/design-system";
+import { Bot, Check, ChevronDown, CircleAlert, LoaderCircle } from "lucide-react";
 import { fetchModels, type LanguageModel } from "../data/models";
 
 interface ModelComboboxProps {
@@ -133,7 +134,7 @@ export function ModelCombobox({
   return (
     <div className="relative">
       <div className="relative">
-        <input
+        <Input
           ref={inputRef}
           id={id}
           value={inputText}
@@ -155,8 +156,10 @@ export function ModelCombobox({
           placeholder={placeholder}
           className={className}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           tabIndex={-1}
           // Fokus im Feld behalten, damit onBlur nicht vorzeitig committet.
           onMouseDown={(e) => e.preventDefault()}
@@ -169,13 +172,15 @@ export function ModelCombobox({
             }
           }}
           aria-label="Knowledge-Bases anzeigen"
-          className="absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant hover:text-primary transition-colors"
+          className="absolute inset-y-0 right-0"
         >
-          <Icon
-            name="expand_more"
+          <ChevronDown
             className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
+            width="1em"
+            height="1em"
+            aria-hidden
           />
-        </button>
+        </Button>
       </div>
 
       {open && (
@@ -186,7 +191,7 @@ export function ModelCombobox({
         >
           {loading && (
             <div className="flex items-center gap-2 px-3 py-2 text-sm text-on-surface-variant">
-              <Icon name="progress_activity" className="text-[18px] animate-spin" />
+              <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
               Modelle werden geladen…
             </div>
           )}
@@ -194,17 +199,19 @@ export function ModelCombobox({
           {!loading && error && (
             <div className="px-3 py-2">
               <p className="text-sm text-error flex items-center gap-1.5">
-                <Icon name="error" className="text-[18px]" />
+                <CircleAlert className="text-[18px]" width="1em" height="1em" aria-hidden />
                 {error}
               </p>
-              <button
+              <Button
                 type="button"
+                variant="link"
+                size="sm"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => load(true)}
-                className="mt-1 text-xs text-primary hover:underline"
+                className="mt-1 p-0"
               >
                 Erneut versuchen
-              </button>
+              </Button>
             </div>
           )}
 
@@ -217,26 +224,25 @@ export function ModelCombobox({
           {!loading &&
             !error &&
             filtered.map((m, i) => (
-              <button
+              <MenuItem
                 key={m.id}
                 type="button"
                 role="option"
                 aria-selected={m.id === value}
+                selected={m.id === value}
+                highlighted={i === highlight}
                 // Verhindert, dass der Klick das Feld unfokussiert (onBlur) –
                 // sonst würde commitText vor select() greifen.
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => select(m)}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                  i === highlight ? "bg-surface-container-high" : "hover:bg-surface-container-low"
-                } ${m.id === value ? "text-primary" : "text-on-surface"}`}
               >
-                <span className="flex items-center gap-2 min-w-0">
-                  <Icon name="smart_toy" className="text-[18px] shrink-0 text-on-surface-variant" />
+                <span className="flex min-w-0 items-center gap-2">
+                  <Bot className="text-[18px] shrink-0 text-on-surface-variant" width="1em" height="1em" aria-hidden />
                   <span className="truncate">{m.name || m.id}</span>
                 </span>
-                {m.id === value && <Icon name="check" className="text-[18px] shrink-0" />}
-              </button>
+                {m.id === value && <Check className="ml-auto text-[18px]" width="1em" height="1em" aria-hidden />}
+              </MenuItem>
             ))}
         </div>
       )}

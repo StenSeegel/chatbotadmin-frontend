@@ -1,9 +1,21 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Icon } from "../components/Icon";
+import { Badge, Button, CodeBlock } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
+import {
+  ArrowLeft,
+  Check,
+  CircleAlert,
+  CircleCheck,
+  CirclePause,
+  Copy,
+  ExternalLink,
+  TriangleAlert,
+  LoaderCircle,
+  Send,
+  type LucideIcon,
+} from "lucide-react";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -63,7 +75,7 @@ function StepCard({
   const status = statusBadge[tone];
   return (
     <Card
-      className={`rounded-2xl p-6 space-y-stack-sm ${
+      className={`p-6 space-y-stack-sm ${
         accent ? "border-l-4 border-l-primary" : ""
       }`}
     >
@@ -105,35 +117,6 @@ function StepCard({
   );
 }
 
-function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; onCopy: () => void }) {
-  return (
-    // Documented design-system exception: a code/terminal viewer stays fixed-dark
-    // in both themes (see docs/DESIGN_SYSTEM.md "Accepted color exceptions").
-    // eslint-disable-next-line design-system/no-hardcoded-colors
-    <div className="relative rounded-xl bg-[#1e1e2e] overflow-hidden">
-      <button
-        type="button"
-        onClick={onCopy}
-        className="absolute top-2.5 right-2.5 flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition-colors"
-      >
-        <Icon name={copied ? "check" : "content_copy"} className="text-[14px]" />
-        {copied ? "Kopiert" : "Code kopieren"}
-      </button>
-      <pre className="overflow-x-auto p-4 pr-28 font-mono text-xs leading-relaxed">
-        {code.split("\n").map((line, i) => (
-          <div
-            key={i}
-            // eslint-disable-next-line design-system/no-hardcoded-colors
-            className={line.trim().startsWith("<!--") ? "text-emerald-400/80" : "text-slate-100"}
-          >
-            {line || " "}
-          </div>
-        ))}
-      </pre>
-    </div>
-  );
-}
-
 // ── Seite ────────────────────────────────────────────────────────────────
 
 export function WidgetEmbedPage() {
@@ -151,7 +134,7 @@ export function WidgetEmbedPage() {
   // lesbarer HTTP-Status. So sieht die Testseite dasselbe localStorage und dieselbe
   // Session wie das Admin-UI (auf VITE_WIDGET_BASE_URL wäre beides leer/ungültig).
   const [siteStatus, setSiteStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [copied, setCopied] = useState<"loader" | "placeholder" | "url" | null>(null);
+  const [copied, setCopied] = useState<"url" | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -215,7 +198,7 @@ export function WidgetEmbedPage() {
     };
   }, [id]);
 
-  const copy = async (text: string, key: "loader" | "placeholder" | "url") => {
+  const copy = async (text: string, key: "url") => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(key);
@@ -227,9 +210,9 @@ export function WidgetEmbedPage() {
 
   const header = (
     <div className="flex items-center gap-3 mb-2">
-      <Button asChild variant="outline" size="icon" className="rounded-lg">
+      <Button asChild variant="outline" size="icon">
         <Link to="/" aria-label="Zurück zur Übersicht">
-          <Icon name="arrow_back" className="text-[20px]" />
+          <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
         </Link>
       </Button>
       <div className="min-w-0">
@@ -257,7 +240,7 @@ export function WidgetEmbedPage() {
       <main className="flex-grow p-gutter max-w-3xl mx-auto w-full space-y-stack-lg">
         {header}
         <div className="flex items-center gap-2 text-on-surface-variant text-sm">
-          <Icon name="progress_activity" className="text-[18px] animate-spin" />
+          <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
           Wird geladen…
         </div>
       </main>
@@ -274,17 +257,14 @@ export function WidgetEmbedPage() {
   const kbAssigned = widget.knowledgeBaseId.trim() !== "";
 
   // Wiederverwendbarer Status-Chip.
-  const chip = (tone: "success" | "warning" | "error" | "muted" | "loading", icon: string, text: string): ReactNode => {
-    const toneClass =
-      tone === "success" ? "text-success"
-      : tone === "warning" ? "text-warning"
-      : tone === "error" ? "text-error"
-      : "text-on-surface-variant";
+  const chip = (tone: "success" | "warning" | "error" | "muted" | "loading", icon: LucideIcon, text: string): ReactNode => {
+    const ChipIcon = icon;
+    const badgeTone = tone === "muted" || tone === "loading" ? "neutral" : tone;
     return (
-      <span className={`inline-flex items-center gap-1 ${toneClass}`}>
-        <Icon name={icon} className={`text-[16px] ${tone === "loading" ? "animate-spin" : ""}`} />
+      <Badge appearance="text" tone={badgeTone}>
+        <ChipIcon className={`text-[16px] ${tone === "loading" ? "animate-spin" : ""}`} width="1em" height="1em" aria-hidden />
         {text}
-      </span>
+      </Badge>
     );
   };
 
@@ -293,18 +273,18 @@ export function WidgetEmbedPage() {
   //  • Knowledge-Base → ob eine KB zugewiesen ist und sie in /api/models existiert
   //  • Backend        → ob der /api/models-Abruf erfolgreich war
   const kbNode: ReactNode =
-    !kbAssigned ? chip("error", "error", "Keine KB zugewiesen")
-    : apiStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
+    !kbAssigned ? chip("error", CircleAlert, "Keine KB zugewiesen")
+    : apiStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
     : apiStatus === "ok" && !kbIds.has(widget.knowledgeBaseId)
-      ? chip("warning", "warning", `${kbDisplay} — nicht gefunden`)
-    : chip("success", "check_circle", kbDisplay);
+      ? chip("warning", TriangleAlert, `${kbDisplay} — nicht gefunden`)
+    : chip("success", CircleCheck, kbDisplay);
 
   const checks: { label: string; node: ReactNode }[] = [
     {
       label: "Widget-Status",
       node: widget.status === "active"
-        ? chip("success", "check_circle", "Aktiv")
-        : chip("warning", "pause_circle", "Pausiert"),
+        ? chip("success", CircleCheck, "Aktiv")
+        : chip("warning", CirclePause, "Pausiert"),
     },
     {
       label: "Knowledge-Base",
@@ -313,16 +293,16 @@ export function WidgetEmbedPage() {
     {
       label: "Backend erreichbar",
       node:
-        apiStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
-        : apiStatus === "ok" ? chip("success", "check_circle", "OK")
-        : chip("error", "error", "Nicht erreichbar"),
+        apiStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
+        : apiStatus === "ok" ? chip("success", CircleCheck, "OK")
+        : chip("error", CircleAlert, "Nicht erreichbar"),
     },
     {
       label: "Testseite erreichbar",
       node:
-        siteStatus === "loading" ? chip("loading", "progress_activity", "Wird geprüft…")
-        : siteStatus === "ok" ? chip("success", "check_circle", "Erreichbar")
-        : chip("error", "error", "Nicht erreichbar"),
+        siteStatus === "loading" ? chip("loading", LoaderCircle, "Wird geprüft…")
+        : siteStatus === "ok" ? chip("success", CircleCheck, "Erreichbar")
+        : chip("error", CircleAlert, "Nicht erreichbar"),
     },
   ];
 
@@ -349,11 +329,7 @@ export function WidgetEmbedPage() {
         subtitle="Einmalig im Plone-Theme einbinden"
         tags={[{ label: "Admin" }, { label: "Einmalig" }]}
       >
-        <CodeBlock
-          code={buildLoaderCode()}
-          copied={copied === "loader"}
-          onCopy={() => copy(buildLoaderCode(), "loader")}
-        />
+        <CodeBlock code={buildLoaderCode()} />
         <p className="text-xs text-on-surface-variant italic">
           Dieser Code wird nur einmal global eingebunden — nicht pro Seite.
         </p>
@@ -368,35 +344,22 @@ export function WidgetEmbedPage() {
         subtitle="Im Seiteninhalt einfügen"
         tags={[{ label: "Editor" }, { label: "Pro Seite", outline: true }]}
       >
-        <CodeBlock
-          code={buildPlaceholderCode(widget)}
-          copied={copied === "placeholder"}
-          onCopy={() => copy(buildPlaceholderCode(widget), "placeholder")}
-        />
+        <CodeBlock code={buildPlaceholderCode(widget)} />
 
         <div className="flex flex-col gap-1 pt-1">
           <label className="font-label-sm text-xs uppercase tracking-wide text-on-surface-variant">
             Direkte URL
           </label>
           <div className="flex items-center gap-2">
-            <Input
-              readOnly
-              value={directUrl}
-              className="bg-surface font-mono text-xs"
-            />
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              className="shrink-0 rounded-lg"
-            >
+            <Input readOnly value={directUrl} />
+            <Button asChild variant="outline" size="icon" className="shrink-0">
               <a
                 href={directUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="URL öffnen"
               >
-                <Icon name="open_in_new" className="text-[18px]" />
+                <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
               </a>
             </Button>
             <Button
@@ -405,9 +368,13 @@ export function WidgetEmbedPage() {
               size="icon"
               onClick={() => copy(directUrl, "url")}
               aria-label="URL kopieren"
-              className="shrink-0 rounded-lg"
+              className="shrink-0"
             >
-              <Icon name={copied === "url" ? "check" : "content_copy"} className="text-[18px]" />
+              {copied === "url" ? (
+                <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
+              ) : (
+                <Copy className="text-[18px]" width="1em" height="1em" aria-hidden />
+              )}
             </Button>
           </div>
         </div>
@@ -432,13 +399,9 @@ export function WidgetEmbedPage() {
           ))}
         </div>
 
-        <Button
-          asChild
-          variant="ghost"
-          className="mt-2 w-full rounded-xl px-4 py-3 bg-surface-container-high hover:bg-surface-container-highest"
-        >
+        <Button asChild variant="ghost" className="mt-2 w-full">
           <a href={testUrl} target="_blank" rel="noopener noreferrer">
-            <Icon name="send" className="text-[18px]" />
+            <Send className="text-[18px]" width="1em" height="1em" aria-hidden />
             Testseite öffnen
           </a>
         </Button>

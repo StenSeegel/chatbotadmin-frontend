@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { Icon } from "../components/Icon";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Clock,
+  MessagesSquare,
+  Search,
+  Star,
+  TrendingDown,
+  TrendingUp,
+  User,
+  type LucideIcon,
+} from "lucide-react";
+import { Badge, Card, Input, SegmentedControl } from "@ki4jlu/design-system";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -9,9 +17,16 @@ type ChartView = "Tag" | "Woche" | "Monat";
 
 // ── Mock data ─────────────────────────────────────────────────
 
-const KPI_CARDS = [
+const KPI_CARDS: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+  delta: string;
+  sub: string;
+  positive: boolean;
+}[] = [
   {
-    icon: "forum",
+    icon: MessagesSquare,
     value: "3 842",
     label: "Gespräche gesamt",
     delta: "+14 %",
@@ -19,7 +34,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "person",
+    icon: User,
     value: "1 924",
     label: "Eindeutige Nutzer",
     delta: "+9 %",
@@ -27,7 +42,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "schedule",
+    icon: Clock,
     value: "1,4 s",
     label: "Ø Antwortzeit",
     delta: "-0,3 s",
@@ -35,7 +50,7 @@ const KPI_CARDS = [
     positive: true,
   },
   {
-    icon: "star",
+    icon: Star,
     value: "4,6",
     label: "Ø Bewertung",
     delta: "+0,2",
@@ -81,11 +96,12 @@ const TOP_QUESTIONS = [
   { text: "Kontakt zum Prüfungsamt?", count: 156 },
 ];
 
+// Serienfarben über Chart-Tokens (theme-fähig): stroke-* für SVG, bg-* für Legende.
 const DONUT_SEGMENTS = [
-  { label: "Öffentlicher Chatbot", percent: 55, color: "#0052ff" },
-  { label: "Interner Bot", percent: 26, color: "#7cb3ff" },
-  { label: "TBOS-Widget", percent: 13, color: "#bccac0" },
-  { label: "Sonstige", percent: 6, color: "#e8ecf0" },
+  { label: "Öffentlicher Chatbot", percent: 55, stroke: "stroke-chart-1", dot: "bg-chart-1" },
+  { label: "Interner Bot", percent: 26, stroke: "stroke-chart-2", dot: "bg-chart-2" },
+  { label: "TBOS-Widget", percent: 13, stroke: "stroke-chart-3", dot: "bg-chart-3" },
+  { label: "Sonstige", percent: 6, stroke: "stroke-chart-4", dot: "bg-chart-4" },
 ];
 
 const PERIOD_CARDS = [
@@ -142,8 +158,8 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
         const by = tp + ch - bh;
         const isLast = i === n - 1;
         const isHov = hovered === i;
-        const fill = isLast ? "#0052ff" : "rgba(0,82,255,0.15)";
-        const fillHov = isLast ? "#003fd1" : "rgba(0,82,255,0.28)";
+        const fill = isLast ? "fill-chart-1" : "fill-chart-1/15";
+        const fillHov = isLast ? "fill-chart-1 brightness-90" : "fill-chart-1/25";
 
         return (
           <g
@@ -152,20 +168,20 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
             onMouseLeave={() => setHovered(null)}
             style={{ cursor: "pointer" }}
           >
-            <rect x={bx} y={by} width={barW} height={bh} rx={4} fill={isHov ? fillHov : fill} />
-            <text x={bx + barW / 2} y={tp + ch + 20} textAnchor="middle" fontSize={11} fill="#6b7280">
+            <rect x={bx} y={by} width={barW} height={bh} rx={4} className={isHov ? fillHov : fill} />
+            <text x={bx + barW / 2} y={tp + ch + 20} textAnchor="middle" fontSize={11} className="fill-on-surface-variant">
               {d.label}
             </text>
             {isHov && (
               <>
-                <rect x={bx + barW / 2 - 24} y={by - 30} width={48} height={22} rx={5} fill="#1a1a2e" />
+                <rect x={bx + barW / 2 - 24} y={by - 30} width={48} height={22} rx={5} className="fill-inverse-surface" />
                 <text
                   x={bx + barW / 2}
                   y={by - 14}
                   textAnchor="middle"
                   fontSize={12}
                   fontWeight="600"
-                  fill="white"
+                  className="fill-inverse-on-surface"
                 >
                   {d.value}
                 </text>
@@ -193,7 +209,7 @@ function DonutChart() {
     <div className="flex items-center gap-6">
       <div className="shrink-0">
         <svg width={150} height={150} viewBox="0 0 150 150" role="img" aria-label="Widget-Verteilung">
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f4f6" strokeWidth={sw} />
+          <circle cx={cx} cy={cy} r={r} fill="none" className="stroke-chart-track" strokeWidth={sw} />
           {DONUT_SEGMENTS.map((seg, i) => {
             const dash = (seg.percent / 100) * circ - 2.5;
             const offset = -(cumStart[i] / 100) * circ;
@@ -204,7 +220,7 @@ function DonutChart() {
                 cy={cy}
                 r={r}
                 fill="none"
-                stroke={seg.color}
+                className={seg.stroke}
                 strokeWidth={sw}
                 strokeDasharray={`${Math.max(0, dash)} ${circ}`}
                 strokeDashoffset={offset}
@@ -213,10 +229,10 @@ function DonutChart() {
             );
             return el;
           })}
-          <text x={cx} y={cy - 6} textAnchor="middle" fontSize={20} fontWeight="700" fill="#1a1a2e">
+          <text x={cx} y={cy - 6} textAnchor="middle" fontSize={20} fontWeight="700" className="fill-on-surface">
             3.8k
           </text>
-          <text x={cx} y={cy + 13} textAnchor="middle" fontSize={10} fill="#6b7280" letterSpacing="0.5">
+          <text x={cx} y={cy + 13} textAnchor="middle" fontSize={10} className="fill-on-surface-variant" letterSpacing="0.5">
             GESAMT
           </text>
         </svg>
@@ -225,7 +241,7 @@ function DonutChart() {
       <div className="flex-1 space-y-2.5">
         {DONUT_SEGMENTS.slice(0, 3).map((seg, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: seg.color }} />
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${seg.dot}`} />
             <span className="text-xs text-on-surface flex-1">{seg.label}</span>
             <span className="text-xs font-semibold">{seg.percent}%</span>
           </div>
@@ -256,17 +272,19 @@ export function StatisticsPage() {
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {/* Search */}
             <div className="relative">
-              <Icon
-                name="search"
+              <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10"
                 style={{ fontSize: 18 }}
+                width="1em"
+                height="1em"
+                aria-hidden
               />
               <Input
                 type="text"
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-1.5 rounded-full bg-surface-container-lowest text-sm w-40"
+                className="pl-9 w-40"
               />
             </div>
           </div>
@@ -277,57 +295,48 @@ export function StatisticsPage() {
       <main className="flex-1 p-6 space-y-6 max-w-container-max mx-auto w-full">
         {/* KPI row */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {KPI_CARDS.map((kpi, i) => (
-            <Card
-              key={i}
-              className="rounded-2xl shadow-none p-5 flex flex-col gap-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
-                  <Icon name={kpi.icon} className="text-on-primary-container" style={{ fontSize: 20 }} />
+          {KPI_CARDS.map((kpi, i) => {
+            const KpiIcon = kpi.icon;
+            const TrendIcon = kpi.positive ? TrendingUp : TrendingDown;
+            return (
+              <Card key={i} className="p-5 flex flex-col gap-3">
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+                    <KpiIcon className="text-on-primary-container" style={{ fontSize: 20 }} width="1em" height="1em" aria-hidden />
+                  </div>
+                  <Badge tone={kpi.positive ? "success" : "error"}>
+                    <TrendIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
+                    {kpi.delta}
+                  </Badge>
                 </div>
-                <span
-                  className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    kpi.positive
-                      ? "bg-success-container text-on-success-container"
-                      : "bg-error-container text-on-error-container"
-                  }`}
-                >
-                  <Icon name={kpi.positive ? "trending_up" : "trending_down"} style={{ fontSize: 14 }} />
-                  {kpi.delta}
-                </span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{kpi.value}</p>
-                <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
-              </div>
-              <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
-            </Card>
-          ))}
+                <div>
+                  <p className="text-2xl font-bold">{kpi.value}</p>
+                  <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
+                </div>
+                <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Bar chart */}
-        <Card className="rounded-2xl shadow-none p-6">
+        <Card className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
               <p className="text-sm text-on-surface-variant mt-0.5">Täglich, wöchentlich oder monatlich</p>
             </div>
-            <div className="flex rounded-full border border-outline-variant overflow-hidden shrink-0">
-              {(["Tag", "Woche", "Monat"] as const).map((view) => (
-                <button
-                  key={view}
-                  onClick={() => setChartView(view)}
-                  className={`px-4 py-1.5 text-sm transition-colors ${
-                    chartView === view
-                      ? "bg-primary text-on-primary font-medium"
-                      : "text-on-surface-variant hover:bg-secondary-container"
-                  }`}
-                >
-                  {view}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={[
+                { value: "Tag", label: "Tag" },
+                { value: "Woche", label: "Woche" },
+                { value: "Monat", label: "Monat" },
+              ]}
+              value={chartView}
+              onValueChange={(v) => setChartView(v as ChartView)}
+              aria-label="Zeitraum"
+              className="shrink-0"
+            />
           </div>
           <BarChart data={CHART_DATA[chartView]} />
         </Card>
@@ -335,7 +344,7 @@ export function StatisticsPage() {
         {/* Bottom row: top questions + donut */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Häufigste Fragen */}
-          <Card className="lg:col-span-3 rounded-2xl shadow-none p-6">
+          <Card className="lg:col-span-3 p-6">
             <h3 className="text-title-md font-semibold">Häufigste Fragen</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Top 5 Nutzeranfragen diesen Monat</p>
             <div className="space-y-4">
@@ -363,7 +372,7 @@ export function StatisticsPage() {
           </Card>
 
           {/* Widget-Verteilung */}
-          <Card className="lg:col-span-2 rounded-2xl shadow-none p-6">
+          <Card className="lg:col-span-2 p-6">
             <h3 className="text-title-md font-semibold">Widget-Verteilung</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Gespräche nach Widget</p>
             <DonutChart />
@@ -373,16 +382,13 @@ export function StatisticsPage() {
         {/* Period summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PERIOD_CARDS.map((period, i) => (
-            <Card
-              key={i}
-              className="rounded-2xl shadow-none p-5"
-            >
+            <Card key={i} className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
-                <span className="flex items-center gap-1 text-xs font-semibold text-on-success-container bg-success-container px-2 py-0.5 rounded-full">
-                  <Icon name="trending_up" style={{ fontSize: 13 }} />
+                <Badge tone="success">
+                  <TrendingUp style={{ fontSize: 13 }} width="1em" height="1em" aria-hidden />
                   {period.trend}
-                </span>
+                </Badge>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

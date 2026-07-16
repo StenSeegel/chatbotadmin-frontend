@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Icon } from "./Icon";
+import { ChartColumn, LayoutGrid, type LucideIcon } from "lucide-react";
 
 interface BottomNavItem {
   label: string;
-  icon: string;
+  icon: LucideIcon;
   to: string;
   /** Prefixe, die diesen Eintrag aktiv markieren (zusätzlich zum exakten `to`). */
   match: (pathname: string) => boolean;
@@ -12,13 +12,13 @@ interface BottomNavItem {
 const navItems: BottomNavItem[] = [
   {
     label: "Widgets",
-    icon: "grid_view",
+    icon: LayoutGrid,
     to: "/",
     match: (p) => p === "/" || p.startsWith("/widgets"),
   },
   {
     label: "Statistiken",
-    icon: "bar_chart",
+    icon: ChartColumn,
     to: "/statistiken",
     match: (p) => p.startsWith("/statistiken"),
   },
@@ -42,7 +42,7 @@ export function BottomNavBar() {
                 : "flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
             }
           >
-            <Icon name={item.icon} />
+            <item.icon width="1em" height="1em" aria-hidden />
             <span className="font-label-sm text-[10px]">{item.label}</span>
           </Link>
         );
