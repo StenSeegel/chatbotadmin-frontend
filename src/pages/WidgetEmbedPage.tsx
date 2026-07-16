@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Badge, Button } from "@ki4jlu/design-system";
+import { Badge, Button, CodeBlock } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
 import {
@@ -117,41 +117,6 @@ function StepCard({
   );
 }
 
-function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; onCopy: () => void }) {
-  return (
-    // Documented design-system exception: a code/terminal viewer stays fixed-dark
-    // in both themes (see docs/DESIGN_SYSTEM.md "Accepted color exceptions").
-    // eslint-disable-next-line design-system/no-hardcoded-colors
-    <div className="relative rounded-xl bg-[#1e1e2e] overflow-hidden">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onCopy}
-        className="absolute top-2.5 right-2.5 bg-white/10 text-white hover:bg-white/20"
-      >
-        {copied ? (
-          <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
-        ) : (
-          <Copy className="text-[14px]" width="1em" height="1em" aria-hidden />
-        )}
-        {copied ? "Kopiert" : "Code kopieren"}
-      </Button>
-      <pre className="overflow-x-auto p-4 pr-44 font-mono text-xs leading-relaxed">
-        {code.split("\n").map((line, i) => (
-          <div
-            key={i}
-            // eslint-disable-next-line design-system/no-hardcoded-colors
-            className={line.trim().startsWith("<!--") ? "text-emerald-400/80" : "text-slate-100"}
-          >
-            {line || " "}
-          </div>
-        ))}
-      </pre>
-    </div>
-  );
-}
-
 // ── Seite ────────────────────────────────────────────────────────────────
 
 export function WidgetEmbedPage() {
@@ -169,7 +134,7 @@ export function WidgetEmbedPage() {
   // lesbarer HTTP-Status. So sieht die Testseite dasselbe localStorage und dieselbe
   // Session wie das Admin-UI (auf VITE_WIDGET_BASE_URL wäre beides leer/ungültig).
   const [siteStatus, setSiteStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [copied, setCopied] = useState<"loader" | "placeholder" | "url" | null>(null);
+  const [copied, setCopied] = useState<"url" | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -233,7 +198,7 @@ export function WidgetEmbedPage() {
     };
   }, [id]);
 
-  const copy = async (text: string, key: "loader" | "placeholder" | "url") => {
+  const copy = async (text: string, key: "url") => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(key);
@@ -364,11 +329,7 @@ export function WidgetEmbedPage() {
         subtitle="Einmalig im Plone-Theme einbinden"
         tags={[{ label: "Admin" }, { label: "Einmalig" }]}
       >
-        <CodeBlock
-          code={buildLoaderCode()}
-          copied={copied === "loader"}
-          onCopy={() => copy(buildLoaderCode(), "loader")}
-        />
+        <CodeBlock code={buildLoaderCode()} />
         <p className="text-xs text-on-surface-variant italic">
           Dieser Code wird nur einmal global eingebunden — nicht pro Seite.
         </p>
@@ -383,11 +344,7 @@ export function WidgetEmbedPage() {
         subtitle="Im Seiteninhalt einfügen"
         tags={[{ label: "Editor" }, { label: "Pro Seite", outline: true }]}
       >
-        <CodeBlock
-          code={buildPlaceholderCode(widget)}
-          copied={copied === "placeholder"}
-          onCopy={() => copy(buildPlaceholderCode(widget), "placeholder")}
-        />
+        <CodeBlock code={buildPlaceholderCode(widget)} />
 
         <div className="flex flex-col gap-1 pt-1">
           <label className="font-label-sm text-xs uppercase tracking-wide text-on-surface-variant">

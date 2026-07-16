@@ -9,7 +9,7 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react";
-import { Badge, Button, Card, Input } from "@ki4jlu/design-system";
+import { Badge, Card, Input, SegmentedControl } from "@ki4jlu/design-system";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -326,23 +326,17 @@ export function StatisticsPage() {
               <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
               <p className="text-sm text-on-surface-variant mt-0.5">Täglich, wöchentlich oder monatlich</p>
             </div>
-            <div className="flex rounded-full border border-outline-variant overflow-hidden shrink-0">
-              {(["Tag", "Woche", "Monat"] as const).map((view) => (
-                <Button
-                  key={view}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setChartView(view)}
-                  className={`rounded-none ${
-                    chartView === view
-                      ? "bg-primary text-on-primary hover:bg-primary"
-                      : "text-on-surface-variant"
-                  }`}
-                >
-                  {view}
-                </Button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={[
+                { value: "Tag", label: "Tag" },
+                { value: "Woche", label: "Woche" },
+                { value: "Monat", label: "Monat" },
+              ]}
+              value={chartView}
+              onValueChange={(v) => setChartView(v as ChartView)}
+              aria-label="Zeitraum"
+              className="shrink-0"
+            />
           </div>
           <BarChart data={CHART_DATA[chartView]} />
         </Card>

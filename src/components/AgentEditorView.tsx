@@ -199,7 +199,7 @@ export function AgentEditorView({
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
               <Button
-                variant="outline"
+                variant="destructive-outline"
                 size="sm"
                 onClick={() => {
                   if (deleteBlocked) return;
@@ -209,7 +209,6 @@ export function AgentEditorView({
                 }}
                 disabled={deleteBlocked}
                 title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
-                className="border-error text-error hover:bg-error hover:text-on-error"
               >
                 <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Agent löschen
@@ -319,7 +318,8 @@ export function AgentEditorView({
                         value={rule.text}
                         onChange={(e) => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, text: e.target.value } : r)))}
                         placeholder="Neue Regel..."
-                        className={`flex-1 border-0 p-0 bg-transparent text-sm ${
+                        variant="inline"
+                        className={`flex-1 ${
                           rule.enabled ? "text-on-surface" : "text-on-surface-variant line-through"
                         }`}
                       />

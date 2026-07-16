@@ -285,7 +285,7 @@ export function WidgetConfigView({
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
               <Button
-                variant="outline"
+                variant="destructive-outline"
                 size="sm"
                 onClick={() => {
                   if (
@@ -296,7 +296,6 @@ export function WidgetConfigView({
                     onDelete();
                   }
                 }}
-                className="border-error text-error hover:bg-error hover:text-on-error"
               >
                 <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Konnektor löschen

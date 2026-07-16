@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Button } from "@ki4jlu/design-system";
+import { Button, Textarea } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { Send } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
@@ -119,7 +119,8 @@ export function WidgetConversationsPage() {
           {/* Composer */}
           <div className="shrink-0 border-t border-outline-variant p-4">
             <Card>
-              <textarea
+              <Textarea
+                variant="inline"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -127,7 +128,7 @@ export function WidgetConversationsPage() {
                 }}
                 placeholder="Antwortnachricht eingeben..."
                 rows={3}
-                className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none"
+                className="resize-none px-4 py-3"
               />
               <div className="flex items-center justify-end px-3 py-2">
                 <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
