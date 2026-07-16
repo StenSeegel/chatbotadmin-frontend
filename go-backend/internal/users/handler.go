@@ -2,16 +2,14 @@ package users
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
 )
 
 var uuidRegex = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
@@ -70,39 +68,28 @@ func NewHandler(store Store) *Handler {
 	return &Handler{store: store}
 }
 
-// fullUserResponse is the response shape for an admin or own-profile lookup.
-type fullUserResponse struct {
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
-	FirstName *string   `json:"firstName,omitempty"`
-	LastName  *string   `json:"lastName,omitempty"`
-	Email     *string   `json:"email,omitempty"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-// limitedUserResponse is the response shape returned to other authenticated users.
-type limitedUserResponse struct {
-	ID        string  `json:"id"`
-	Username  string  `json:"username"`
-	FirstName *string `json:"firstName,omitempty"`
-	LastName  *string `json:"lastName,omitempty"`
-}
-
 func isAdmin(claims *auth.Claims) bool {
 	return claims != nil && (claims.Role == "admin" || claims.Role == "superadmin")
 }
 
-// GetUser handles GET /api/users/{id}.
+// fullUser projects a row onto the full (own-profile / admin) wire shape.
+func fullUser(row *UserRow) api.User {
+	return api.User{
+		Id:        row.ID,
+		Username:  row.Username,
+		FirstName: row.FirstName,
+		LastName:  row.LastName,
+		Email:     row.Email,
+		Role:      api.Role(row.Role),
+		CreatedAt: row.CreatedAt,
+	}
+}
+
+// GetUser implements GET /api/users/{id}.
 // It resolves the {id} path value as UUID → username → search term.
 // Own profile or admin/superadmin receives the full response; others get a limited view.
-func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing id")
-		return
-	}
+func (h *Handler) GetUser(ctx context.Context, request api.GetUserRequestObject) (api.GetUserResponseObject, error) {
+	id := request.Id
 
 	var found *UserRow
 	var err error
@@ -110,114 +97,84 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if uuidRegex.MatchString(id) {
 		found, err = h.store.GetUserByID(ctx, id)
 		if err != nil {
-			httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to fetch user")
-			return
+			return nil, err
 		}
 	}
 
 	if found == nil {
 		found, err = h.store.GetUserByUsername(ctx, id)
 		if err != nil {
-			httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to fetch user")
-			return
+			return nil, err
 		}
 	}
 
 	if found == nil {
 		found, err = h.store.SearchUserByTerm(ctx, id)
 		if err != nil {
-			httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to fetch user")
-			return
+			return nil, err
 		}
 	}
 
 	if found == nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "user not found")
-		return
+		return api.GetUser404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "user not found"},
+		}, nil
 	}
 
+	var body api.GetUser200JSONResponseBody
 	viewer := auth.UserFromContext(ctx)
 	if viewer != nil && (viewer.ID == found.ID || isAdmin(viewer)) {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, fullUserResponse{
-			ID:        found.ID,
-			Username:  found.Username,
-			FirstName: found.FirstName,
-			LastName:  found.LastName,
-			Email:     found.Email,
-			Role:      found.Role,
-			CreatedAt: found.CreatedAt,
-		})
+		if err := body.FromUser(fullUser(found)); err != nil {
+			return nil, err
+		}
 	} else {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, limitedUserResponse{
-			ID:        found.ID,
+		if err := body.FromUserLimited(api.UserLimited{
+			Id:        found.ID,
 			Username:  found.Username,
 			FirstName: found.FirstName,
 			LastName:  found.LastName,
-		})
+		}); err != nil {
+			return nil, err
+		}
 	}
+	return api.GetUser200JSONResponse(body), nil
 }
 
-// patchBody is the expected JSON body for PATCH /api/users/{id}.
-type patchBody struct {
-	FirstName *string `json:"firstName"`
-	LastName  *string `json:"lastName"`
-	Email     *string `json:"email"`
-	Password  *string `json:"password"`
-}
-
-// UpdateUser handles PATCH /api/users/{id}.
+// UpdateUser implements PATCH /api/users/{id}.
 // Only the user themselves or an admin/superadmin may update the profile.
-func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	id := r.PathValue("id")
-	if id == "" {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "missing id")
-		return
-	}
+// Length/format bounds (name ≤ 50, password ≥ 8) are enforced by the spec
+// middleware; only the checks the schema cannot express live here.
+func (h *Handler) UpdateUser(ctx context.Context, request api.UpdateUserRequestObject) (api.UpdateUserResponseObject, error) {
+	id := request.Id
+	body := request.Body
 
 	viewer := auth.UserFromContext(ctx)
 	if viewer == nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusUnauthorized, "authentication required")
-		return
+		return api.UpdateUser401JSONResponse{
+			UnauthorizedJSONResponse: api.UnauthorizedJSONResponse{Error: "authentication required"},
+		}, nil
 	}
 
 	if viewer.ID != id && !isAdmin(viewer) {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusForbidden, "forbidden")
-		return
+		return api.UpdateUser403JSONResponse{
+			ForbiddenJSONResponse: api.ForbiddenJSONResponse{Error: "forbidden"},
+		}, nil
 	}
 
 	existing, err := h.store.GetUserByID(ctx, id)
 	if err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to fetch user")
-		return
+		return nil, err
 	}
 	if existing == nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusNotFound, "user not found")
-		return
+		return api.UpdateUser404JSONResponse{
+			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "user not found"},
+		}, nil
 	}
 
-	var body patchBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "invalid JSON body")
-		return
-	}
-
-	// Validate fields
-	if body.FirstName != nil && len(*body.FirstName) > 50 {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "firstName too long (max 50)")
-		return
-	}
-	if body.LastName != nil && len(*body.LastName) > 50 {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "lastName too long (max 50)")
-		return
-	}
 	if body.Email != nil && !strings.Contains(*body.Email, "@") {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "invalid email")
-		return
-	}
-	if body.Password != nil && len(*body.Password) < 8 {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusBadRequest, "password must be at least 8 characters")
-		return
+		return api.UpdateUser400JSONResponse{
+			BadRequestJSONResponse: api.BadRequestJSONResponse{Error: "invalid email"},
+		}, nil
 	}
 
 	update := UserUpdate{
@@ -233,8 +190,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		// the stored hash, so older cost-10 hashes keep working.
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*body.Password), 12)
 		if err != nil {
-			httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to hash password")
-			return
+			return nil, err
 		}
 		s := string(hashed)
 		update.PasswordHash = &s
@@ -242,17 +198,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := h.store.UpdateUser(ctx, id, update)
 	if err != nil {
-		httputil.WriteErrorCtx(r.Context(), w, http.StatusInternalServerError, "failed to update user")
-		return
+		return nil, err
 	}
 
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, fullUserResponse{
-		ID:        updated.ID,
-		Username:  updated.Username,
-		FirstName: updated.FirstName,
-		LastName:  updated.LastName,
-		Email:     updated.Email,
-		Role:      updated.Role,
-		CreatedAt: updated.CreatedAt,
-	})
+	return api.UpdateUser200JSONResponse(fullUser(updated)), nil
 }

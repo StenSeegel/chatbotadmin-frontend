@@ -1,0 +1,22 @@
+# oapi-codegen configuration. Regenerate with: go generate ./internal/api
+#
+# Strict server + stdlib ServeMux (Go 1.22 method+path patterns). The SSE
+# streaming operations (chat, widgetChat) and the OIDC browser-redirect flow
+# are excluded: they write raw response streams / set cookies and redirects,
+# which the strict (typed request/response) model cannot express. They are
+# mounted manually in internal/app/router.go and still validated at runtime
+# against the spec by the middleware.
+package: api
+output: gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+output-options:
+  exclude-operation-ids:
+    - oidcLogin
+    - oidcCallback
+    - oidcLogout
+    - oidcBackchannelLogout
+    - chat
+    - widgetChat

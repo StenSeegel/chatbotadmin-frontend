@@ -3,10 +3,9 @@ package agents
 import (
 	"context"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 )
 
 // ---------------------------------------------------------------------------
@@ -57,27 +56,18 @@ func (r *fakeRefs) CountByAgent(_ context.Context, agentID string) (int, error) 
 	return r.byAgent[agentID], nil
 }
 
-// newTestHandler wires an agents.Handler over the fakes and returns a mux that
-// routes the agent paths (so r.PathValue("id") is populated as in production).
-// Delete is wrapped exactly like the real router, but without the JWT/role
-// middleware — the role check is the router's concern, not the handler's.
-func newTestHandler(store Store, refs WidgetRefs) http.Handler {
-	h := NewHandler(store, refs)
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/agents", h.List)
-	mux.HandleFunc("PUT /api/agents/{id}", h.Upsert)
-	mux.HandleFunc("DELETE /api/agents/{id}", h.Delete)
-	return mux
-}
-
-func agentJSON(id, name, model string) string {
-	b, _ := json.Marshal(map[string]any{
-		"id":    id,
-		"name":  name,
-		"model": model,
-		"rules": []any{},
-	})
-	return string(b)
+// testAgent builds the typed body the strict handler receives. Extra fields
+// beyond the modelled ones land in AdditionalProperties, as they would after
+// the generated decoder ran.
+func testAgent(id, name, model string) *api.Agent {
+	return &api.Agent{
+		Id:    id,
+		Name:  name,
+		Model: model,
+		AdditionalProperties: map[string]interface{}{
+			"tools": []interface{}{},
+		},
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -86,49 +76,63 @@ func agentJSON(id, name, model string) string {
 
 func TestUpsert_CreatesAgent(t *testing.T) {
 	store := &fakeStore{data: map[string]json.RawMessage{}}
-	handler := newTestHandler(store, &fakeRefs{})
+	h := NewHandler(store, &fakeRefs{})
 
 	const id = "a1"
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/api/agents/"+id,
-		strings.NewReader(agentJSON(id, "JLU Assistent", "jlu/gpt-oss-20b")))
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200 (body: %s)", rec.Code, rec.Body.String())
+	resp, err := h.UpsertAgent(context.Background(), api.UpsertAgentRequestObject{
+		Id:   id,
+		Body: testAgent(id, "JLU Assistent", "jlu/gpt-oss-20b"),
+	})
+	if err != nil {
+		t.Fatalf("UpsertAgent: %v", err)
 	}
-	if _, ok := store.data[id]; !ok {
+	if _, ok := resp.(api.UpsertAgent200JSONResponse); !ok {
+		t.Fatalf("response = %T, want UpsertAgent200JSONResponse", resp)
+	}
+	stored, ok := store.data[id]
+	if !ok {
 		t.Fatalf("agent %q was not stored", id)
+	}
+	// The unmodelled field must survive the typed round-trip into storage.
+	var raw map[string]any
+	if err := json.Unmarshal(stored, &raw); err != nil {
+		t.Fatalf("stored agent is not JSON: %v", err)
+	}
+	if _, ok := raw["tools"]; !ok {
+		t.Fatalf("additional property was dropped on store: %s", stored)
 	}
 }
 
 func TestUpsert_RejectsIDMismatch(t *testing.T) {
-	handler := newTestHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
+	h := NewHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/api/agents/url-id",
-		strings.NewReader(agentJSON("body-id", "Name", "model")))
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want 400 for id mismatch", rec.Code)
+	resp, err := h.UpsertAgent(context.Background(), api.UpsertAgentRequestObject{
+		Id:   "url-id",
+		Body: testAgent("body-id", "Name", "model"),
+	})
+	if err != nil {
+		t.Fatalf("UpsertAgent: %v", err)
+	}
+	if _, ok := resp.(api.UpsertAgent400JSONResponse); !ok {
+		t.Fatalf("response = %T, want UpsertAgent400JSONResponse for id mismatch", resp)
 	}
 }
 
 func TestUpsert_RequiresNameAndModel(t *testing.T) {
-	handler := newTestHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
+	h := NewHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
 
-	cases := map[string]string{
-		"missing name":  agentJSON("a1", "", "model"),
-		"missing model": agentJSON("a1", "Name", ""),
+	cases := map[string]*api.Agent{
+		"missing name":  testAgent("a1", "  ", "model"),
+		"missing model": testAgent("a1", "Name", " "),
 	}
 	for label, body := range cases {
 		t.Run(label, func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPut, "/api/agents/a1", strings.NewReader(body))
-			handler.ServeHTTP(rec, req)
-			if rec.Code != http.StatusBadRequest {
-				t.Fatalf("status = %d, want 400 (%s)", rec.Code, label)
+			resp, err := h.UpsertAgent(context.Background(), api.UpsertAgentRequestObject{Id: "a1", Body: body})
+			if err != nil {
+				t.Fatalf("UpsertAgent: %v", err)
+			}
+			if _, ok := resp.(api.UpsertAgent400JSONResponse); !ok {
+				t.Fatalf("response = %T, want UpsertAgent400JSONResponse (%s)", resp, label)
 			}
 		})
 	}
@@ -138,17 +142,17 @@ func TestUpsert_RequiresNameAndModel(t *testing.T) {
 // must remain in the store.
 func TestDelete_RefusesWhenAgentInUse(t *testing.T) {
 	store := &fakeStore{data: map[string]json.RawMessage{
-		"a1": json.RawMessage(agentJSON("a1", "In Use", "model")),
+		"a1": json.RawMessage(`{"id":"a1","name":"In Use","model":"m"}`),
 	}}
 	refs := &fakeRefs{byAgent: map[string]int{"a1": 2}}
-	handler := newTestHandler(store, refs)
+	h := NewHandler(store, refs)
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/api/agents/a1", nil)
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusConflict {
-		t.Fatalf("status = %d, want 409 for in-use agent", rec.Code)
+	resp, err := h.DeleteAgent(context.Background(), api.DeleteAgentRequestObject{Id: "a1"})
+	if err != nil {
+		t.Fatalf("DeleteAgent: %v", err)
+	}
+	if _, ok := resp.(api.DeleteAgent409JSONResponse); !ok {
+		t.Fatalf("response = %T, want DeleteAgent409JSONResponse for in-use agent", resp)
 	}
 	if _, ok := store.data["a1"]; !ok {
 		t.Fatalf("in-use agent was deleted despite 409")
@@ -158,16 +162,16 @@ func TestDelete_RefusesWhenAgentInUse(t *testing.T) {
 // An unreferenced agent deletes cleanly (204).
 func TestDelete_SucceedsWhenUnused(t *testing.T) {
 	store := &fakeStore{data: map[string]json.RawMessage{
-		"a1": json.RawMessage(agentJSON("a1", "Standalone", "model")),
+		"a1": json.RawMessage(`{"id":"a1","name":"Standalone","model":"m"}`),
 	}}
-	handler := newTestHandler(store, &fakeRefs{byAgent: map[string]int{"a1": 0}})
+	h := NewHandler(store, &fakeRefs{byAgent: map[string]int{"a1": 0}})
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/api/agents/a1", nil)
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want 204", rec.Code)
+	resp, err := h.DeleteAgent(context.Background(), api.DeleteAgentRequestObject{Id: "a1"})
+	if err != nil {
+		t.Fatalf("DeleteAgent: %v", err)
+	}
+	if _, ok := resp.(api.DeleteAgent204Response); !ok {
+		t.Fatalf("response = %T, want DeleteAgent204Response", resp)
 	}
 	if _, ok := store.data["a1"]; ok {
 		t.Fatalf("agent was not deleted")
@@ -175,36 +179,32 @@ func TestDelete_SucceedsWhenUnused(t *testing.T) {
 }
 
 func TestDelete_UnknownAgentReturns404(t *testing.T) {
-	handler := newTestHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
+	h := NewHandler(&fakeStore{data: map[string]json.RawMessage{}}, &fakeRefs{})
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/api/agents/nope", nil)
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want 404", rec.Code)
+	resp, err := h.DeleteAgent(context.Background(), api.DeleteAgentRequestObject{Id: "nope"})
+	if err != nil {
+		t.Fatalf("DeleteAgent: %v", err)
+	}
+	if _, ok := resp.(api.DeleteAgent404JSONResponse); !ok {
+		t.Fatalf("response = %T, want DeleteAgent404JSONResponse", resp)
 	}
 }
 
 func TestList_ReturnsAgentsEnvelope(t *testing.T) {
 	store := &fakeStore{data: map[string]json.RawMessage{
-		"a1": json.RawMessage(agentJSON("a1", "One", "m")),
+		"a1": json.RawMessage(`{"id":"a1","name":"One","model":"m"}`),
 	}}
-	handler := newTestHandler(store, &fakeRefs{})
+	h := NewHandler(store, &fakeRefs{})
 
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/agents", nil))
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
+	resp, err := h.ListAgents(context.Background(), api.ListAgentsRequestObject{})
+	if err != nil {
+		t.Fatalf("ListAgents: %v", err)
 	}
-	var resp struct {
-		Agents []json.RawMessage `json:"agents"`
+	list, ok := resp.(api.ListAgents200JSONResponse)
+	if !ok {
+		t.Fatalf("response = %T, want ListAgents200JSONResponse", resp)
 	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(resp.Agents) != 1 {
-		t.Fatalf("agents length = %d, want 1", len(resp.Agents))
+	if len(list.Agents) != 1 {
+		t.Fatalf("agents length = %d, want 1", len(list.Agents))
 	}
 }

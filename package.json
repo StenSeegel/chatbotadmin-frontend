@@ -15,7 +15,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:api-types": "openapi-typescript go-backend/internal/apidocs/openapi.yaml -o src/types/api.gen.ts",
+    "lint:api-spec": "npx --yes @redocly/cli@2 lint go-backend/internal/apidocs/openapi.yaml"
   },
   "dependencies": {
     "@ki4jlu/design-system": "^0.8.0",
@@ -43,10 +45,16 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

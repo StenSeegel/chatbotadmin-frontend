@@ -176,7 +176,6 @@ func newTestHandlerWithAgents(t *testing.T, store Store, agents AgentStore, kbUR
 	h := NewHandler(store, agents, proxy)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/widgets/{id}/chat", h.Chat)
-	mux.HandleFunc("GET /api/widgets/{id}", h.PublicConfig)
 	return mux
 }
 

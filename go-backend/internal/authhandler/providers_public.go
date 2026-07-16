@@ -1,10 +1,10 @@
 package authhandler
 
 import (
-	"net/http"
+	"context"
 	"os"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
 )
 
@@ -20,44 +20,29 @@ func localAuthEnabled(hasOIDC bool) bool {
 	return !hasOIDC
 }
 
-// publicProvider is the no-secret projection of an auth_providers row returned
-// to unauthenticated clients so the login form can decide which buttons to
-// render (e.g. "Sign in with SSO" for OIDC).
-type publicProvider struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Name string `json:"name"`
-}
-
-// publicProvidersResponse is the public auth-config projection consumed by the
-// login page. localAuthEnabled mirrors the DISABLE_LOCAL_AUTH env var so the
-// page knows whether to render the username/password form.
-type publicProvidersResponse struct {
-	Providers        []publicProvider `json:"providers"`
-	LocalAuthEnabled bool             `json:"localAuthEnabled"`
-}
-
-// ListPublicProviders handles GET /api/auth/providers. No auth required; the
-// response intentionally excludes the config JSONB so client_secret and
-// bindCredentials can't leak.
-func (h *Handler) ListPublicProviders(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.store.GetActiveAuthProviders(r.Context())
+// ListAuthProviders implements GET /api/auth/providers (public): the no-secret
+// projection of the auth_providers rows the login form needs to decide which
+// buttons to render. The response intentionally excludes the config JSONB so
+// client_secret and bindCredentials can't leak.
+func (h *Handler) ListAuthProviders(ctx context.Context, _ api.ListAuthProvidersRequestObject) (api.ListAuthProvidersResponseObject, error) {
+	rows, err := h.store.GetActiveAuthProviders(ctx)
 	if err != nil {
-		logctx.From(r.Context()).Error("list public providers", "err", err)
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
-		return
+		logctx.From(ctx).Error("list public providers", "err", err)
+		return api.ListAuthProviders500JSONResponse{
+			InternalErrorJSONResponse: api.InternalErrorJSONResponse{Error: "Internal server error"},
+		}, nil
 	}
-	out := make([]publicProvider, 0, len(rows))
+
+	providers := make([]api.PublicProvider, 0, len(rows))
 	hasOIDC := false
 	for _, p := range rows {
-		out = append(out, publicProvider{ID: p.ID, Type: p.Type, Name: p.Name})
+		providers = append(providers, api.PublicProvider{Id: p.ID, Name: p.Name, Type: p.Type})
 		if p.Type == OIDCProviderType {
 			hasOIDC = true
 		}
 	}
-	resp := publicProvidersResponse{
-		Providers:        out,
+	return api.ListAuthProviders200JSONResponse{
+		Providers:        providers,
 		LocalAuthEnabled: localAuthEnabled(hasOIDC),
-	}
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, resp)
+	}, nil
 }

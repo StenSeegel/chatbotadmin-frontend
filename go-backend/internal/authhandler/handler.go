@@ -1,10 +1,10 @@
-// Package authhandler implements the POST /api/auth/login, /logout, and /refresh endpoints.
+// Package authhandler implements the auth endpoints: login, logout, refresh,
+// the public provider listing (strict, generated from the OpenAPI spec), and
+// the OIDC broker (oidc.go, mounted manually).
 package authhandler
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"strings"
 	"time"
 
@@ -13,8 +13,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/stenseegel/chatbotadmin-backend/internal/adminproviders"
+	"github.com/stenseegel/chatbotadmin-backend/internal/api"
 	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
 	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
 	"github.com/stenseegel/chatbotadmin-backend/internal/users"
 )
@@ -41,9 +41,10 @@ type Store interface {
 // ---------------------------------------------------------------------------
 
 // LoginFailureRecorder is called to record a failed login attempt for
-// rate-limiting purposes. Both RedisRateLimiter and RateLimiter satisfy this.
+// rate-limiting purposes. The context is the request context (request id and
+// logging attached by the middleware chain).
 type LoginFailureRecorder interface {
-	RecordFailure(r *http.Request)
+	RecordFailure(ctx context.Context)
 }
 
 // Handler holds the dependencies for the auth endpoints.
@@ -74,9 +75,9 @@ func (h *Handler) SetFailureRecorders(recorders ...LoginFailureRecorder) {
 }
 
 // recordLoginFailure increments all configured rate-limit counters.
-func (h *Handler) recordLoginFailure(r *http.Request) {
+func (h *Handler) recordLoginFailure(ctx context.Context) {
 	for _, rec := range h.failRecorders {
-		rec.RecordFailure(r)
+		rec.RecordFailure(ctx)
 	}
 }
 
@@ -101,46 +102,17 @@ func (h *Handler) oidcActive(ctx context.Context) bool {
 // POST /api/auth/login
 // ---------------------------------------------------------------------------
 
-type loginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type loginResponse struct {
-	Token string      `json:"token"`
-	User  userPayload `json:"user"`
-}
-
-type userPayload struct {
-	ID         string `json:"id"`
-	Username   string `json:"username"`
-	Role       string `json:"role"`
-	AuthMethod string `json:"authMethod"`
-}
-
-// Login handles POST /api/auth/login.
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
-		return
-	}
-	if req.Username == "" || req.Password == "" {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "Username and password are required"})
-		return
-	}
-	if len(req.Username) < 3 || len(req.Username) > 50 {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusBadRequest, map[string]string{"error": "Username must be between 3 and 50 characters"})
-		return
-	}
-
-	ctx := r.Context()
+// Login implements the login operation. The spec middleware has already
+// validated the body shape (username/password present, length bounds).
+func (h *Handler) Login(ctx context.Context, request api.LoginRequestObject) (api.LoginResponseObject, error) {
+	req := request.Body
 
 	// Look up user by username.
 	user, err := h.store.GetUserByUsername(ctx, req.Username)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
-		return
+		return api.Login500JSONResponse{
+			InternalErrorJSONResponse: api.InternalErrorJSONResponse{Error: "Internal server error"},
+		}, nil
 	}
 
 	// Attempt local authentication. Local password login is disabled — for
@@ -164,90 +136,91 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if localAuthOK {
-		h.respondWithToken(r.Context(), w, user)
-		return
+		resp, err := h.loginResponse(ctx, user)
+		if err != nil {
+			return api.Login500JSONResponse{
+				InternalErrorJSONResponse: api.InternalErrorJSONResponse{Error: "Failed to generate token"},
+			}, nil
+		}
+		return api.Login200JSONResponse(resp), nil
 	}
 
 	// Local authentication failed. (OIDC is handled by the dedicated
 	// /api/auth/oidc/* broker endpoints, not this password flow.)
-	logctx.From(r.Context()).Warn("auth.login_failed",
+	logctx.From(ctx).Warn("auth.login_failed",
 		"username", req.Username,
 		"user_exists", user != nil,
 	)
-	h.recordLoginFailure(r)
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusUnauthorized, map[string]string{"error": "Invalid username or password"})
+	h.recordLoginFailure(ctx)
+	return api.Login401JSONResponse{Error: "Invalid username or password"}, nil
 }
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/logout
 // ---------------------------------------------------------------------------
 
-// Logout handles POST /api/auth/logout. Requires auth middleware.
-func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// The auth middleware has already verified the token's signature and
-	// stored the parsed claims in the context — use those rather than
-	// re-decoding the bearer token unverified. A forged or expired token
-	// never reaches this handler, so we can only ever blacklist a JTI that
-	// belonged to a genuine, still-valid session.
+// Logout revokes the presented JWT. The spec middleware has already verified
+// the token and stored the parsed claims in the context — a forged or expired
+// token never reaches this handler, so we can only ever blacklist a JTI that
+// belonged to a genuine, still-valid session.
+func (h *Handler) Logout(ctx context.Context, _ api.LogoutRequestObject) (api.LogoutResponseObject, error) {
 	claims := auth.UserFromContext(ctx)
 	if claims == nil {
 		logctx.From(ctx).Info("auth.logout", "decoded", false)
-		httputil.WriteJSONCtx(ctx, w, http.StatusOK, map[string]string{"message": "Logged out"})
-		return
+		return api.Logout200JSONResponse{Message: "Logged out"}, nil
 	}
 
 	expTime := time.Unix(claims.ExpiresAt, 0)
 	h.blacklist.Add(ctx, claims.JTI, expTime)
 
 	logctx.From(ctx).Info("auth.logout", "user_id", claims.ID, "jti", claims.JTI)
-	httputil.WriteJSONCtx(ctx, w, http.StatusOK, map[string]string{"message": "Logged out"})
+	return api.Logout200JSONResponse{Message: "Logged out"}, nil
 }
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/refresh
 // ---------------------------------------------------------------------------
 
-// Refresh handles POST /api/auth/refresh. Requires auth middleware.
-func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
-	claims := auth.UserFromContext(r.Context())
+// RefreshToken rotates the presented JWT: issues a fresh one and blacklists
+// the old JTI.
+func (h *Handler) RefreshToken(ctx context.Context, _ api.RefreshTokenRequestObject) (api.RefreshTokenResponseObject, error) {
+	claims := auth.UserFromContext(ctx)
 	if claims == nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusUnauthorized, map[string]string{"error": "Authentication required"})
-		return
+		return api.RefreshToken401JSONResponse{
+			UnauthorizedJSONResponse: api.UnauthorizedJSONResponse{Error: "Authentication required"},
+		}, nil
 	}
 
 	tokenStr, err := h.signToken(claims.ID, claims.Username, claims.Role)
 	if err != nil {
-		httputil.WriteJSONCtx(r.Context(), w, http.StatusInternalServerError, map[string]string{"error": "Failed to generate token"})
-		return
+		return api.RefreshToken500JSONResponse{
+			InternalErrorJSONResponse: api.InternalErrorJSONResponse{Error: "Failed to generate token"},
+		}, nil
 	}
 
 	// Invalidate the previous token so a leaked copy can't keep working until
 	// its natural expiry alongside the freshly issued one. signToken mints a
 	// new JTI, so the new token isn't affected by blacklisting the old one.
-	h.blacklist.Add(r.Context(), claims.JTI, time.Unix(claims.ExpiresAt, 0))
+	h.blacklist.Add(ctx, claims.JTI, time.Unix(claims.ExpiresAt, 0))
 
-	httputil.WriteJSONCtx(r.Context(), w, http.StatusOK, loginResponse{
-		Token: tokenStr,
-		User: userPayload{
-			ID:       claims.ID,
-			Username: claims.Username,
-			Role:     claims.Role,
-		},
-	})
+	resp := api.LoginResponse{Token: tokenStr}
+	resp.User.Id = claims.ID
+	resp.User.Username = claims.Username
+	resp.User.Role = api.Role(claims.Role)
+	return api.RefreshToken200JSONResponse(resp), nil
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-func (h *Handler) respondWithToken(ctx context.Context, w http.ResponseWriter, user *users.UserRow) {
+// loginResponse signs a fresh token for user and builds the shared login/
+// refresh wire shape.
+func (h *Handler) loginResponse(ctx context.Context, user *users.UserRow) (api.LoginResponse, error) {
 	tokenStr, err := h.signToken(user.ID, user.Username, user.Role)
 	if err != nil {
 		logctx.From(ctx).Error("auth.login_token_error", "user_id", user.ID, "error", err.Error())
-		httputil.WriteJSONCtx(ctx, w, http.StatusInternalServerError, map[string]string{"error": "Failed to generate token"})
-		return
+		return api.LoginResponse{}, err
 	}
 	logctx.From(ctx).Info("auth.login_success",
 		"user_id", user.ID,
@@ -255,15 +228,12 @@ func (h *Handler) respondWithToken(ctx context.Context, w http.ResponseWriter, u
 		"role", user.Role,
 		"method", user.AuthMethod,
 	)
-	httputil.WriteJSONCtx(ctx, w, http.StatusOK, loginResponse{
-		Token: tokenStr,
-		User: userPayload{
-			ID:         user.ID,
-			Username:   user.Username,
-			Role:       user.Role,
-			AuthMethod: user.AuthMethod,
-		},
-	})
+	resp := api.LoginResponse{Token: tokenStr}
+	resp.User.Id = user.ID
+	resp.User.Username = user.Username
+	resp.User.Role = api.Role(user.Role)
+	resp.User.AuthMethod = user.AuthMethod
+	return resp, nil
 }
 
 func (h *Handler) signToken(userID, username, role string) (string, error) {
