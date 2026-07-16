@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import { Card, Input } from "@ki4jlu/design-system";
 import { Icon } from "../components/Icon";
 import { ConversationsShell } from "../components/ConversationsShell";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -64,7 +64,7 @@ export function WidgetDashboardPage() {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
               style={{ fontSize: 18 }}
             />
-            <input
+            <Input
               type="text"
               placeholder="Suchen..."
               value={search}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import { Card } from "@ki4jlu/design-system";
 import { Icon } from "../components/Icon";
 import { agentUsageByWidgets, fetchAgents } from "../data/agentsStore";
 import { fetchModels } from "../data/models";

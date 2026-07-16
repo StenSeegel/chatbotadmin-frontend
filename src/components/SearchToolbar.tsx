@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@ki4jlu/design-system";
 import type { WidgetStatus } from "../types/widget";
 
 export type StatusFilter = "all" | WidgetStatus;
@@ -48,37 +48,39 @@ function ToolbarDropdown<T extends string>({ icon, label, options, value, defaul
 
   return (
     <div className="relative flex-1 lg:flex-none" ref={ref}>
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => setIsOpen((open) => !open)}
         className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 border rounded-lg font-label-sm text-xs transition-colors ${
           isActive
-            ? "border-primary text-primary bg-primary/10"
+            ? "border-primary text-primary bg-primary/10 hover:bg-primary/10"
             : "border-outline-variant text-on-surface hover:bg-surface-container-high"
         }`}
       >
         <Icon name={icon} className="text-[16px]" />
         {label}
         {isActive && <span className="font-mono">({options.find((option) => option.value === value)?.label})</span>}
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="absolute right-0 mt-1 w-44 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-md z-10 overflow-hidden">
           {options.map((option) => (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant="ghost"
               onClick={() => {
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-label-sm text-left hover:bg-surface-container-high transition-colors ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-label-sm text-left hover:bg-surface-container-high transition-colors ${
                 value === option.value ? "text-primary" : "text-on-surface"
               }`}
             >
               {option.label}
               {value === option.value && <Icon name="check" className="text-[16px]" />}
-            </button>
+            </Button>
           ))}
         </div>
       )}

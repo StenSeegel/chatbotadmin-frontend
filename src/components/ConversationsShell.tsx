@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@ki4jlu/design-system";
 import { CONVERSATIONS, STATUS_STYLES } from "../data/conversations";
 
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
@@ -20,33 +20,35 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button
+      <Button
+        variant="outline"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-outline-variant text-sm text-on-surface-variant hover:bg-secondary-container transition-colors whitespace-nowrap"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-outline-variant font-body-base text-sm text-on-surface-variant hover:bg-secondary-container transition-colors whitespace-nowrap"
       >
         {value}
         <Icon name="expand_more" style={{ fontSize: 16 }} />
-      </button>
+      </Button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full mt-1 z-50 min-w-full w-max rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
             {options.map((option) => (
-              <button
+              <Button
                 key={option}
+                variant="ghost"
                 onClick={() => {
                   onChange(option);
                   setOpen(false);
                 }}
-                className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 rounded-none font-body-base text-sm text-left transition-colors ${
                   option === value
-                    ? "bg-primary-container text-on-primary-container font-medium"
+                    ? "bg-primary-container hover:bg-primary-container text-on-primary-container font-medium"
                     : "text-on-surface hover:bg-secondary-container"
                 }`}
               >
                 {option}
                 {option === value && <Icon name="check" style={{ fontSize: 16 }} />}
-              </button>
+              </Button>
             ))}
           </div>
         </>

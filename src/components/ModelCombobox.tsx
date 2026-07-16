@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button, Input } from "@ki4jlu/design-system";
 import { Icon } from "./Icon";
 import { fetchModels, type LanguageModel } from "../data/models";
 
@@ -133,7 +134,7 @@ export function ModelCombobox({
   return (
     <div className="relative">
       <div className="relative">
-        <input
+        <Input
           ref={inputRef}
           id={id}
           value={inputText}
@@ -155,8 +156,10 @@ export function ModelCombobox({
           placeholder={placeholder}
           className={className}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           tabIndex={-1}
           // Fokus im Feld behalten, damit onBlur nicht vorzeitig committet.
           onMouseDown={(e) => e.preventDefault()}
@@ -169,13 +172,13 @@ export function ModelCombobox({
             }
           }}
           aria-label="Knowledge-Bases anzeigen"
-          className="absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant hover:text-primary transition-colors"
+          className="absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
         >
           <Icon
             name="expand_more"
             className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
           />
-        </button>
+        </Button>
       </div>
 
       {open && (
@@ -197,14 +200,16 @@ export function ModelCombobox({
                 <Icon name="error" className="text-[18px]" />
                 {error}
               </p>
-              <button
+              <Button
                 type="button"
+                variant="link"
+                size="sm"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => load(true)}
-                className="mt-1 text-xs text-primary hover:underline"
+                className="mt-1 p-0 text-xs text-primary hover:underline"
               >
                 Erneut versuchen
-              </button>
+              </Button>
             </div>
           )}
 
@@ -217,9 +222,10 @@ export function ModelCombobox({
           {!loading &&
             !error &&
             filtered.map((m, i) => (
-              <button
+              <Button
                 key={m.id}
                 type="button"
+                variant="ghost"
                 role="option"
                 aria-selected={m.id === value}
                 // Verhindert, dass der Klick das Feld unfokussiert (onBlur) –
@@ -227,7 +233,7 @@ export function ModelCombobox({
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => select(m)}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                className={`w-full flex items-center justify-between gap-2 rounded-none px-3 py-2 text-left text-sm transition-colors ${
                   i === highlight ? "bg-surface-container-high" : "hover:bg-surface-container-low"
                 } ${m.id === value ? "text-primary" : "text-on-surface"}`}
               >
@@ -236,7 +242,7 @@ export function ModelCombobox({
                   <span className="truncate">{m.name || m.id}</span>
                 </span>
                 {m.id === value && <Icon name="check" className="text-[18px] shrink-0" />}
-              </button>
+              </Button>
             ))}
         </div>
       )}

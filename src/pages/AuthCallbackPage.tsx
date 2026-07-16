@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type AuthUser } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ki4jlu/design-system";
 
 type ParsedCallback = { token: string; user: AuthUser } | { error: string };
 

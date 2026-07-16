@@ -3,10 +3,10 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../auth/api";
 import { useAuth } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 
 interface PublicProvider {
   id: string;

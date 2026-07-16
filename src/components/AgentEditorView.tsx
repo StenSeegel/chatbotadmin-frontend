@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { ModelCombobox } from "./ModelCombobox";
-import { Label } from "@/components/ui/label";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Label } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
+import { Input, Textarea } from "@ki4jlu/design-system";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import type { Agent, AgentRule } from "../types/agent";
 
@@ -177,7 +177,9 @@ export function AgentEditorView({
 
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   if (deleteBlocked) return;
                   if (window.confirm(`Agent „${agent.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
@@ -190,7 +192,7 @@ export function AgentEditorView({
               >
                 <Icon name="delete" className="text-[18px]" />
                 Agent löschen
-              </button>
+              </Button>
             )}
             <Button variant="outline" onClick={onCancel}>Abbrechen</Button>
             <Button
@@ -237,6 +239,7 @@ export function AgentEditorView({
                   <Label htmlFor="agent-max-tokens">Max. Tokens pro Antwort</Label>
                   <span className="font-mono text-sm">{agent.maxTokens}</span>
                 </div>
+                {/* eslint-disable-next-line design-system/no-raw-ui-elements -- range slider; Input only covers text-like fields */}
                 <input
                   id="agent-max-tokens"
                   type="range"
@@ -252,7 +255,7 @@ export function AgentEditorView({
 
             <div className="flex flex-col gap-1">
               <Label htmlFor="agent-system-prompt">System-Prompt</Label>
-              <textarea
+              <Textarea
                 id="agent-system-prompt"
                 rows={5}
                 value={agent.systemPrompt}
@@ -265,14 +268,15 @@ export function AgentEditorView({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label>Regeln</Label>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={() => onUpdate("rules", [...agent.rules, { text: "", enabled: true } satisfies AgentRule])}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  className="flex items-center gap-1 p-0 text-xs text-primary hover:underline"
                 >
                   <Icon name="add" className="text-[16px]" />
                   Regel hinzufügen
-                </button>
+                </Button>
               </div>
 
               {agent.rules.length === 0 ? (
@@ -281,6 +285,7 @@ export function AgentEditorView({
                 <div className="divide-y divide-outline-variant/30 border border-outline-variant rounded-lg overflow-hidden">
                   {agent.rules.map((rule, i) => (
                     <div key={i} className="flex items-center gap-3 px-3 py-2 bg-surface hover:bg-surface-container-low transition-colors">
+                      {/* eslint-disable-next-line design-system/no-raw-ui-elements -- custom checkbox toggle; no Checkbox component in the design system and Button padding/hover styles don't fit */}
                       <button
                         type="button"
                         onClick={() => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, enabled: !r.enabled } : r)))}
@@ -291,22 +296,24 @@ export function AgentEditorView({
                       >
                         {rule.enabled && <Icon name="check" className="text-[14px]" />}
                       </button>
-                      <input
+                      <Input
                         value={rule.text}
                         onChange={(e) => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, text: e.target.value } : r)))}
                         placeholder="Neue Regel..."
-                        className={`flex-1 bg-transparent text-sm outline-none ${
+                        className={`flex-1 border-0 p-0 bg-transparent text-sm outline-none ${
                           rule.enabled ? "text-on-surface" : "text-on-surface-variant line-through"
                         }`}
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => onUpdate("rules", agent.rules.filter((_, j) => j !== i))}
                         aria-label="Regel entfernen"
-                        className="shrink-0 p-1 text-on-surface-variant hover:text-error transition-colors"
+                        className="shrink-0 p-1 text-on-surface-variant hover:bg-transparent hover:text-error transition-colors"
                       >
                         <Icon name="close" className="text-[16px]" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -347,14 +354,15 @@ export function AgentEditorView({
                 <Icon name="chat" className="text-primary" />
                 Test-Chat
               </h3>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleReset}
-                className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
+                className="flex items-center gap-1 p-0 text-xs text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
               >
                 <Icon name="refresh" className="text-[14px]" />
                 Zurücksetzen
-              </button>
+              </Button>
             </div>
             <p className="text-xs text-on-surface-variant">
               Testet den reinen Agenten – System-Prompt und aktive Regeln werden gesendet. Vorlagen &amp; Design gehören zum Konnektor.
@@ -385,7 +393,7 @@ export function AgentEditorView({
               </div>
 
               <div className="flex items-center gap-1 p-2 border-t border-outline-variant shrink-0 bg-surface-container-lowest">
-                <input
+                <Input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
@@ -397,15 +405,16 @@ export function AgentEditorView({
                   placeholder="Nachricht eingeben…"
                   className="flex-1 px-3 py-1.5 bg-surface border border-outline-variant rounded-full text-xs outline-none focus:ring-2 focus:ring-primary min-w-0"
                 />
-                <button
+                <Button
                   type="button"
+                  size="icon"
                   onClick={() => handleSend(draft)}
                   disabled={!draft.trim() || typing}
                   aria-label="Senden"
                   className="p-2 rounded-full bg-primary text-on-primary disabled:opacity-40 transition-opacity shrink-0"
                 >
                   <Icon name="send" className="text-[16px]" />
-                </button>
+                </Button>
               </div>
             </div>
           </Card>

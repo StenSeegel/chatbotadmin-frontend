@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
 import { Icon } from "../components/Icon";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -111,14 +111,16 @@ function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; on
     // in both themes (see docs/DESIGN_SYSTEM.md "Accepted color exceptions").
     // eslint-disable-next-line design-system/no-hardcoded-colors
     <div className="relative rounded-xl bg-[#1e1e2e] overflow-hidden">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={onCopy}
         className="absolute top-2.5 right-2.5 flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition-colors"
       >
         <Icon name={copied ? "check" : "content_copy"} className="text-[14px]" />
         {copied ? "Kopiert" : "Code kopieren"}
-      </button>
+      </Button>
       <pre className="overflow-x-auto p-4 pr-28 font-mono text-xs leading-relaxed">
         {code.split("\n").map((line, i) => (
           <div

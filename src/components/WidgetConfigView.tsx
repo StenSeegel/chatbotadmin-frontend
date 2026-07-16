@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
+import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
+import { Input } from "@ki4jlu/design-system";
+import { Label } from "@ki4jlu/design-system";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { Toggle } from "./Toggle";
@@ -262,7 +262,9 @@ export function WidgetConfigView({
 
           <div className="flex items-center gap-2 shrink-0">
             {!isNew && canDelete && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   if (
                     window.confirm(
@@ -276,10 +278,12 @@ export function WidgetConfigView({
               >
                 <Icon name="delete" className="text-[18px]" />
                 Konnektor löschen
-              </button>
+              </Button>
             )}
             {!isNew && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={onToggleStatus}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors ${
                   isActive
@@ -289,7 +293,7 @@ export function WidgetConfigView({
               >
                 <Icon name={isActive ? "pause_circle" : "play_circle"} className="text-[18px]" />
                 {isActive ? "Konnektor deaktivieren" : "Konnektor aktivieren"}
-              </button>
+              </Button>
             )}
             <Button variant="outline" onClick={onCancel}>
               Abbrechen
@@ -319,11 +323,12 @@ export function WidgetConfigView({
                 Grundeinstellungen
               </h3>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setBasicsOpen((o) => !o)}
                 aria-expanded={basicsOpen}
-                className="w-full flex items-center justify-between gap-2 text-left"
+                className="w-full flex items-center justify-between gap-2 text-left p-0 whitespace-normal hover:bg-transparent"
               >
                 <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                   <Icon name="tune" className="text-primary" />
@@ -333,7 +338,7 @@ export function WidgetConfigView({
                   {basicsOpen ? "Einklappen" : "Bearbeiten"}
                   <Icon name="expand_more" className={`text-[20px] transition-transform ${basicsOpen ? "rotate-180" : ""}`} />
                 </span>
-              </button>
+              </Button>
             )}
 
             {basicsOpen && (
@@ -436,15 +441,16 @@ export function WidgetConfigView({
                     ({widget.config.templates.length}/4)
                   </span>
                 </Label>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   disabled={widget.config.templates.length >= 4}
                   onClick={() => onUpdateConfig("templates", [...widget.config.templates, ""])}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                  className="p-0 flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                 >
                   <Icon name="add" className="text-[16px]" />
                   Vorlage hinzufügen
-                </button>
+                </Button>
               </div>
 
               {widget.config.templates.length === 0 ? (
@@ -528,6 +534,7 @@ export function WidgetConfigView({
                   <Label htmlFor={id}>{label}</Label>
                   <span className="font-mono text-sm">{widget.config[key]}</span>
                 </div>
+                {/* eslint-disable-next-line design-system/no-raw-ui-elements -- range slider; Input covers text-like inputs only */}
                 <input
                   id={id}
                   type="range"
@@ -566,14 +573,16 @@ export function WidgetConfigView({
                 <pre className="w-full overflow-x-auto px-4 py-3 bg-surface border border-outline-variant rounded-lg font-mono text-xs leading-relaxed whitespace-pre">
                   {embedCode}
                 </pre>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => onCopy(embedCode, "code")}
                   className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-md text-xs hover:bg-surface-container-high transition-colors"
                 >
                   <Icon name={copied === "code" ? "check" : "content_copy"} className="text-[14px]" />
                   {copied === "code" ? "Kopiert" : "Kopieren"}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -649,6 +658,7 @@ export function WidgetConfigView({
                   Akzentfarbe
                 </Label>
                 <div className="flex items-center gap-2">
+                  {/* eslint-disable-next-line design-system/no-raw-ui-elements -- native color picker swatch, not a text input */}
                   <input
                     id="appearance-color"
                     type="color"
@@ -685,18 +695,20 @@ export function WidgetConfigView({
               <Label>Icon</Label>
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map((iconName) => (
-                  <button
+                  <Button
                     key={iconName}
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => onUpdate("icon", iconName)}
                     className={`w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-colors ${
                       widget.icon === iconName
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-outline-variant text-on-surface-variant hover:border-primary/50 hover:text-primary"
+                        ? "border-primary bg-primary/10 hover:bg-primary/10 text-primary"
+                        : "border-outline-variant text-on-surface-variant hover:bg-transparent hover:border-primary/50 hover:text-primary"
                     }`}
                   >
                     <WidgetIcon name={iconName} size={22} />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -709,28 +721,31 @@ export function WidgetConfigView({
                 <Icon name="visibility" className="text-primary" />
                 Vorschau
               </h3>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handlePreviewReset}
-                className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
+                className="p-0 hover:bg-transparent flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
               >
                 <Icon name="refresh" className="text-[14px]" />
                 Zurücksetzen
-              </button>
+              </Button>
             </div>
 
             <div className="relative h-[420px] rounded-lg border border-outline-variant bg-surface overflow-hidden">
               {/* Geschlossener Zustand: nur der Chat-Button an der eingestellten Position. */}
               {!previewOpen && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setPreviewOpen(true)}
                   aria-label="Chat öffnen"
                   className={`absolute w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-transform hover:scale-105 ${previewPositionClass}`}
                   style={{ backgroundColor: widget.config.accentColor }}
                 >
                   <WidgetIcon name={widget.icon || "Bot"} size={26} />
-                </button>
+                </Button>
               )}
 
               {/* Geöffneter Zustand: das Chat-Fenster. */}
@@ -750,14 +765,16 @@ export function WidgetConfigView({
                       {widget.routing}
                     </span>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setPreviewOpen(false)}
                     aria-label="Chat schließen"
-                    className="p-0.5 rounded hover:bg-white/20 transition-colors shrink-0"
+                    className="p-0.5 rounded text-white hover:bg-white/20 transition-colors shrink-0"
                   >
                     <Icon name="close" className="text-[18px]" />
-                  </button>
+                  </Button>
                 </div>
 
                 <div ref={messagesRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-surface-container-low">
@@ -773,26 +790,30 @@ export function WidgetConfigView({
                       </div>
                       {msg.role === "bot" && i > 0 && !msg.notice && widget.config.feedbackButtons && (
                         <div className="flex items-center gap-1 mt-1">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePreviewFeedback(i, "up")}
                             aria-label="Hilfreich"
-                            className={`p-0.5 rounded transition-colors ${
+                            className={`p-0.5 rounded hover:bg-transparent transition-colors ${
                               msg.feedback === "up" ? "text-primary" : "text-on-surface-variant/50 hover:text-primary"
                             }`}
                           >
                             <Icon name="thumb_up" className="text-[14px]" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePreviewFeedback(i, "down")}
                             aria-label="Nicht hilfreich"
-                            className={`p-0.5 rounded transition-colors ${
+                            className={`p-0.5 rounded hover:bg-transparent transition-colors ${
                               msg.feedback === "down" ? "text-error" : "text-on-surface-variant/50 hover:text-error"
                             }`}
                           >
                             <Icon name="thumb_down" className="text-[14px]" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -813,21 +834,23 @@ export function WidgetConfigView({
                 {previewMessages.length === 1 && widget.config.templates.filter(Boolean).length > 0 && (
                   <div className="flex flex-wrap justify-start gap-1 px-2 pt-1 pb-1 shrink-0 bg-surface-container-low">
                     {widget.config.templates.filter(Boolean).map((tpl, i) => (
-                      <button
+                      <Button
                         key={i}
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => handlePreviewSend(tpl)}
                         className="px-2 py-0.5 rounded-full border bg-surface-container-lowest text-[10px] font-medium cursor-pointer transition-colors hover:bg-surface-container-high"
                         style={{ borderColor: widget.config.accentColor, color: widget.config.accentColor }}
                       >
                         {tpl}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
 
                 <div className="flex items-center gap-1 p-2 border-t border-outline-variant shrink-0">
-                  <input
+                  <Input
                     value={previewDraft}
                     onChange={(e) => setPreviewDraft(e.target.value)}
                     onKeyDown={(e) => {
@@ -843,8 +866,10 @@ export function WidgetConfigView({
                       "--tw-ring-color": widget.config.accentColor,
                     } as CSSProperties}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handlePreviewSend(previewDraft)}
                     disabled={!previewDraft.trim() || previewTyping}
                     aria-label="Senden"
@@ -852,7 +877,7 @@ export function WidgetConfigView({
                     style={{ backgroundColor: widget.config.accentColor }}
                   >
                     <Icon name="send" className="text-[16px]" />
-                  </button>
+                  </Button>
                 </div>
               </div>
               )}

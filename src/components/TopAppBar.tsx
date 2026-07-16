@@ -1,6 +1,6 @@
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Icon } from "./Icon";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeToggle } from "@ki4jlu/design-system";
 
 interface TopAppBarProps {
   title: string;

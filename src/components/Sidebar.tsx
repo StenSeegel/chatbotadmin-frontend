@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { Icon } from "./Icon";
 import { WidgetIcon } from "./WidgetIcon";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Button, ThemeToggle } from "@ki4jlu/design-system";
 import { fetchWidgets } from "../data/widgetsStore";
 import { fetchAgents } from "../data/agentsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -41,9 +41,10 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
   const statistikenActive = location.pathname.startsWith("/statistiken");
 
+  // hover:bg-primary keeps the active row's bg stable (Button's ghost variant adds hover:bg-surface-container-high)
   const parentClass = (active: boolean) =>
     active
-      ? "flex items-center gap-4 px-4 py-3 bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
+      ? "flex items-center gap-4 px-4 py-3 bg-primary hover:bg-primary text-on-primary rounded-full transition-all duration-200 ease-in-out"
       : "flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-secondary-container rounded-full transition-all duration-200 ease-in-out";
 
   return (
@@ -54,13 +55,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
       </div>
       <nav className="flex flex-col gap-2 flex-grow overflow-y-auto">
         <div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => {
               navigate("/agents");
               setAgentsOpen((v) => !v);
             }}
-            className={`${parentClass(agentsActive)} w-full`}
+            className={`${parentClass(agentsActive)} justify-start w-full font-body-base text-body-base`}
           >
             <Icon name="psychology" />
             <span className={agentsActive ? "font-label-sm" : "font-body-base"}>Agenten</span>
@@ -69,7 +71,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               className={`ml-auto shrink-0 transition-transform duration-200 ${agentsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
             />
-          </button>
+          </Button>
 
           {agentsOpen && (
             <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
@@ -98,13 +100,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </div>
 
         <div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => {
               navigate("/");
               setWidgetsOpen((v) => !v);
             }}
-            className={`${parentClass(widgetsActive)} w-full`}
+            className={`${parentClass(widgetsActive)} justify-start w-full font-body-base text-body-base`}
           >
             <Icon name="hub" />
             <span className={widgetsActive ? "font-label-sm" : "font-body-base"}>Konnektoren</span>
@@ -113,7 +116,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               className={`ml-auto shrink-0 transition-transform duration-200 ${widgetsOpen ? "rotate-180" : ""}`}
               style={{ fontSize: 20 }}
             />
-          </button>
+          </Button>
 
           {widgetsOpen && (
             <div className="mt-1 ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
@@ -163,23 +166,25 @@ export function Sidebar({ onLogout }: SidebarProps) {
                   Mock-Widget-Portal
                 </a>
               )}
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setMenuOpen(false);
                   onLogout();
                 }}
-                className="flex w-full items-center gap-3 px-4 py-3 text-sm text-error hover:bg-secondary-container transition-colors"
+                className="flex w-full items-center justify-start gap-3 px-4 py-3 rounded-none font-body-base text-sm text-error hover:bg-secondary-container transition-colors"
               >
                 <Icon name="logout" style={{ fontSize: 18 }} />
                 Abmelden
-              </button>
+              </Button>
             </div>
           </>
         )}
 
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center gap-3 px-2 py-1 w-full rounded-lg hover:bg-secondary-container transition-colors"
+          className="flex items-center justify-start gap-3 px-2 py-1 w-full rounded-lg font-body-base text-body-base hover:bg-secondary-container transition-colors"
         >
           <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-surface shadow-sm shrink-0">
             <span className="text-on-primary-container text-sm font-semibold">
@@ -195,7 +200,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             </span>
           </div>
           <Icon name="expand_more" className="text-on-surface-variant shrink-0" style={{ fontSize: 18 }} />
-        </button>
+        </Button>
       </div>
     </aside>
   );

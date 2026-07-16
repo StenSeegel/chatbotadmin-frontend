@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@ki4jlu/design-system";
+import { Card } from "@ki4jlu/design-system";
 import { Icon } from "./Icon";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
