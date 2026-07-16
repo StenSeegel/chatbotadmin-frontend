@@ -284,7 +284,7 @@ export function StatisticsPage() {
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-1.5 rounded-full bg-surface-container-lowest text-sm w-40"
+                className="pl-9 w-40"
               />
             </div>
           </div>
@@ -299,10 +299,7 @@ export function StatisticsPage() {
             const KpiIcon = kpi.icon;
             const TrendIcon = kpi.positive ? TrendingUp : TrendingDown;
             return (
-              <Card
-                key={i}
-                className="rounded-2xl shadow-none p-5 flex flex-col gap-3"
-              >
+              <Card key={i} className="p-5 flex flex-col gap-3">
                 <div className="flex items-start justify-between">
                   <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
                     <KpiIcon className="text-on-primary-container" style={{ fontSize: 20 }} width="1em" height="1em" aria-hidden />
@@ -323,7 +320,7 @@ export function StatisticsPage() {
         </div>
 
         {/* Bar chart */}
-        <Card className="rounded-2xl shadow-none p-6">
+        <Card className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
@@ -334,11 +331,12 @@ export function StatisticsPage() {
                 <Button
                   key={view}
                   variant="ghost"
+                  size="sm"
                   onClick={() => setChartView(view)}
-                  className={`rounded-none px-4 py-1.5 text-sm font-body-base transition-colors ${
+                  className={`rounded-none ${
                     chartView === view
-                      ? "bg-primary text-on-primary font-medium hover:bg-primary"
-                      : "text-on-surface-variant hover:bg-secondary-container"
+                      ? "bg-primary text-on-primary hover:bg-primary"
+                      : "text-on-surface-variant"
                   }`}
                 >
                   {view}
@@ -352,7 +350,7 @@ export function StatisticsPage() {
         {/* Bottom row: top questions + donut */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Häufigste Fragen */}
-          <Card className="lg:col-span-3 rounded-2xl shadow-none p-6">
+          <Card className="lg:col-span-3 p-6">
             <h3 className="text-title-md font-semibold">Häufigste Fragen</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Top 5 Nutzeranfragen diesen Monat</p>
             <div className="space-y-4">
@@ -380,7 +378,7 @@ export function StatisticsPage() {
           </Card>
 
           {/* Widget-Verteilung */}
-          <Card className="lg:col-span-2 rounded-2xl shadow-none p-6">
+          <Card className="lg:col-span-2 p-6">
             <h3 className="text-title-md font-semibold">Widget-Verteilung</h3>
             <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Gespräche nach Widget</p>
             <DonutChart />
@@ -390,10 +388,7 @@ export function StatisticsPage() {
         {/* Period summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PERIOD_CARDS.map((period, i) => (
-            <Card
-              key={i}
-              className="rounded-2xl shadow-none p-5"
-            >
+            <Card key={i} className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
                 <Badge tone="success">

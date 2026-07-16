@@ -194,9 +194,7 @@ export function StandaloneWidgetPage() {
                     size="icon"
                     aria-label="Hilfreich"
                     onClick={() => setFeedback(i, "up")}
-                    className={`p-1 rounded text-on-surface-variant transition-colors hover:bg-transparent hover:text-on-surface ${
-                      msg.feedback === "up" ? "text-primary" : ""
-                    }`}
+                    className={msg.feedback === "up" ? "text-primary" : undefined}
                   >
                     <ThumbsUp size={15} />
                   </Button>
@@ -206,9 +204,7 @@ export function StandaloneWidgetPage() {
                     size="icon"
                     aria-label="Nicht hilfreich"
                     onClick={() => setFeedback(i, "down")}
-                    className={`p-1 rounded text-on-surface-variant transition-colors hover:bg-transparent hover:text-on-surface ${
-                      msg.feedback === "down" ? "text-primary" : ""
-                    }`}
+                    className={msg.feedback === "down" ? "text-primary" : undefined}
                   >
                     <ThumbsDown size={15} />
                   </Button>
@@ -233,8 +229,8 @@ export function StandaloneWidgetPage() {
                   key={tpl}
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={() => handleSend(tpl)}
-                  className="rounded-full border bg-surface px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-container"
                   style={{ color: accent, borderColor: `${accent}66` }}
                 >
                   {tpl}
@@ -260,13 +256,14 @@ export function StandaloneWidgetPage() {
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Frage eingeben…"
                 autoComplete="off"
-                className="flex-1 rounded-full border border-outline-variant bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary"
+                className="flex-1"
               />
               <Button
                 type="submit"
+                size="icon"
                 disabled={!draft.trim() || typing}
                 aria-label="Senden"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white p-0 disabled:opacity-50"
+                className="shrink-0 text-white"
                 style={{ backgroundColor: accent }}
               >
                 <Send size={18} />

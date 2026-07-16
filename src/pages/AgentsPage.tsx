@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "@ki4jlu/design-system";
+import { Button, Card } from "@ki4jlu/design-system";
 import { Bot, Brain, Link as LinkIcon, Pencil, Plus } from "lucide-react";
 import { agentUsageByWidgets, fetchAgents } from "../data/agentsStore";
 import { fetchModels } from "../data/models";
@@ -99,13 +99,12 @@ export function AgentsPage() {
                 </div>
               </div>
 
-              <Link
-                to={`/agents/${agent.id}`}
-                className="mt-auto flex items-center justify-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-sm font-medium hover:bg-surface-container-high transition-colors"
-              >
-                <Pencil className="text-[16px]" width="1em" height="1em" aria-hidden />
-                Bearbeiten
-              </Link>
+              <Button asChild variant="outline" size="sm" className="mt-auto w-full">
+                <Link to={`/agents/${agent.id}`}>
+                  <Pencil className="text-[16px]" width="1em" height="1em" aria-hidden />
+                  Bearbeiten
+                </Link>
+              </Button>
             </Card>
           );
         })}

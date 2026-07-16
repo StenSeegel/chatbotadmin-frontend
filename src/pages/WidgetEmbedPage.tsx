@@ -75,7 +75,7 @@ function StepCard({
   const status = statusBadge[tone];
   return (
     <Card
-      className={`rounded-2xl p-6 space-y-stack-sm ${
+      className={`p-6 space-y-stack-sm ${
         accent ? "border-l-4 border-l-primary" : ""
       }`}
     >
@@ -128,7 +128,7 @@ function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; on
         variant="ghost"
         size="sm"
         onClick={onCopy}
-        className="absolute top-2.5 right-2.5 flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition-colors"
+        className="absolute top-2.5 right-2.5 bg-white/10 text-white hover:bg-white/20"
       >
         {copied ? (
           <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
@@ -137,7 +137,7 @@ function CodeBlock({ code, copied, onCopy }: { code: string; copied: boolean; on
         )}
         {copied ? "Kopiert" : "Code kopieren"}
       </Button>
-      <pre className="overflow-x-auto p-4 pr-28 font-mono text-xs leading-relaxed">
+      <pre className="overflow-x-auto p-4 pr-44 font-mono text-xs leading-relaxed">
         {code.split("\n").map((line, i) => (
           <div
             key={i}
@@ -245,7 +245,7 @@ export function WidgetEmbedPage() {
 
   const header = (
     <div className="flex items-center gap-3 mb-2">
-      <Button asChild variant="outline" size="icon" className="rounded-lg">
+      <Button asChild variant="outline" size="icon">
         <Link to="/" aria-label="Zurück zur Übersicht">
           <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
         </Link>
@@ -394,17 +394,8 @@ export function WidgetEmbedPage() {
             Direkte URL
           </label>
           <div className="flex items-center gap-2">
-            <Input
-              readOnly
-              value={directUrl}
-              className="bg-surface font-mono text-xs"
-            />
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              className="shrink-0 rounded-lg"
-            >
+            <Input readOnly value={directUrl} />
+            <Button asChild variant="outline" size="icon" className="shrink-0">
               <a
                 href={directUrl}
                 target="_blank"
@@ -420,7 +411,7 @@ export function WidgetEmbedPage() {
               size="icon"
               onClick={() => copy(directUrl, "url")}
               aria-label="URL kopieren"
-              className="shrink-0 rounded-lg"
+              className="shrink-0"
             >
               {copied === "url" ? (
                 <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
@@ -451,11 +442,7 @@ export function WidgetEmbedPage() {
           ))}
         </div>
 
-        <Button
-          asChild
-          variant="ghost"
-          className="mt-2 w-full rounded-xl px-4 py-3 bg-surface-container-high hover:bg-surface-container-highest"
-        >
+        <Button asChild variant="ghost" className="mt-2 w-full">
           <a href={testUrl} target="_blank" rel="noopener noreferrer">
             <Send className="text-[18px]" width="1em" height="1em" aria-hidden />
             Testseite öffnen

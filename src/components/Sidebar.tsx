@@ -141,7 +141,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
             <div className="absolute bottom-full left-2 right-2 mb-2 z-50 rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
               {isAdmin && (
-                <MenuItem asChild className="border-b border-outline-variant px-4 py-3">
+                <MenuItem asChild className="border-b border-outline-variant">
                   <a
                     href={widgetPortalUrl}
                     target="_blank"
@@ -156,7 +156,6 @@ export function Sidebar({ onLogout }: SidebarProps) {
               <MenuItem
                 type="button"
                 variant="destructive"
-                className="px-4 py-3"
                 onClick={() => {
                   setMenuOpen(false);
                   onLogout();

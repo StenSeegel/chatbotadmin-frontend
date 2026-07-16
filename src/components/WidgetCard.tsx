@@ -78,7 +78,7 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
             asChild
             variant="outline"
             size="sm"
-            className={`flex-col gap-1 min-w-0 w-full px-1 py-1.5 font-mono text-[10px]${action.tight ? " leading-tight" : ""}`}
+            className={`flex-col gap-1 min-w-0 w-full px-1 py-1.5${action.tight ? " leading-tight" : ""}`}
           >
             <Link to={`/widgets/${widget.id}${action.path}`}>
               <action.icon className="text-sm" width="1em" height="1em" aria-hidden />

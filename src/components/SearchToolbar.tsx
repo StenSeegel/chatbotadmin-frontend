@@ -51,16 +51,17 @@ function ToolbarDropdown<T extends string>({ icon: IconCmp, label, options, valu
       <Button
         type="button"
         variant="outline"
+        size="sm"
         onClick={() => setIsOpen((open) => !open)}
-        className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 border rounded-lg font-label-sm text-xs transition-colors ${
-          isActive
-            ? "border-primary text-primary bg-primary/10 hover:bg-primary/10"
-            : "border-outline-variant text-on-surface hover:bg-surface-container-high"
+        className={`w-full${
+          // Active-state skin on the dropdown trigger (kept deliberately; see
+          // design-system variant candidate "toggle/active trigger").
+          isActive ? " border-primary text-primary bg-primary/10 hover:bg-primary/10" : ""
         }`}
       >
         <IconCmp className="text-[16px]" width="1em" height="1em" aria-hidden />
         {label}
-        {isActive && <span className="font-mono">({options.find((option) => option.value === value)?.label})</span>}
+        {isActive && <span>({options.find((option) => option.value === value)?.label})</span>}
       </Button>
 
       {isOpen && (
@@ -114,7 +115,7 @@ export function SearchToolbar({
           aria-hidden
         />
         <Input
-          className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest shadow-sm"
+          className="pl-9"
           placeholder="Widgets durchsuchen..."
           type="text"
           value={value}

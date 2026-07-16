@@ -248,7 +248,6 @@ export function WidgetConfigView({
               size="icon"
               onClick={onCancel}
               aria-label="Zurück zur Übersicht"
-              className="rounded-lg"
             >
               <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
@@ -297,7 +296,7 @@ export function WidgetConfigView({
                     onDelete();
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error"
+                className="border-error text-error hover:bg-error hover:text-on-error"
               >
                 <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Konnektor löschen
@@ -308,11 +307,11 @@ export function WidgetConfigView({
                 variant="outline"
                 size="sm"
                 onClick={onToggleStatus}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors ${
+                className={
                   isActive
                     ? "border-error text-error hover:bg-error-container"
                     : "border-primary text-primary hover:bg-primary/10"
-                }`}
+                }
               >
                 {isActive ? (
                   <CirclePause className="text-[18px]" width="1em" height="1em" aria-hidden />
@@ -328,7 +327,6 @@ export function WidgetConfigView({
             <Button
               onClick={onSave}
               disabled={saved || (isNew && (!widget.name.trim() || !widget.agentId))}
-              className="shadow-sm"
             >
               {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
             </Button>
@@ -355,7 +353,7 @@ export function WidgetConfigView({
                 variant="ghost"
                 onClick={() => setBasicsOpen((o) => !o)}
                 aria-expanded={basicsOpen}
-                className="w-full flex items-center justify-between gap-2 text-left p-0 whitespace-normal hover:bg-transparent"
+                className="w-full justify-between text-left p-0 whitespace-normal"
               >
                 <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                   <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
@@ -473,7 +471,7 @@ export function WidgetConfigView({
                   variant="link"
                   disabled={widget.config.templates.length >= 4}
                   onClick={() => onUpdateConfig("templates", [...widget.config.templates, ""])}
-                  className="p-0 flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                  className="p-0"
                 >
                   <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Vorlage hinzufügen
@@ -496,7 +494,6 @@ export function WidgetConfigView({
                           onUpdateConfig("templates", updated);
                         }}
                         placeholder={`Vorlage ${i + 1}`}
-                        className="text-sm"
                       />
                       <Button
                         type="button"
@@ -504,7 +501,7 @@ export function WidgetConfigView({
                         size="icon"
                         onClick={() => onUpdateConfig("templates", widget.config.templates.filter((_, j) => j !== i))}
                         aria-label="Vorlage entfernen"
-                        className="rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
+                        className="text-on-surface-variant hover:text-error hover:bg-error-container shrink-0"
                       >
                         <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                       </Button>
@@ -605,7 +602,7 @@ export function WidgetConfigView({
                   variant="outline"
                   size="sm"
                   onClick={() => onCopy(embedCode, "code")}
-                  className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-md text-xs hover:bg-surface-container-high transition-colors"
+                  className="absolute top-2 right-2 px-2 py-1 bg-surface-container-lowest"
                 >
                   {copied === "code" ? (
                     <Check className="text-[14px]" width="1em" height="1em" aria-hidden />
@@ -631,7 +628,6 @@ export function WidgetConfigView({
                   size="icon"
                   onClick={() => onCopy(directUrl, "url")}
                   aria-label="URL kopieren"
-                  className="rounded-lg"
                 >
                   {copied === "url" ? (
                     <Check className="text-[18px]" width="1em" height="1em" aria-hidden />
@@ -645,7 +641,6 @@ export function WidgetConfigView({
                     variant="outline"
                     size="icon"
                     aria-label="URL öffnen"
-                    className="rounded-lg"
                   >
                     <a
                       href={directUrl}
@@ -704,7 +699,7 @@ export function WidgetConfigView({
                   <Input
                     value={widget.config.accentColor}
                     onChange={(e) => onUpdateConfig("accentColor", e.target.value)}
-                    className="px-3 font-mono text-sm"
+                    className="font-mono text-sm"
                   />
                 </div>
               </div>
@@ -736,7 +731,7 @@ export function WidgetConfigView({
                     variant="outline"
                     size="icon"
                     onClick={() => onUpdate("icon", iconName)}
-                    className={`w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-colors ${
+                    className={`w-11 h-11 rounded-xl border-2 ${
                       widget.icon === iconName
                         ? "border-primary bg-primary/10 hover:bg-primary/10 text-primary"
                         : "border-outline-variant text-on-surface-variant hover:bg-transparent hover:border-primary/50 hover:text-primary"
@@ -759,8 +754,8 @@ export function WidgetConfigView({
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 onClick={handlePreviewReset}
-                className="p-0 hover:bg-transparent flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
               >
                 <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
@@ -776,7 +771,7 @@ export function WidgetConfigView({
                   size="icon"
                   onClick={() => setPreviewOpen(true)}
                   aria-label="Chat öffnen"
-                  className={`absolute w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-transform hover:scale-105 ${previewPositionClass}`}
+                  className={`absolute w-14 h-14 rounded-full shadow-lg text-white transition-transform hover:scale-105 ${previewPositionClass}`}
                   style={{ backgroundColor: widget.config.accentColor }}
                 >
                   <WidgetIcon name={widget.icon || "Bot"} size={26} />
@@ -806,7 +801,7 @@ export function WidgetConfigView({
                     size="icon"
                     onClick={() => setPreviewOpen(false)}
                     aria-label="Chat schließen"
-                    className="p-0.5 rounded text-white hover:bg-white/20 transition-colors shrink-0"
+                    className="p-0.5 rounded text-white hover:bg-white/20 shrink-0"
                   >
                     <X className="text-[18px]" width="1em" height="1em" aria-hidden />
                   </Button>
@@ -831,7 +826,7 @@ export function WidgetConfigView({
                             size="icon"
                             onClick={() => handlePreviewFeedback(i, "up")}
                             aria-label="Hilfreich"
-                            className={`p-0.5 rounded hover:bg-transparent transition-colors ${
+                            className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "up" ? "text-primary" : "text-on-surface-variant/50 hover:text-primary"
                             }`}
                           >
@@ -843,7 +838,7 @@ export function WidgetConfigView({
                             size="icon"
                             onClick={() => handlePreviewFeedback(i, "down")}
                             aria-label="Nicht hilfreich"
-                            className={`p-0.5 rounded hover:bg-transparent transition-colors ${
+                            className={`p-0.5 rounded hover:bg-transparent ${
                               msg.feedback === "down" ? "text-error" : "text-on-surface-variant/50 hover:text-error"
                             }`}
                           >
@@ -875,7 +870,7 @@ export function WidgetConfigView({
                         variant="outline"
                         size="sm"
                         onClick={() => handlePreviewSend(tpl)}
-                        className="px-2 py-0.5 rounded-full border bg-surface-container-lowest text-[10px] font-medium cursor-pointer transition-colors hover:bg-surface-container-high"
+                        className="px-2 py-0.5 rounded-full bg-surface-container-lowest text-[10px] font-medium cursor-pointer"
                         style={{ borderColor: widget.config.accentColor, color: widget.config.accentColor }}
                       >
                         {tpl}
@@ -895,7 +890,7 @@ export function WidgetConfigView({
                       }
                     }}
                     placeholder="Nachricht eingeben…"
-                    className="flex-1 px-3 py-1.5 bg-surface border rounded-full text-xs outline-none focus:ring-2 min-w-0"
+                    className="flex-1 px-3 py-1.5 rounded-full text-xs focus:ring-2 min-w-0"
                     style={{
                       borderColor: widget.config.accentColor,
                       "--tw-ring-color": widget.config.accentColor,
@@ -908,7 +903,7 @@ export function WidgetConfigView({
                     onClick={() => handlePreviewSend(previewDraft)}
                     disabled={!previewDraft.trim() || previewTyping}
                     aria-label="Senden"
-                    className="p-2 rounded-full text-white disabled:opacity-40 transition-opacity shrink-0"
+                    className="text-white shrink-0"
                     style={{ backgroundColor: widget.config.accentColor }}
                   >
                     <Send className="text-[16px]" width="1em" height="1em" aria-hidden />

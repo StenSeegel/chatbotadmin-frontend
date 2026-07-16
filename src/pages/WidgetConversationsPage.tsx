@@ -77,7 +77,7 @@ export function WidgetConversationsPage() {
                     <p className="text-xs text-on-surface-variant mb-1">
                       {m.author} • {m.time}
                     </p>
-                    <Card className="rounded-2xl rounded-tl-sm px-4 py-3">
+                    <Card className="px-4 py-3">
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
                       {m.sources && m.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
@@ -118,7 +118,7 @@ export function WidgetConversationsPage() {
 
           {/* Composer */}
           <div className="shrink-0 border-t border-outline-variant p-4">
-            <Card className="rounded-xl">
+            <Card>
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -130,11 +130,7 @@ export function WidgetConversationsPage() {
                 className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none"
               />
               <div className="flex items-center justify-end px-3 py-2">
-                <Button
-                  onClick={handleSend}
-                  disabled={!draft.trim()}
-                  className="px-5 py-2"
-                >
+                <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
                   <Send style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
                   Senden
                 </Button>

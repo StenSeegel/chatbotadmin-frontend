@@ -172,7 +172,7 @@ export function ModelCombobox({
             }
           }}
           aria-label="Knowledge-Bases anzeigen"
-          className="absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
+          className="absolute inset-y-0 right-0"
         >
           <ChevronDown
             className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
@@ -208,7 +208,7 @@ export function ModelCombobox({
                 size="sm"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => load(true)}
-                className="mt-1 p-0 text-xs text-primary hover:underline"
+                className="mt-1 p-0"
               >
                 Erneut versuchen
               </Button>

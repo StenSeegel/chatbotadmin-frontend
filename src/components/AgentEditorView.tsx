@@ -178,7 +178,7 @@ export function AgentEditorView({
       <header className="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-30">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht" className="rounded-lg">
+            <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht">
               <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
             </Button>
             <div className="min-w-0">
@@ -209,7 +209,7 @@ export function AgentEditorView({
                 }}
                 disabled={deleteBlocked}
                 title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg font-label-sm text-label-sm transition-colors border-error text-error hover:bg-error hover:text-on-error disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-error"
+                className="border-error text-error hover:bg-error hover:text-on-error"
               >
                 <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
                 Agent löschen
@@ -219,7 +219,6 @@ export function AgentEditorView({
             <Button
               onClick={onSave}
               disabled={saved || (isNew && (!agent.name.trim() || !agent.model.trim()))}
-              className="shadow-sm"
             >
               {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
             </Button>
@@ -252,7 +251,6 @@ export function AgentEditorView({
                   value={agent.model}
                   onChange={(value) => onUpdate("model", value)}
                   placeholder="Modell-ID eingeben…"
-                  className="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -281,7 +279,7 @@ export function AgentEditorView({
                 rows={5}
                 value={agent.systemPrompt}
                 onChange={(e) => onUpdate("systemPrompt", e.target.value)}
-                className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm resize-y"
+                className="resize-y"
               />
             </div>
 
@@ -293,7 +291,7 @@ export function AgentEditorView({
                   type="button"
                   variant="link"
                   onClick={() => onUpdate("rules", [...agent.rules, { text: "", enabled: true } satisfies AgentRule])}
-                  className="flex items-center gap-1 p-0 text-xs text-primary hover:underline"
+                  className="p-0"
                 >
                   <Plus className="text-[16px]" width="1em" height="1em" aria-hidden />
                   Regel hinzufügen
@@ -321,7 +319,7 @@ export function AgentEditorView({
                         value={rule.text}
                         onChange={(e) => onUpdate("rules", agent.rules.map((r, j) => (j === i ? { ...r, text: e.target.value } : r)))}
                         placeholder="Neue Regel..."
-                        className={`flex-1 border-0 p-0 bg-transparent text-sm outline-none ${
+                        className={`flex-1 border-0 p-0 bg-transparent text-sm ${
                           rule.enabled ? "text-on-surface" : "text-on-surface-variant line-through"
                         }`}
                       />
@@ -331,7 +329,7 @@ export function AgentEditorView({
                         size="icon"
                         onClick={() => onUpdate("rules", agent.rules.filter((_, j) => j !== i))}
                         aria-label="Regel entfernen"
-                        className="shrink-0 p-1 text-on-surface-variant hover:bg-transparent hover:text-error transition-colors"
+                        className="shrink-0"
                       >
                         <X className="text-[16px]" width="1em" height="1em" aria-hidden />
                       </Button>
@@ -374,8 +372,8 @@ export function AgentEditorView({
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 onClick={handleReset}
-                className="flex items-center gap-1 p-0 text-xs text-on-surface-variant hover:bg-transparent hover:text-primary transition-colors"
               >
                 <RefreshCw className="text-[14px]" width="1em" height="1em" aria-hidden />
                 Zurücksetzen
@@ -420,7 +418,7 @@ export function AgentEditorView({
                     }
                   }}
                   placeholder="Nachricht eingeben…"
-                  className="flex-1 px-3 py-1.5 bg-surface border border-outline-variant rounded-full text-xs outline-none focus:ring-2 focus:ring-primary min-w-0"
+                  className="flex-1 min-w-0"
                 />
                 <Button
                   type="button"
@@ -428,7 +426,7 @@ export function AgentEditorView({
                   onClick={() => handleSend(draft)}
                   disabled={!draft.trim() || typing}
                   aria-label="Senden"
-                  className="p-2 rounded-full bg-primary text-on-primary disabled:opacity-40 transition-opacity shrink-0"
+                  className="shrink-0"
                 >
                   <Send className="text-[16px]" width="1em" height="1em" aria-hidden />
                 </Button>

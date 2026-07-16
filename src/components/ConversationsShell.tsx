@@ -20,11 +20,7 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <Button
-        variant="outline"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-outline-variant font-body-base text-sm text-on-surface-variant hover:bg-secondary-container transition-colors whitespace-nowrap"
-      >
+      <Button variant="outline" size="sm" onClick={() => setOpen((v) => !v)}>
         {value}
         <ChevronDown style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
       </Button>
@@ -110,7 +106,7 @@ export function ConversationsShell({
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-2 text-sm bg-surface-container-lowest"
+                className="pl-9"
               />
             </div>
           </div>
@@ -127,10 +123,10 @@ export function ConversationsShell({
                 <h3 className="text-title-md font-semibold">Gespräche</h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">{filtered.length} Ergebnisse</p>
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary-container/50 px-2 py-1 rounded-full">
+              <Badge tone="primary">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 Live
-              </span>
+              </Badge>
             </div>
 
             {/* Online-Nutzer (aus den Gesprächen mit Online-Status) */}
