@@ -31,7 +31,7 @@ export function createDefaultConfig(): WidgetConfig {
     maxTokensPerAnswer: 2000,
     title: "ChatBot",
     greeting: "Hallo! Wie kann ich dir helfen?",
-    accentColor: "#0052ff",
+    accentColor: "#0056b3",
     position: "bottom-right",
   };
 }

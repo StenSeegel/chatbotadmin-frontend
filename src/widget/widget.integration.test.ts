@@ -41,7 +41,7 @@ const publicConfig = {
   routing: "internal",
   title: "PE Bot",
   greeting: "Hallo! Wie kann ich helfen?",
-  accentColor: "#0052ff",
+  accentColor: "#0056b3",
   position: "bottom-right",
   icon: "smart_toy",
   templates: [],
