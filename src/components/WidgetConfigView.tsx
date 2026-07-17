@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Button, CodeBlock } from "@ki4jlu/design-system";
+import { Badge, Button, CodeBlock } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
 import { Label } from "@ki4jlu/design-system";
 import {
-  ArrowLeft,
   Brain,
   Check,
   ChevronDown,
@@ -29,6 +28,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { EditorShell } from "./EditorShell";
 import { Markdown } from "./Markdown";
 import { Toggle } from "./Toggle";
 import { ICON_OPTIONS, POSITION_OPTIONS } from "./widgetOptions";
@@ -236,111 +236,75 @@ export function WidgetConfigView({
   };
 
   return (
-    <main className="flex-grow max-w-container-max mx-auto w-full">
-
-      {/* ── Header ── */}
-      <header className="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
-
-          <div className="flex items-center gap-3 min-w-0">
+    <EditorShell
+      onBack={onCancel}
+      title={
+        isNew ? "Neuen Konnektor erstellen" : <span className="truncate">{widget.name}</span>
+      }
+      meta={isNew ? undefined : `Konnektor · Typ: Widget · ID: ${widget.id}`}
+      status={
+        !isNew && (
+          <Badge dot tone={isActive ? "primary" : "neutral"}>
+            {isActive ? "Aktiv" : "Pause"}
+          </Badge>
+        )
+      }
+      actions={
+        <>
+          {!isNew && canDelete && (
+            <Button
+              variant="destructive-outline"
+              size="sm"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Konnektor „${widget.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+                  )
+                ) {
+                  onDelete();
+                }
+              }}
+            >
+              <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
+              Konnektor löschen
+            </Button>
+          )}
+          {!isNew && (
             <Button
               variant="outline"
-              size="icon"
-              onClick={onCancel}
-              aria-label="Zurück zur Übersicht"
+              size="sm"
+              onClick={onToggleStatus}
+              className={
+                isActive
+                  ? "border-error text-error hover:bg-error-container"
+                  : "border-primary text-primary hover:bg-primary/10"
+              }
             >
-              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
-            </Button>
-
-            <div className="min-w-0">
-              {isNew ? (
-                <h2 className="font-headline-md text-headline-md text-on-surface">
-                  Neuen Konnektor erstellen
-                </h2>
+              {isActive ? (
+                <CirclePause className="text-[18px]" width="1em" height="1em" aria-hidden />
               ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-headline-md text-headline-md text-on-surface truncate">
-                      {widget.name}
-                    </h2>
-                    <span
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-bold ${
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "bg-surface-container-highest text-on-surface-variant"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${isActive ? "bg-primary" : "bg-on-surface-variant"}`} />
-                      {isActive ? "Aktiv" : "Pause"}
-                    </span>
-                  </div>
-                  <p className="font-mono text-xs text-on-surface-variant truncate">
-                    Konnektor · Typ: Widget · ID: {widget.id}
-                  </p>
-                </>
+                <CirclePlay className="text-[18px]" width="1em" height="1em" aria-hidden />
               )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {!isNew && canDelete && (
-              <Button
-                variant="destructive-outline"
-                size="sm"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Konnektor „${widget.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-                    )
-                  ) {
-                    onDelete();
-                  }
-                }}
-              >
-                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
-                Konnektor löschen
-              </Button>
-            )}
-            {!isNew && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggleStatus}
-                className={
-                  isActive
-                    ? "border-error text-error hover:bg-error-container"
-                    : "border-primary text-primary hover:bg-primary/10"
-                }
-              >
-                {isActive ? (
-                  <CirclePause className="text-[18px]" width="1em" height="1em" aria-hidden />
-                ) : (
-                  <CirclePlay className="text-[18px]" width="1em" height="1em" aria-hidden />
-                )}
-                {isActive ? "Konnektor deaktivieren" : "Konnektor aktivieren"}
-              </Button>
-            )}
-            <Button variant="outline" onClick={onCancel}>
-              Abbrechen
+              {isActive ? "Konnektor deaktivieren" : "Konnektor aktivieren"}
             </Button>
-            <Button
-              onClick={onSave}
-              disabled={saved || (isNew && (!widget.name.trim() || !widget.agentId))}
-            >
-              {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Two-column grid ── */}
-      <div className="p-gutter grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-
-        {/* Left column */}
+          )}
+          <Button variant="outline" onClick={onCancel}>
+            Abbrechen
+          </Button>
+          <Button
+            onClick={onSave}
+            disabled={saved || (isNew && (!widget.name.trim() || !widget.agentId))}
+          >
+            {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
+          </Button>
+        </>
+      }
+    >
+      {/* Left column */}
         <div className="lg:col-span-2 space-y-stack-lg">
 
           {/* Grundeinstellungen — beim Erstellen offen, bei bestehenden Konnektoren einklappbar */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             {isNew ? (
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <SlidersHorizontal className="text-primary" width="1em" height="1em" aria-hidden />
@@ -451,7 +415,7 @@ export function WidgetConfigView({
           </Card>
 
           {/* Vorlagen & Verhalten des Konnektors — Front-Belange (nicht Agent-Verhalten) */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <MessagesSquare className="text-primary" width="1em" height="1em" aria-hidden />
               Vorlagen &amp; Verhalten
@@ -546,7 +510,7 @@ export function WidgetConfigView({
           </Card>
 
           {/* Rate Limits */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Gauge className="text-primary" width="1em" height="1em" aria-hidden />
               Rate Limits
@@ -578,7 +542,7 @@ export function WidgetConfigView({
         <div className="space-y-stack-lg">
 
           {/* Output — Widget-Code */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Code className="text-primary" width="1em" height="1em" aria-hidden />
               Output — Einbettung
@@ -639,7 +603,7 @@ export function WidgetConfigView({
           </Card>
 
           {/* Erscheinungsbild */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Palette className="text-primary" width="1em" height="1em" aria-hidden />
               Erscheinungsbild
@@ -729,7 +693,7 @@ export function WidgetConfigView({
           </Card>
 
           {/* Vorschau */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <Eye className="text-primary" width="1em" height="1em" aria-hidden />
@@ -904,7 +868,6 @@ export function WidgetConfigView({
           </Card>
 
         </div>
-      </div>
-    </main>
+    </EditorShell>
   );
 }

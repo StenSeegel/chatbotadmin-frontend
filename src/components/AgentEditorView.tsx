@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import {
-  ArrowLeft,
   Brain,
   Check,
   BookSearch,
@@ -16,6 +15,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { EditorShell } from "./EditorShell";
 import { Markdown } from "./Markdown";
 import { ModelCombobox } from "./ModelCombobox";
 import { Label } from "@ki4jlu/design-system";
@@ -173,63 +173,51 @@ export function AgentEditorView({
   const deleteBlocked = usageCount > 0;
 
   return (
-    <main className="flex-grow max-w-container-max mx-auto w-full">
-      {/* ── Header ── */}
-      <header className="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-gutter py-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Button variant="outline" size="icon" onClick={onCancel} aria-label="Zurück zur Übersicht">
-              <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
-            </Button>
-            <div className="min-w-0">
-              {isNew ? (
-                <h2 className="font-headline-md text-headline-md text-on-surface">Neuer Agent</h2>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Brain className="text-primary text-[22px]" width="1em" height="1em" aria-hidden />
-                    <h2 className="font-headline-md text-headline-md text-on-surface truncate">{agent.name}</h2>
-                  </div>
-                  <p className="font-mono text-xs text-on-surface-variant truncate">Agent-ID: {agent.id}</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {!isNew && canDelete && (
-              <Button
-                variant="destructive-outline"
-                size="sm"
-                onClick={() => {
-                  if (deleteBlocked) return;
-                  if (window.confirm(`Agent „${agent.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
-                    onDelete();
-                  }
-                }}
-                disabled={deleteBlocked}
-                title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
-              >
-                <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
-                Agent löschen
-              </Button>
-            )}
-            <Button variant="outline" onClick={onCancel}>Abbrechen</Button>
+    <EditorShell
+      onBack={onCancel}
+      title={
+        isNew ? (
+          "Neuer Agent"
+        ) : (
+          <>
+            <Brain className="text-primary text-[22px] shrink-0" width="1em" height="1em" aria-hidden />
+            <span className="truncate">{agent.name}</span>
+          </>
+        )
+      }
+      meta={isNew ? undefined : `Agent-ID: ${agent.id}`}
+      actions={
+        <>
+          {!isNew && canDelete && (
             <Button
-              onClick={onSave}
-              disabled={saved || (isNew && (!agent.name.trim() || !agent.model.trim()))}
+              variant="destructive-outline"
+              size="sm"
+              onClick={() => {
+                if (deleteBlocked) return;
+                if (window.confirm(`Agent „${agent.name}“ endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+                  onDelete();
+                }
+              }}
+              disabled={deleteBlocked}
+              title={deleteBlocked ? `Wird von ${usageCount} Konnektor(en) verwendet` : undefined}
             >
-              {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
+              <Trash2 className="text-[18px]" width="1em" height="1em" aria-hidden />
+              Agent löschen
             </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Two-column grid ── */}
-      <div className="p-gutter grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-        {/* Left column — Denkschicht */}
+          )}
+          <Button variant="outline" onClick={onCancel}>Abbrechen</Button>
+          <Button
+            onClick={onSave}
+            disabled={saved || (isNew && (!agent.name.trim() || !agent.model.trim()))}
+          >
+            {saved ? "Gespeichert" : isNew ? "Erstellen" : "Speichern"}
+          </Button>
+        </>
+      }
+    >
+      {/* Left column — Denkschicht */}
         <div className="lg:col-span-2 space-y-stack-lg">
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Brain className="text-primary" width="1em" height="1em" aria-hidden />
               Denkschicht
@@ -341,7 +329,7 @@ export function AgentEditorView({
           </Card>
 
           {/* Tools & Wissen — MVP-Platzhalter (Ebene 1) */}
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
               <Wrench className="text-primary" width="1em" height="1em" aria-hidden />
               Tools & Wissen
@@ -363,7 +351,7 @@ export function AgentEditorView({
 
         {/* Right column — Test-Chat */}
         <div className="space-y-stack-lg">
-          <Card className="p-6 space-y-stack-sm">
+          <Card className="p-gutter space-y-stack-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-headline-md text-base font-bold flex items-center gap-2">
                 <MessageSquare className="text-primary" width="1em" height="1em" aria-hidden />
@@ -434,7 +422,6 @@ export function AgentEditorView({
             </div>
           </Card>
         </div>
-      </div>
-    </main>
+    </EditorShell>
   );
 }

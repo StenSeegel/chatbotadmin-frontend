@@ -11,6 +11,19 @@ vi.mock("../data/models", () => ({
   ]),
 }));
 
+// Die Liste rendert jetzt im Radix-Popover (Portal, positioniert via
+// floating-ui). jsdom bringt keinen ResizeObserver mit — ein No-op-Stub
+// genügt, damit das Popover mounten kann. Die screen-Queries selbst finden
+// Portal-Inhalte ohnehin, weil sie das ganze document durchsuchen.
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
+
 describe("ModelCombobox", () => {
   it("stürzt bei undefined value nicht ab und zeigt ein leeres Feld", async () => {
     render(

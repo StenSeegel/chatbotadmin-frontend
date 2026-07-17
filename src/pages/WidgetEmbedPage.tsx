@@ -1,10 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Badge, Button, CodeBlock } from "@ki4jlu/design-system";
+import { useParams } from "react-router-dom";
+import { Badge, Button, CodeBlock, FormLayout } from "@ki4jlu/design-system";
 import { Card } from "@ki4jlu/design-system";
 import { Input } from "@ki4jlu/design-system";
 import {
-  ArrowLeft,
   Check,
   CircleAlert,
   CircleCheck,
@@ -16,6 +15,7 @@ import {
   Send,
   type LucideIcon,
 } from "lucide-react";
+import { Alert } from "../components/Alert";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import { resolveWidgetPortalUrl } from "../lib/widgetPortal";
@@ -49,10 +49,10 @@ const stepBadge: Record<Tone, string> = {
   pending: "bg-surface-container-high text-on-surface-variant",
 };
 
-const statusBadge: Record<Tone, { label: string; className: string }> = {
-  done: { label: "Erledigt", className: "bg-success-container text-on-success-container" },
-  active: { label: "Aktiv", className: "bg-primary/10 text-primary" },
-  pending: { label: "Ausstehend", className: "bg-error/10 text-error" },
+const statusBadge: Record<Tone, { label: string; tone: "success" | "primary" | "error" }> = {
+  done: { label: "Erledigt", tone: "success" },
+  active: { label: "Aktiv", tone: "primary" },
+  pending: { label: "Ausstehend", tone: "error" },
 };
 
 function StepCard({
@@ -75,7 +75,7 @@ function StepCard({
   const status = statusBadge[tone];
   return (
     <Card
-      className={`p-6 space-y-stack-sm ${
+      className={`p-gutter space-y-stack-sm ${
         accent ? "border-l-4 border-l-primary" : ""
       }`}
     >
@@ -105,11 +105,9 @@ function StepCard({
             <p className="text-sm text-on-surface-variant mt-0.5">{subtitle}</p>
           </div>
         </div>
-        <span
-          className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full ${status.className}`}
-        >
+        <Badge dot tone={status.tone} className="shrink-0">
           {status.label}
-        </span>
+        </Badge>
       </div>
 
       {children}
@@ -208,41 +206,25 @@ export function WidgetEmbedPage() {
     }
   };
 
-  const header = (
-    <div className="flex items-center gap-3 mb-2">
-      <Button asChild variant="outline" size="icon">
-        <Link to="/" aria-label="Zurück zur Übersicht">
-          <ArrowLeft className="text-[20px]" width="1em" height="1em" aria-hidden />
-        </Link>
-      </Button>
-      <div className="min-w-0">
-        <h1 className="font-headline-md text-headline-md text-on-surface">Einbetten</h1>
-        <p className="text-sm text-on-surface-variant truncate">
-          {widget ? widget.name || widget.id : "…"}
-        </p>
-      </div>
-    </div>
-  );
-
   if (notFound) {
     return (
-      <main className="flex-grow p-gutter max-w-3xl mx-auto w-full space-y-stack-lg">
-        {header}
-        <div className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
-          Widget „{id}" wurde nicht gefunden.
-        </div>
+      <main className="flex-grow w-full">
+        <FormLayout title="Widget einbetten">
+          <Alert>Widget „{id}" wurde nicht gefunden.</Alert>
+        </FormLayout>
       </main>
     );
   }
 
   if (!widget) {
     return (
-      <main className="flex-grow p-gutter max-w-3xl mx-auto w-full space-y-stack-lg">
-        {header}
-        <div className="flex items-center gap-2 text-on-surface-variant text-sm">
-          <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
-          Wird geladen…
-        </div>
+      <main className="flex-grow w-full">
+        <FormLayout title="Widget einbetten" description="…">
+          <div className="flex items-center gap-2 text-on-surface-variant text-sm">
+            <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
+            Wird geladen…
+          </div>
+        </FormLayout>
       </main>
     );
   }
@@ -318,8 +300,9 @@ export function WidgetEmbedPage() {
     apiStatus === "loading" || siteStatus === "loading" ? "active" : allHealthy ? "done" : "pending";
 
   return (
-    <main className="flex-grow p-gutter max-w-3xl mx-auto w-full space-y-stack-lg">
-      {header}
+    <main className="flex-grow w-full">
+      {/* FormLayout (max-w-2xl) übernimmt Seitenbreite und Abstände. */}
+      <FormLayout title="Widget einbetten" description={widget.name || widget.id}>
 
       {/* Schritt 1 — Globaler Script-Loader */}
       <StepCard
@@ -406,6 +389,7 @@ export function WidgetEmbedPage() {
           </a>
         </Button>
       </StepCard>
+      </FormLayout>
     </main>
   );
 }
