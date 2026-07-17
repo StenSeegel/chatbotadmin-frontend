@@ -79,8 +79,8 @@ export function DashboardPage() {
           search={
             <Input
               leadingIcon={<Search aria-hidden />}
-              placeholder="Widgets durchsuchen..."
-              aria-label="Widgets durchsuchen"
+              placeholder="Konnektoren durchsuchen..."
+              aria-label="Konnektoren durchsuchen"
               type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
