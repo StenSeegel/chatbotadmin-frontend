@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Alert } from "../components/Alert";
 import { WidgetConfigView } from "../components/WidgetConfigView";
 import { createDefaultConfig, deleteWidget, fetchWidgets, saveWidget } from "../data/widgetsStore";
 import { fetchAgents } from "../data/agentsStore";
@@ -155,9 +156,7 @@ export function WidgetConfigPage() {
     <>
       {saveError ? (
         <div className="mx-auto mt-4 max-w-container-max px-gutter">
-          <div className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
-            {saveError}
-          </div>
+          <Alert>{saveError}</Alert>
         </div>
       ) : null}
       <WidgetConfigView

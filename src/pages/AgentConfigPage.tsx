@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Alert } from "../components/Alert";
 import { AgentEditorView } from "../components/AgentEditorView";
 import { agentUsageByWidgets, createDefaultAgent, deleteAgent, fetchAgents, saveAgent } from "../data/agentsStore";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -91,7 +92,7 @@ export function AgentConfigPage() {
     <>
       {saveError ? (
         <div className="mx-auto mt-4 max-w-container-max px-gutter">
-          <div className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">{saveError}</div>
+          <Alert>{saveError}</Alert>
         </div>
       ) : null}
       <AgentEditorView

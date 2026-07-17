@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { Button } from "@ki4jlu/design-system";
-import { Card } from "@ki4jlu/design-system";
+import { Badge, Button, Card } from "@ki4jlu/design-system";
 import { Brain, Code, Settings, type LucideIcon } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
@@ -10,9 +9,9 @@ const accentClasses: Record<Widget["accent"], { iconBg: string; iconText: string
   secondary: { iconBg: "bg-secondary/10", iconText: "text-secondary" },
 };
 
-const statusClasses: Record<Widget["status"], { badge: string; dot: string; label: string }> = {
-  active: { badge: "bg-primary/10 text-primary", dot: "bg-primary", label: "Aktiv" },
-  paused: { badge: "bg-surface-container-highest text-on-surface-variant", dot: "bg-on-surface-variant", label: "Pause" },
+const statusBadge: Record<Widget["status"], { tone: "primary" | "neutral"; label: string }> = {
+  active: { tone: "primary", label: "Aktiv" },
+  paused: { tone: "neutral", label: "Pause" },
 };
 
 // Footer-Buttons (`path` wird an `/widgets/${id}` angehängt). Die Chatbox ist
@@ -31,7 +30,7 @@ interface WidgetCardProps {
 
 export function WidgetCard({ widget, agentName }: WidgetCardProps) {
   const accent = accentClasses[widget.accent];
-  const status = statusClasses[widget.status];
+  const status = statusBadge[widget.status];
   const rating = widget.stats.rating.toFixed(1).replace(".", ",");
 
   return (
@@ -40,10 +39,9 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
         <div className={`w-10 h-10 ${accent.iconBg} rounded-xl flex items-center justify-center`}>
           <WidgetIcon name={widget.icon} className={accent.iconText} />
         </div>
-        <div className={`flex items-center gap-1.5 ${status.badge} px-2.5 py-1 rounded-full text-label-sm font-bold`}>
-          <span className={`w-2 h-2 rounded-full ${status.dot}`} />
+        <Badge dot tone={status.tone}>
           {status.label}
-        </div>
+        </Badge>
       </div>
 
       <div className="mb-3">
