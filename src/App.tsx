@@ -1,8 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useAuth } from "./auth/AuthContext";
-import { BottomNavBar } from "./components/BottomNavBar";
-import { Sidebar } from "./components/Sidebar";
-import { TopAppBar } from "./components/TopAppBar";
+import { AppLayout } from "./components/AppLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AgentsPage } from "./pages/AgentsPage";
@@ -15,18 +12,6 @@ import { WidgetConfigPage } from "./pages/WidgetConfigPage";
 import { WidgetEmbedPage } from "./pages/WidgetEmbedPage";
 import { WidgetConversationsPage } from "./pages/WidgetConversationsPage";
 import { WidgetDashboardPage } from "./pages/WidgetDashboardPage";
-
-function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-  const { logout } = useAuth();
-
-  return (
-    <div className="bg-surface text-on-surface min-h-screen flex flex-row">
-      <Sidebar onLogout={logout} />
-      <div className="flex-grow flex flex-col lg:pl-64 min-w-0">{children}</div>
-      <BottomNavBar />
-    </div>
-  );
-}
 
 function App() {
   const location = useLocation();
@@ -46,89 +31,23 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-      {/* Protected app routes */}
+      {/* Protected app routes — one layout route provides shell + guard. */}
       <Route
-        path="/"
         element={
           <ProtectedRoute>
-            <AuthenticatedLayout>
-              <TopAppBar title="Dashboard Übersicht" />
-              <DashboardPage />
-            </AuthenticatedLayout>
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/widgets/:id"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <WidgetConfigPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/widgets/:id/einbetten"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <WidgetEmbedPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/widgets/:id/gespraeche"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <WidgetDashboardPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/widgets/:id/gespraeche/:convId"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <WidgetConversationsPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agents"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <TopAppBar title="Agenten" />
-              <AgentsPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agents/:id"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <AgentConfigPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/statistiken"
-        element={
-          <ProtectedRoute>
-            <AuthenticatedLayout>
-              <StatisticsPage />
-            </AuthenticatedLayout>
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/widgets/:id" element={<WidgetConfigPage />} />
+        <Route path="/widgets/:id/einbetten" element={<WidgetEmbedPage />} />
+        <Route path="/widgets/:id/gespraeche" element={<WidgetDashboardPage />} />
+        <Route path="/widgets/:id/gespraeche/:convId" element={<WidgetConversationsPage />} />
+        <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/agents/:id" element={<AgentConfigPage />} />
+        <Route path="/statistiken" element={<StatisticsPage />} />
+      </Route>
 
       {/* Unknown paths fall back to the dashboard, which enforces auth. */}
       <Route path="*" element={<Navigate to="/" replace />} />
