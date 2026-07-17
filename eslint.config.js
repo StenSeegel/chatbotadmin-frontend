@@ -26,8 +26,8 @@ export default defineConfig([
     plugins: { 'design-system': designSystem },
     rules: {
       'design-system/no-hardcoded-colors': 'error',
-      'design-system/no-raw-ui-elements': 'warn',
-      'design-system/layout-only-classname': 'warn',
+      'design-system/no-raw-ui-elements': 'error',
+      'design-system/layout-only-classname': 'error',
     },
   },
 ])
