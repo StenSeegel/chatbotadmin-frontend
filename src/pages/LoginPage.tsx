@@ -2,11 +2,17 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../auth/api";
 import { useAuth } from "../auth/AuthContext";
-import { Bot, LogIn } from "lucide-react";
-import { Button } from "@ki4jlu/design-system";
-import { Card } from "@ki4jlu/design-system";
-import { Input } from "@ki4jlu/design-system";
-import { FormControl, FormItem, FormLabel } from "@ki4jlu/design-system";
+import { LogIn } from "lucide-react";
+import {
+  AuthLayout,
+  Button,
+  FormControl,
+  FormItem,
+  FormLabel,
+  Input,
+  Logo,
+  Spinner,
+} from "@ki4jlu/design-system";
 
 interface PublicProvider {
   id: string;
@@ -97,74 +103,68 @@ export function LoginPage() {
   };
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center gap-2 mb-8">
-          <Bot className="text-primary" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
-          <h1 className="text-headline-md font-bold text-primary">ChatBot Admin</h1>
-          <p className="text-on-surface-variant font-body-base text-sm">
-            Melden Sie sich an, um fortzufahren
+    <AuthLayout
+      logo={<Logo product="CampusAgents" size="lg" />}
+      title="Anmelden"
+      description="Melden Sie sich an, um fortzufahren"
+    >
+      <div className="space-y-stack-sm">
+        {error && (
+          <p className="text-sm text-error text-center" role="alert">
+            {error}
           </p>
-        </div>
+        )}
 
-        <Card className="p-6 space-y-stack-sm">
-          {error && (
-            <p className="text-sm text-error text-center" role="alert">
-              {error}
-            </p>
-          )}
+        {!authConfigLoaded && (
+          <div className="flex justify-center py-2 text-primary">
+            <Spinner size="lg" />
+          </div>
+        )}
 
-          {!authConfigLoaded && (
-            <div className="flex justify-center py-2">
-              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
+        {showOidcButton && oidcProvider && (
+          <Button type="button" onClick={loginWithSSO} className="w-full">
+            <LogIn className="text-[18px]" width="1em" height="1em" aria-hidden />
+            Anmelden mit {oidcProvider.name}
+          </Button>
+        )}
 
-          {showOidcButton && oidcProvider && (
-            <Button type="button" onClick={loginWithSSO} className="w-full">
-              <LogIn className="text-[18px]" width="1em" height="1em" aria-hidden />
-              Anmelden mit {oidcProvider.name}
+        {showPasswordForm && (
+          <form onSubmit={handleSubmit} className="space-y-stack-sm">
+            <FormItem>
+              <FormLabel>Benutzername</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </FormControl>
+            </FormItem>
+            <FormItem>
+              <FormLabel>Passwort</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </FormControl>
+            </FormItem>
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={submitting}
+              className="w-full"
+            >
+              {submitting ? "Anmeldung…" : "Anmelden"}
             </Button>
-          )}
-
-          {showPasswordForm && (
-            <form onSubmit={handleSubmit} className="space-y-stack-sm">
-              <FormItem>
-                <FormLabel>Benutzername</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    autoComplete="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </FormControl>
-              </FormItem>
-              <FormItem>
-                <FormLabel>Passwort</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </FormControl>
-              </FormItem>
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={submitting}
-                className="w-full"
-              >
-                {submitting ? "Anmeldung…" : "Anmelden"}
-              </Button>
-            </form>
-          )}
-        </Card>
+          </form>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type AuthUser } from "../auth/AuthContext";
 import { CircleAlert } from "lucide-react";
-import { Button } from "@ki4jlu/design-system";
+import { AuthLayout, Button, Spinner } from "@ki4jlu/design-system";
 
 type ParsedCallback = { token: string; user: AuthUser } | { error: string };
 
@@ -53,26 +53,25 @@ export function AuthCallbackPage() {
 
   if (error) {
     return (
-      <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
-        <div className="w-full max-w-sm text-center">
-          <CircleAlert className="text-error mb-4" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
-          <h1 className="text-headline-md font-bold text-error mb-2">Anmeldung fehlgeschlagen</h1>
-          <p className="text-sm text-on-surface-variant mb-6">{error}</p>
+      <AuthLayout title="Anmeldung fehlgeschlagen">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <CircleAlert className="text-error" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
+          <p className="text-sm text-on-surface-variant">{error}</p>
           <Button onClick={() => navigate("/login", { replace: true })}>
             Zurück zur Anmeldung
           </Button>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <AuthLayout title="Anmeldung wird abgeschlossen…">
+      <div className="flex flex-col items-center gap-4 text-primary">
+        <Spinner size="lg" />
         <p className="text-sm text-on-surface-variant">Anmeldung wird verarbeitet…</p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 

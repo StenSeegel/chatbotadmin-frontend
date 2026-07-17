@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Button, Textarea } from "@ki4jlu/design-system";
-import { Card } from "@ki4jlu/design-system";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  ChatBubble,
+  ChatLayout,
+  Textarea,
+} from "@ki4jlu/design-system";
 import { Send } from "lucide-react";
 import { ConversationsShell } from "../components/ConversationsShell";
+import { ProgressBar } from "../components/ProgressBar";
 import { fetchWidgets } from "../data/widgetsStore";
 import { CONVERSATIONS, type Message } from "../data/conversations";
 
@@ -46,23 +54,44 @@ export function WidgetConversationsPage() {
       <div className="flex-1 flex min-h-0">
         {/* Center: chat thread */}
         <section className="flex-1 flex flex-col min-w-0 min-h-0">
-          {/* Thread header */}
-          <div className="shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-b border-outline-variant">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-sm font-semibold shrink-0">
-                {selected.initials}
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold truncate">{selected.name}</p>
-                <p className="text-xs text-on-surface-variant truncate">
-                  {selected.channel}-widget • Gespräch #{selected.id} • {selected.time}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-surface-container-low/30">
+          <ChatLayout
+            className="rounded-none border-0 shadow-none"
+            header={
+              <>
+                <Avatar initials={selected.initials} />
+                <div className="min-w-0">
+                  <p className="font-semibold truncate">{selected.name}</p>
+                  <p className="text-xs text-on-surface-variant truncate">
+                    {selected.channel}-widget • Gespräch #{selected.id} • {selected.time}
+                  </p>
+                </div>
+                <Badge dot tone={selected.online ? "success" : "neutral"} className="ml-auto shrink-0">
+                  {selected.online ? "Online" : "Offline"}
+                </Badge>
+              </>
+            }
+            composer={
+              <Card>
+                <Textarea
+                  variant="inline"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
+                  }}
+                  placeholder="Antwortnachricht eingeben..."
+                  rows={3}
+                  className="resize-none px-4 py-3"
+                />
+                <div className="flex items-center justify-end px-3 py-2">
+                  <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
+                    <Send style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
+                    Senden
+                  </Button>
+                </div>
+              </Card>
+            }
+          >
             <div className="flex justify-center">
               <span className="text-xs text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full">
                 {selected.dateLabel}
@@ -77,7 +106,7 @@ export function WidgetConversationsPage() {
                     <p className="text-xs text-on-surface-variant mb-1">
                       {m.author} • {m.time}
                     </p>
-                    <Card className="px-4 py-3">
+                    <ChatBubble from="assistant" className="max-w-full">
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
                       {m.sources && m.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
@@ -95,7 +124,7 @@ export function WidgetConversationsPage() {
                           })}
                         </div>
                       )}
-                    </Card>
+                    </ChatBubble>
                   </div>
                 </div>
               ) : (
@@ -104,40 +133,15 @@ export function WidgetConversationsPage() {
                     <p className="text-xs text-on-surface-variant mb-1 text-right">
                       {m.author} • {m.time}
                     </p>
-                    <div className="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-4 py-3">
+                    <ChatBubble from="user" className="max-w-full">
                       <p className="text-sm leading-relaxed whitespace-pre-line">{m.text}</p>
-                    </div>
+                    </ChatBubble>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary text-xs font-semibold shrink-0">
-                    {selected.initials}
-                  </div>
+                  <Avatar initials={selected.initials} size="sm" className="shrink-0" />
                 </div>
               ),
             )}
-          </div>
-
-          {/* Composer */}
-          <div className="shrink-0 border-t border-outline-variant p-4">
-            <Card>
-              <Textarea
-                variant="inline"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
-                }}
-                placeholder="Antwortnachricht eingeben..."
-                rows={3}
-                className="resize-none px-4 py-3"
-              />
-              <div className="flex items-center justify-end px-3 py-2">
-                <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
-                  <Send style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
-                  Senden
-                </Button>
-              </div>
-            </Card>
-          </div>
+          </ChatLayout>
         </section>
 
         {/* Right: user info */}
@@ -146,24 +150,14 @@ export function WidgetConversationsPage() {
             <h3 className="text-title-md font-semibold">Nutzerinfo</h3>
           </div>
 
-          <div className="p-6 flex flex-col items-center text-center border-b border-outline-variant">
-            <div className="h-20 w-20 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-2xl font-semibold mb-3">
-              {selected.initials}
-            </div>
+          <div className="p-gutter flex flex-col items-center text-center border-b border-outline-variant">
+            <Avatar initials={selected.initials} size="lg" className="mb-3" />
             <p className="font-semibold">{selected.name}</p>
             <p className="text-xs text-on-surface-variant truncate max-w-full mt-0.5">{selected.email}</p>
             <div className="flex items-center gap-2 mt-3">
-              {selected.online ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-on-success-container bg-success-container px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                  Online
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs font-medium text-on-surface-variant bg-surface-container-high px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-on-surface-variant" />
-                  Offline
-                </span>
-              )}
+              <Badge dot tone={selected.online ? "success" : "neutral"}>
+                {selected.online ? "Online" : "Offline"}
+              </Badge>
               <span className="text-xs font-medium text-primary bg-primary-container/50 px-2.5 py-1 rounded-full">
                 {selected.channel}-widget
               </span>
@@ -209,9 +203,7 @@ export function WidgetConversationsPage() {
                 {selected.ratingBreakdown.map((r) => (
                   <div key={r.stars} className="flex items-center gap-2">
                     <span className="text-xs text-on-surface-variant w-2">{r.stars}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-secondary-container overflow-hidden">
-                      <div className="h-full rounded-full bg-primary" style={{ width: `${r.percent}%` }} />
-                    </div>
+                    <ProgressBar percent={r.percent} className="flex-1 h-1.5" />
                   </div>
                 ))}
               </div>
