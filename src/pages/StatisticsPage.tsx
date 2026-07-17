@@ -4,12 +4,14 @@ import {
   MessagesSquare,
   Search,
   Star,
-  TrendingDown,
   TrendingUp,
   User,
   type LucideIcon,
 } from "lucide-react";
-import { Badge, Card, Input, SegmentedControl } from "@ki4jlu/design-system";
+import { Badge, Card, DashboardLayout, Input, SegmentedControl } from "@ki4jlu/design-system";
+import { EmptyState } from "../components/EmptyState";
+import { ProgressBar } from "../components/ProgressBar";
+import { StatCard } from "../components/StatCard";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -263,151 +265,118 @@ export function StatisticsPage() {
   const maxCount = Math.max(...TOP_QUESTIONS.map((q) => q.count));
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-surface border-b border-outline-variant">
-        <div className="flex items-center justify-between gap-4 px-6 py-4 max-w-container-max mx-auto w-full">
-          <h2 className="text-headline-md font-semibold shrink-0">Statistiken</h2>
-
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {/* Search */}
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10"
-                style={{ fontSize: 18 }}
-                width="1em"
-                height="1em"
-                aria-hidden
-              />
-              <Input
-                type="text"
-                placeholder="Suchen..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-40"
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="flex-1 p-6 space-y-6 max-w-container-max mx-auto w-full">
-        {/* KPI row */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {KPI_CARDS.map((kpi, i) => {
-            const KpiIcon = kpi.icon;
-            const TrendIcon = kpi.positive ? TrendingUp : TrendingDown;
-            return (
-              <Card key={i} className="p-5 flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
-                    <KpiIcon className="text-on-primary-container" style={{ fontSize: 20 }} width="1em" height="1em" aria-hidden />
-                  </div>
-                  <Badge tone={kpi.positive ? "success" : "error"}>
-                    <TrendIcon style={{ fontSize: 14 }} width="1em" height="1em" aria-hidden />
-                    {kpi.delta}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{kpi.value}</p>
-                  <p className="text-sm text-on-surface-variant mt-0.5">{kpi.label}</p>
-                </div>
-                <p className="text-xs text-on-surface-variant">{kpi.sub}</p>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Bar chart */}
-        <Card className="p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
-              <p className="text-sm text-on-surface-variant mt-0.5">Täglich, wöchentlich oder monatlich</p>
-            </div>
-            <SegmentedControl
-              options={[
-                { value: "Tag", label: "Tag" },
-                { value: "Woche", label: "Woche" },
-                { value: "Monat", label: "Monat" },
-              ]}
-              value={chartView}
-              onValueChange={(v) => setChartView(v as ChartView)}
-              aria-label="Zeitraum"
-              className="shrink-0"
+    <DashboardLayout
+      title="Statistiken"
+      description="Nutzung aller Widgets der letzten 30 Tage."
+      actions={
+        <Input
+          leadingIcon={<Search aria-hidden />}
+          type="text"
+          placeholder="Suchen..."
+          aria-label="Statistiken durchsuchen"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-48"
+        />
+      }
+      stats={
+        <>
+          {KPI_CARDS.map((kpi) => (
+            <StatCard
+              key={kpi.label}
+              icon={<kpi.icon aria-hidden />}
+              value={kpi.value}
+              label={kpi.label}
+              delta={{ label: kpi.delta, positive: kpi.positive }}
+              sub={kpi.sub}
             />
+          ))}
+        </>
+      }
+    >
+      {/* Bar chart */}
+      <Card className="p-gutter">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-title-md font-semibold">Gespräche über Zeit</h3>
+            <p className="text-sm text-on-surface-variant mt-0.5">Täglich, wöchentlich oder monatlich</p>
           </div>
-          <BarChart data={CHART_DATA[chartView]} />
+          <SegmentedControl
+            options={[
+              { value: "Tag", label: "Tag" },
+              { value: "Woche", label: "Woche" },
+              { value: "Monat", label: "Monat" },
+            ]}
+            value={chartView}
+            onValueChange={(v) => setChartView(v as ChartView)}
+            aria-label="Zeitraum"
+            className="shrink-0"
+          />
+        </div>
+        <BarChart data={CHART_DATA[chartView]} />
+      </Card>
+
+      {/* Bottom row: top questions + donut (3/2-Split — Grid kann nur gleiche Spalten) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-gutter">
+        {/* Häufigste Fragen */}
+        <Card className="lg:col-span-3 p-gutter">
+          <h3 className="text-title-md font-semibold">Häufigste Fragen</h3>
+          <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Top 5 Nutzeranfragen diesen Monat</p>
+          <div className="space-y-4">
+            {filteredQuestions.slice(0, 5).map((q, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{q.text}</p>
+                  <ProgressBar percent={(q.count / maxCount) * 100} className="mt-1.5 h-1.5" />
+                </div>
+                <span className="text-sm font-semibold shrink-0 tabular-nums">{q.count}</span>
+              </div>
+            ))}
+            {filteredQuestions.length === 0 && (
+              <EmptyState title="Keine Ergebnisse" hint="Suchbegriff anpassen." />
+            )}
+          </div>
         </Card>
 
-        {/* Bottom row: top questions + donut */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* Häufigste Fragen */}
-          <Card className="lg:col-span-3 p-6">
-            <h3 className="text-title-md font-semibold">Häufigste Fragen</h3>
-            <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Top 5 Nutzeranfragen diesen Monat</p>
-            <div className="space-y-4">
-              {filteredQuestions.slice(0, 5).map((q, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-primary-container text-on-primary-container text-xs font-bold flex items-center justify-center shrink-0">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{q.text}</p>
-                    <div className="mt-1.5 h-1.5 rounded-full bg-secondary-container overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${(q.count / maxCount) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-sm font-semibold shrink-0 tabular-nums">{q.count}</span>
-                </div>
-              ))}
-              {filteredQuestions.length === 0 && (
-                <p className="text-sm text-on-surface-variant text-center py-4">Keine Ergebnisse</p>
-              )}
+        {/* Widget-Verteilung */}
+        <Card className="lg:col-span-2 p-gutter">
+          <h3 className="text-title-md font-semibold">Widget-Verteilung</h3>
+          <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Gespräche nach Widget</p>
+          <DonutChart />
+        </Card>
+      </div>
+
+      {/* Period summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        {PERIOD_CARDS.map((period, i) => (
+          <Card key={i} className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
+              <Badge tone="success">
+                <TrendingUp style={{ fontSize: 13 }} width="1em" height="1em" aria-hidden />
+                {period.trend}
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-on-surface-variant">Gespräche</span>
+                <span className="text-lg font-bold text-primary">{period.gespräche}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-on-surface-variant">Nutzer</span>
+                <span className="text-sm font-semibold">{period.nutzer}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-on-surface-variant">Ø Antwortzeit</span>
+                <span className="text-sm font-semibold">{period.antwortzeit}</span>
+              </div>
             </div>
           </Card>
-
-          {/* Widget-Verteilung */}
-          <Card className="lg:col-span-2 p-6">
-            <h3 className="text-title-md font-semibold">Widget-Verteilung</h3>
-            <p className="text-sm text-on-surface-variant mt-0.5 mb-5">Gespräche nach Widget</p>
-            <DonutChart />
-          </Card>
-        </div>
-
-        {/* Period summary cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PERIOD_CARDS.map((period, i) => (
-            <Card key={i} className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold tracking-widest text-on-surface-variant">{period.label}</span>
-                <Badge tone="success">
-                  <TrendingUp style={{ fontSize: 13 }} width="1em" height="1em" aria-hidden />
-                  {period.trend}
-                </Badge>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-on-surface-variant">Gespräche</span>
-                  <span className="text-lg font-bold text-primary">{period.gespräche}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-on-surface-variant">Nutzer</span>
-                  <span className="text-sm font-semibold">{period.nutzer}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-on-surface-variant">Ø Antwortzeit</span>
-                  <span className="text-sm font-semibold">{period.antwortzeit}</span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </main>
-    </div>
+        ))}
+      </div>
+    </DashboardLayout>
   );
 }

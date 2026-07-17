@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { AddWidgetCard } from "../components/AddWidgetCard";
+import { DashboardLayout, Grid } from "@ki4jlu/design-system";
+import { AddTile } from "../components/AddTile";
+import { Alert } from "../components/Alert";
+import { EmptyState } from "../components/EmptyState";
 import { SearchToolbar, type SortOption, type StatusFilter } from "../components/SearchToolbar";
 import { WidgetCard } from "../components/WidgetCard";
 import { fetchAgents } from "../data/agentsStore";
@@ -53,7 +56,10 @@ export function DashboardPage() {
     });
 
   return (
-    <main className="flex-grow p-gutter space-y-stack-lg max-w-container-max mx-auto w-full">
+    <DashboardLayout
+      title="Dashboard Übersicht"
+      description={`${filteredWidgets.length} Konnektor${filteredWidgets.length === 1 ? "" : "en"}`}
+    >
       <SearchToolbar
         value={search}
         onChange={setSearch}
@@ -63,23 +69,22 @@ export function DashboardPage() {
         onSortOptionChange={setSortOption}
       />
 
-      {loadError ? (
-        <div className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
-          Konnektoren konnten nicht geladen werden: {loadError}
-        </div>
-      ) : null}
+      {loadError && <Alert>Konnektoren konnten nicht geladen werden: {loadError}</Alert>}
 
-      <div className="flex items-center justify-between border-b border-outline-variant pb-4">
-        <h2 className="font-headline-md text-headline-md text-on-surface">Ihre Konnektoren</h2>
-        <p className="text-on-surface-variant font-body-base text-sm">{filteredWidgets.length} Konnektoren</p>
-      </div>
+      {!loadError && widgets.length > 0 && filteredWidgets.length === 0 && (
+        <EmptyState title="Keine Konnektoren gefunden" hint="Suchbegriff oder Filter anpassen." />
+      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <Grid cols={4}>
         {filteredWidgets.map((widget) => (
-          <WidgetCard key={widget.id} widget={widget} agentName={widget.agentId ? agentNames[widget.agentId] : undefined} />
+          <WidgetCard
+            key={widget.id}
+            widget={widget}
+            agentName={widget.agentId ? agentNames[widget.agentId] : undefined}
+          />
         ))}
-        <AddWidgetCard />
-      </div>
-    </main>
+        <AddTile to="/widgets/new" label="Konnektor hinzufügen" hint="Neuen Front (Widget) anlegen" />
+      </Grid>
+    </DashboardLayout>
   );
 }

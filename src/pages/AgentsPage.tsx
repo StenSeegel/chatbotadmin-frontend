@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Card } from "@ki4jlu/design-system";
-import { Bot, Brain, Link as LinkIcon, Pencil, Plus } from "lucide-react";
+import { Badge, Button, Card, DashboardLayout, Grid } from "@ki4jlu/design-system";
+import { Bot, Brain, Link as LinkIcon, Pencil } from "lucide-react";
+import { AddTile } from "../components/AddTile";
+import { Alert } from "../components/Alert";
 import { agentUsageByWidgets, fetchAgents } from "../data/agentsStore";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
@@ -39,24 +41,18 @@ export function AgentsPage() {
   const sorted = [...agents].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <main className="flex-grow p-gutter space-y-stack-lg max-w-container-max mx-auto w-full">
-      <p className="text-sm text-on-surface-variant max-w-prose">
-        Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b> (Ebene 1): Modell,
-        System-Prompt und Regeln. Ein Agent wird einmal definiert und von beliebig vielen Konnektoren verwendet.
-      </p>
+    <DashboardLayout
+      title="Agenten"
+      description={
+        <>
+          Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b> (Ebene 1): Modell,
+          System-Prompt und Regeln. Ein Agent wird einmal definiert und von beliebig vielen Konnektoren verwendet.
+        </>
+      }
+    >
+      {loadError && <Alert>Agenten konnten nicht geladen werden: {loadError}</Alert>}
 
-      {loadError ? (
-        <div className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
-          Agenten konnten nicht geladen werden: {loadError}
-        </div>
-      ) : null}
-
-      <div className="flex items-center justify-between border-b border-outline-variant pb-4">
-        <h2 className="font-headline-md text-headline-md text-on-surface">Ihre Agenten</h2>
-        <p className="text-on-surface-variant font-body-base text-sm">{sorted.length} Agenten</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <Grid cols={4}>
         {sorted.map((agent) => {
           const used = usage[agent.id] ?? 0;
           const activeRules = agent.rules.filter((r) => r.enabled && r.text.trim()).length;
@@ -67,14 +63,12 @@ export function AgentsPage() {
                   <Brain className="text-primary" width="1em" height="1em" aria-hidden />
                 </div>
                 {used > 0 ? (
-                  <span className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-label-sm font-bold">
+                  <Badge tone="primary">
                     <LinkIcon className="text-[14px]" width="1em" height="1em" aria-hidden />
                     {used} Konnektor{used === 1 ? "" : "en"}
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className="flex items-center gap-1.5 bg-surface-container-highest text-on-surface-variant px-2.5 py-1 rounded-full text-label-sm font-bold">
-                    Standalone
-                  </span>
+                  <Badge tone="neutral">Standalone</Badge>
                 )}
               </div>
 
@@ -109,18 +103,8 @@ export function AgentsPage() {
           );
         })}
 
-        {/* Neuer Agent */}
-        <Link
-          to="/agents/new"
-          className="border-2 border-dashed border-outline-variant rounded-xl p-4 flex flex-col items-center justify-center text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer group bg-surface-container-low/50"
-        >
-          <div className="w-12 h-12 rounded-full border-2 border-dashed border-current flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <Plus className="text-[28px]" width="1em" height="1em" aria-hidden />
-          </div>
-          <span className="font-headline-md text-base font-bold">Agent hinzufügen</span>
-          <p className="text-xs mt-1 opacity-70 text-center">Neue Denkschicht anlegen</p>
-        </Link>
-      </div>
-    </main>
+        <AddTile to="/agents/new" label="Agent hinzufügen" hint="Neue Denkschicht anlegen" />
+      </Grid>
+    </DashboardLayout>
   );
 }

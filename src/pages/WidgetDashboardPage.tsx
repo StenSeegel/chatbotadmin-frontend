@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Badge, Card, Input } from "@ki4jlu/design-system";
+import { Avatar, Badge, Card, DashboardLayout, Grid, Input } from "@ki4jlu/design-system";
 import { Search } from "lucide-react";
-import { ConversationsShell } from "../components/ConversationsShell";
+import { EmptyState } from "../components/EmptyState";
+import { ProgressBar } from "../components/ProgressBar";
+import { StatCard } from "../components/StatCard";
 import { fetchWidgets } from "../data/widgetsStore";
 import {
   CONVERSATIONS,
@@ -11,6 +13,9 @@ import {
   TOP_QUESTIONS,
 } from "../data/conversations";
 
+// Per-Widget-Dashboard als eigenständige DashboardLayout-Seite (gleicher
+// Archetyp wie Dashboard/Statistiken). Die Master-Detail-Shell bleibt der
+// Gesprächs-Detailansicht vorbehalten.
 export function WidgetDashboardPage() {
   const { id } = useParams<{ id: string }>();
   const [widgetName, setWidgetName] = useState<string | null>(null);
@@ -47,96 +52,71 @@ export function WidgetDashboardPage() {
   ];
 
   return (
-    <ConversationsShell widgetId={id} widgetName={widgetName}>
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-surface-container-low/30">
-        {/* Bot header card */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-success shrink-0" />
-            <h2 className="text-title-lg font-bold">{widgetName ?? "Widget"}</h2>
-            <span className="text-sm text-on-surface-variant">
-              {DASHBOARD_STATS.gespraecheHeute} Gespräche heute
-            </span>
-          </div>
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
-              style={{ fontSize: 18 }}
-              width="1em"
-              height="1em"
-              aria-hidden
-            />
-            <Input
-              type="text"
-              placeholder="Suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+    <DashboardLayout
+      title={
+        <span className="flex items-center gap-stack-sm">
+          {widgetName ?? "Widget"}
+          <Badge dot tone="success">
+            Online
+          </Badge>
+        </span>
+      }
+      description={`${DASHBOARD_STATS.gespraecheHeute} Gespräche heute`}
+      actions={
+        <Input
+          leadingIcon={<Search aria-hidden />}
+          type="text"
+          placeholder="Suchen..."
+          aria-label="Gespräche durchsuchen"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-48"
+        />
+      }
+      stats={
+        <>
+          {kpis.map((kpi) => (
+            <StatCard key={kpi.label} label={kpi.label} value={kpi.value} accent={kpi.accent} />
+          ))}
+        </>
+      }
+    >
+      <Grid cols={2}>
+        {/* Zuletzt aktiv */}
+        <Card className="p-gutter">
+          <h3 className="text-title-md font-semibold mb-4">Zuletzt aktiv</h3>
+          <div className="space-y-1">
+            {recent.map((c) => (
+              <Link
+                key={c.id}
+                to={`/widgets/${id}/gespraeche/${c.id}`}
+                className="flex items-center gap-3 py-2.5 border-b border-outline-variant/60 last:border-0 hover:bg-secondary-container/40 -mx-2 px-2 rounded-lg transition-colors"
+              >
+                <Avatar size="sm" initials={c.initials} />
+                <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
+                <Badge tone={STATUS_TONES[c.status]}>{c.status}</Badge>
+              </Link>
+            ))}
+            {recent.length === 0 && <EmptyState title="Keine Treffer" hint="Suchbegriff anpassen." />}
           </div>
         </Card>
 
-        {/* KPI row */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {kpis.map((kpi) => (
-            <Card key={kpi.label} className="p-5">
-              <p className="text-sm text-on-surface-variant">{kpi.label}</p>
-              <p className={`text-2xl font-bold mt-2 ${kpi.accent ? "text-primary" : "text-on-surface"}`}>
-                {kpi.value}
-              </p>
-            </Card>
-          ))}
-        </div>
-
-        {/* Zuletzt aktiv + Top-Fragen */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Zuletzt aktiv */}
-          <Card className="p-6">
-            <h3 className="text-title-md font-semibold mb-4">Zuletzt aktiv</h3>
-            <div className="space-y-1">
-              {recent.map((c) => (
-                <Link
-                  key={c.id}
-                  to={`/widgets/${id}/gespraeche/${c.id}`}
-                  className="flex items-center gap-3 py-2.5 border-b border-outline-variant/60 last:border-0 hover:bg-secondary-container/40 -mx-2 px-2 rounded-lg transition-colors"
-                >
-                  <span className="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-semibold shrink-0">
-                    {c.initials}
-                  </span>
-                  <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
-                  <Badge tone={STATUS_TONES[c.status]}>
-                    {c.status}
-                  </Badge>
-                </Link>
-              ))}
-              {recent.length === 0 && (
-                <p className="text-sm text-on-surface-variant text-center py-4">Keine Treffer</p>
-              )}
-            </div>
-          </Card>
-
-          {/* Top-Fragen */}
-          <Card className="p-6">
-            <h3 className="text-title-md font-semibold mb-4">Top-Fragen</h3>
-            <div className="space-y-4">
-              {TOP_QUESTIONS.map((q) => (
-                <div key={q.text}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm">{q.text}</span>
-                    <span className="text-sm font-semibold tabular-nums">{q.count}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-secondary-container overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{ width: `${(q.count / maxCount) * 100}%` }}
-                    />
-                  </div>
+        {/* Top-Fragen */}
+        <Card className="p-gutter">
+          <h3 className="text-title-md font-semibold mb-4">Top-Fragen</h3>
+          <div className="space-y-4">
+            {TOP_QUESTIONS.map((q) => (
+              <div key={q.text}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm">{q.text}</span>
+                  <span className="text-sm font-semibold tabular-nums">{q.count}</span>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </div>
-    </ConversationsShell>
+                <ProgressBar percent={(q.count / maxCount) * 100} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </Grid>
+    </DashboardLayout>
   );
 }
