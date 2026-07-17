@@ -123,7 +123,7 @@ export function DashboardPage() {
             agentName={widget.agentId ? agentNames[widget.agentId] : undefined}
           />
         ))}
-        <AddTile to="/widgets/new" label="Konnektor hinzufügen" hint="Neuen Front (Widget) anlegen" />
+        <AddTile to="/widgets/new" label="Konnektor hinzufügen" hint="Neuen Konnektor anlegen" />
       </Grid>
     </DashboardLayout>
   );
