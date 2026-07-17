@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Input, MenuItem } from "@ki4jlu/design-system";
+import {
+  Button,
+  Input,
+  MenuItem,
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@ki4jlu/design-system";
 import { Bot, Check, ChevronDown, CircleAlert, LoaderCircle } from "lucide-react";
 import { fetchModels, type LanguageModel } from "../data/models";
 
@@ -36,6 +43,9 @@ export function ModelCombobox({
   const [inputText, setInputText] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
+  // Feld + Chevron zusammen bilden den Popover-Anker; Klicks darauf dürfen
+  // das offene Popover nicht über Radix' Outside-Dismiss schließen.
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   // Klarname zu einer ID (oder die ID selbst, falls unbekannt/Freitext).
   const displayFor = (val: string) => models.find((m) => m.id === val)?.name || val;
@@ -132,63 +142,76 @@ export function ModelCombobox({
   };
 
   return (
-    <div className="relative">
-      <div className="relative">
-        <Input
-          ref={inputRef}
-          id={id}
-          value={inputText}
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={id ? `${id}-listbox` : undefined}
-          autoComplete="off"
-          onChange={(e) => {
-            setInputText(e.target.value);
-            if (!open) setOpen(true);
-            setHighlight(0);
-          }}
-          onFocus={(e) => {
-            openDropdown();
-            e.target.select();
-          }}
-          onBlur={commitText}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          className={className}
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          tabIndex={-1}
-          // Fokus im Feld behalten, damit onBlur nicht vorzeitig committet.
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            if (open) {
-              commitText();
-            } else {
+    <Popover open={open} onOpenChange={(next) => { if (!next) setOpen(false); }}>
+      <PopoverAnchor asChild>
+        <div ref={anchorRef} className="relative">
+          <Input
+            ref={inputRef}
+            id={id}
+            value={inputText}
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={id ? `${id}-listbox` : undefined}
+            autoComplete="off"
+            onChange={(e) => {
+              setInputText(e.target.value);
+              if (!open) setOpen(true);
+              setHighlight(0);
+            }}
+            onFocus={(e) => {
               openDropdown();
-              inputRef.current?.focus();
-            }
-          }}
-          aria-label="Knowledge-Bases anzeigen"
-          className="absolute inset-y-0 right-0"
-        >
-          <ChevronDown
-            className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
-            width="1em"
-            height="1em"
-            aria-hidden
+              e.target.select();
+            }}
+            onBlur={commitText}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            className={className}
           />
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            tabIndex={-1}
+            // Fokus im Feld behalten, damit onBlur nicht vorzeitig committet.
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (open) {
+                commitText();
+              } else {
+                openDropdown();
+                inputRef.current?.focus();
+              }
+            }}
+            aria-label="Knowledge-Bases anzeigen"
+            className="absolute inset-y-0 right-0"
+          >
+            <ChevronDown
+              className={`text-[20px] transition-transform ${open ? "rotate-180" : ""}`}
+              width="1em"
+              height="1em"
+              aria-hidden
+            />
+          </Button>
+        </div>
+      </PopoverAnchor>
 
-      {open && (
-        <div
-          id={id ? `${id}-listbox` : undefined}
-          role="listbox"
-          className="absolute z-40 mt-1 w-full max-h-64 overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg py-1"
-        >
+      <PopoverContent
+        id={id ? `${id}-listbox` : undefined}
+        role="listbox"
+        align="start"
+        sideOffset={4}
+        // Fokus bleibt im Eingabefeld — Freitext-Suche muss bei offener Liste
+        // weiter funktionieren, deshalb weder beim Öffnen noch beim Schließen
+        // den Fokus verschieben.
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        // Klicks auf Feld/Chevron sind für Radix „außerhalb" des Portals –
+        // dort aber nicht schließen (Chevron toggelt selbst, Feld bleibt aktiv).
+        onInteractOutside={(e) => {
+          if (anchorRef.current?.contains(e.target as Node)) e.preventDefault();
+        }}
+        className="w-(--radix-popover-trigger-width) max-h-64 overflow-y-auto p-1"
+      >
           {loading && (
             <div className="flex items-center gap-2 px-3 py-2 text-sm text-on-surface-variant">
               <LoaderCircle className="text-[18px] animate-spin" width="1em" height="1em" aria-hidden />
@@ -244,8 +267,7 @@ export function ModelCombobox({
                 {m.id === value && <Check className="ml-auto text-[18px]" width="1em" height="1em" aria-hidden />}
               </MenuItem>
             ))}
-        </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
