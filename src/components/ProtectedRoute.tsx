@@ -1,6 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { Ban } from "lucide-react";
+import { AuthLayout } from "@ki4jlu/design-system";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,15 +23,21 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (requiredRole && user?.role !== requiredRole && user?.role !== "superadmin") {
     return (
-      <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-gutter">
-        <div className="w-full max-w-sm text-center">
-          <Ban className="text-error mb-4" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
-          <h2 className="text-headline-md font-bold text-on-surface mb-2">Zugriff verweigert</h2>
+      <AuthLayout
+        title="Zugriff verweigert"
+        footer={
+          <Link to="/" className="underline underline-offset-4 hover:text-on-surface">
+            Zur Startseite
+          </Link>
+        }
+      >
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Ban className="text-error" style={{ fontSize: 40 }} width="1em" height="1em" aria-hidden />
           <p className="text-sm text-on-surface-variant">
             Sie benötigen die Rolle <strong>{requiredRole}</strong>, um auf diese Seite zuzugreifen.
           </p>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 

@@ -1,55 +1,24 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
-import { Badge, Button, Input, MenuItem } from "@ki4jlu/design-system";
+import {
+  Avatar,
+  Badge,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+} from "@ki4jlu/design-system";
+import { EmptyState } from "./EmptyState";
 import { CONVERSATIONS, STATUS_TONES } from "../data/conversations";
 
+// Bewusste Ausnahme: Das Design-System hat kein SplitView-Template, daher
+// bleibt diese 3-Spalten-Master-Detail-Hülle die eine handgebaute
+// Layout-Ausnahme der App. Sie beherbergt nur noch die
+// Gesprächs-Detailroute (Thread-Ansicht).
 const STATUS_OPTIONS = ["Alle Status", "Offen", "Neu", "Gelöst"];
-
-// ── Small dropdown (display + selectable) ─────────────────────
-
-function FilterDropdown({
-  value,
-  options,
-  onChange,
-}: {
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <Button variant="outline" size="sm" onClick={() => setOpen((v) => !v)}>
-        {value}
-        <ChevronDown style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
-      </Button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-50 min-w-full w-max rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden">
-            {options.map((option) => (
-              <MenuItem
-                key={option}
-                type="button"
-                selected={option === value}
-                onClick={() => {
-                  onChange(option);
-                  setOpen(false);
-                }}
-              >
-                {option}
-                {option === value && (
-                  <Check className="ml-auto" style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
-                )}
-              </MenuItem>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 /**
  * Gemeinsame Hülle der Gesprächsprotokoll-Seiten: Kopfzeile mit Filtern und
@@ -91,22 +60,36 @@ export function ConversationsShell({
           </h2>
 
           <div className="flex items-center gap-2 flex-1 justify-end flex-wrap">
-            <FilterDropdown value={statusFilter} options={STATUS_OPTIONS} onChange={setStatusFilter} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {statusFilter}
+                  <ChevronDown style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {STATUS_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    selected={option === statusFilter}
+                    onSelect={() => setStatusFilter(option)}
+                  >
+                    {option}
+                    {option === statusFilter && (
+                      <Check className="ml-auto" style={{ fontSize: 16 }} width="1em" height="1em" aria-hidden />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
-                style={{ fontSize: 18 }}
-                width="1em"
-                height="1em"
-                aria-hidden
-              />
+            <div className="flex-1 min-w-[200px] max-w-md">
               <Input
                 type="text"
                 placeholder="Suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                leadingIcon={<Search width="1em" height="1em" aria-hidden />}
               />
             </div>
           </div>
@@ -123,8 +106,7 @@ export function ConversationsShell({
                 <h3 className="text-title-md font-semibold">Gespräche</h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">{filtered.length} Ergebnisse</p>
               </div>
-              <Badge tone="primary">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <Badge dot tone="primary">
                 Live
               </Badge>
             </div>
@@ -138,12 +120,7 @@ export function ConversationsShell({
                   className="flex flex-col items-center gap-1 shrink-0"
                   title={c.name}
                 >
-                  <div className="relative">
-                    <div className="h-12 w-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-sm font-semibold">
-                      {c.initials}
-                    </div>
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-surface" />
-                  </div>
+                  <Avatar initials={c.initials} size="lg" online aria-label={`${c.name}, online`} />
                   <span className="text-xs text-on-surface-variant">{c.name.split(" ")[0]}</span>
                 </Link>
               ))}
@@ -164,9 +141,7 @@ export function ConversationsShell({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-semibold shrink-0">
-                      {c.initials}
-                    </div>
+                    <Avatar initials={c.initials} size="sm" className="shrink-0" />
                     <span className="font-semibold text-sm flex-1 truncate">{c.name}</span>
                     <span className="text-xs text-on-surface-variant shrink-0">{c.time}</span>
                   </div>
@@ -177,15 +152,13 @@ export function ConversationsShell({
                     <Badge tone={STATUS_TONES[c.status]}>
                       {c.status}
                     </Badge>
-                    <span className="text-xs text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">
-                      {c.channel}
-                    </span>
+                    <Badge tone="neutral">{c.channel}</Badge>
                   </div>
                 </Link>
               );
             })}
             {filtered.length === 0 && (
-              <p className="text-sm text-on-surface-variant text-center py-8">Keine Gespräche gefunden</p>
+              <EmptyState title="Keine Gespräche gefunden" />
             )}
           </div>
         </aside>

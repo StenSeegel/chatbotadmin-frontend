@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useParams } from "react-router-dom";
 import { Bot, Send, ThumbsDown, ThumbsUp } from "lucide-react";
-import { Button, Input } from "@ki4jlu/design-system";
+import { Button, ChatBubble, ChatLayout, Input } from "@ki4jlu/design-system";
 import { Markdown } from "../components/Markdown";
 import { streamChatMessage, type ChatMessage } from "../data/chat";
 import { fetchPublicConfig, type PublicWidgetConfig } from "../data/widgetsStore";
@@ -66,11 +66,11 @@ export function StandaloneWidgetPage() {
     if (config?.title) document.title = config.title;
   }, [config?.title]);
 
-  // Bei neuen Nachrichten / während des Streamens nach unten scrollen.
-  const messagesRef = useRef<HTMLDivElement>(null);
+  // Bei neuen Nachrichten / während des Streamens nach unten scrollen. Der
+  // Scroll-Container liegt im ChatLayout — daher ein Sentinel am Listenende.
+  const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = messagesRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages, typing]);
 
   const isActive = config?.status === "active";
@@ -144,47 +144,85 @@ export function StandaloneWidgetPage() {
     return <CenteredNotice title="Fehler" text={loadError || "Das Widget konnte nicht geladen werden."} />;
   }
 
-  const accent = config.accentColor || "#0052ff";
+  // Akzentfarbe kommt aus der Widget-Konfiguration (Nutzerdaten) und bleibt
+  // deshalb bewusst ein Inline-Style.
+  const accent = config.accentColor || "#0056b3";
   const onlyGreeting = messages.length === 1 && messages[0].role === "bot";
 
   return (
-    <div className="min-h-screen bg-surface-container-low flex flex-col">
-      <div className="w-full max-w-2xl mx-auto flex flex-col flex-grow min-h-screen bg-surface shadow-sm">
-        {/* Header */}
-        <header className="flex items-center gap-3 px-5 py-4 text-white" style={{ backgroundColor: accent }}>
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-            <Bot size={22} aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-semibold text-base leading-tight truncate">{config.title}</h1>
-            <p className="text-xs opacity-85 flex items-center gap-1.5">
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${
-                  isActive ? "bg-success" : "bg-outline-variant"
-                }`}
-              />
-              {isActive ? "Online" : "Pausiert"}
-            </p>
-          </div>
-        </header>
-
-        {/* Messages */}
-        <div ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-4 bg-surface-container-low">
+    <div className="min-h-dvh bg-surface-container-low">
+      <div className="mx-auto w-full max-w-2xl h-dvh">
+        <ChatLayout
+          header={
+            // Negative Ränder füllen das Padding des Header-Slots, damit die
+            // Akzentfarbe die gesamte Kopfleiste deckt.
+            <div
+              className="-m-4 flex flex-1 items-center gap-3 px-5 py-4 text-white"
+              style={{ backgroundColor: accent }}
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Bot style={{ fontSize: 22 }} width="1em" height="1em" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h1 className="font-semibold text-base leading-tight truncate">{config.title}</h1>
+                <p className="text-xs opacity-85 flex items-center gap-1.5">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${
+                      isActive ? "bg-success" : "bg-outline-variant"
+                    }`}
+                  />
+                  {isActive ? "Online" : "Pausiert"}
+                </p>
+              </div>
+            </div>
+          }
+          composer={
+            isActive ? (
+              <form
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend(draft);
+                }}
+              >
+                <Input
+                  type="text"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Frage eingeben…"
+                  autoComplete="off"
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!draft.trim() || typing}
+                  aria-label="Senden"
+                  className="shrink-0 text-white"
+                  style={{ backgroundColor: accent }}
+                >
+                  <Send style={{ fontSize: 18 }} width="1em" height="1em" aria-hidden />
+                </Button>
+              </form>
+            ) : (
+              <p className="text-center text-sm text-on-surface-variant py-1">
+                Dieses Widget ist derzeit pausiert.
+              </p>
+            )
+          }
+        >
           {messages.map((msg, i) => (
             <div
               key={i}
               className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "text-white rounded-br-sm"
-                    : "bg-surface text-on-surface border border-outline-variant rounded-bl-sm"
-                }`}
+              <ChatBubble
+                from={msg.role === "user" ? "user" : "assistant"}
+                className={msg.role === "user" ? "text-white" : undefined}
                 style={msg.role === "user" ? ({ backgroundColor: accent } as CSSProperties) : undefined}
               >
                 {msg.role === "bot" && !msg.notice ? <Markdown>{msg.text}</Markdown> : msg.text}
-              </div>
+              </ChatBubble>
 
               {config.feedbackButtons && msg.role === "bot" && !msg.notice ? (
                 <div className="flex gap-1 mt-1 ml-1 text-on-surface-variant">
@@ -196,7 +234,7 @@ export function StandaloneWidgetPage() {
                     onClick={() => setFeedback(i, "up")}
                     className={msg.feedback === "up" ? "text-primary" : undefined}
                   >
-                    <ThumbsUp size={15} />
+                    <ThumbsUp style={{ fontSize: 15 }} width="1em" height="1em" aria-hidden />
                   </Button>
                   <Button
                     type="button"
@@ -206,7 +244,7 @@ export function StandaloneWidgetPage() {
                     onClick={() => setFeedback(i, "down")}
                     className={msg.feedback === "down" ? "text-primary" : undefined}
                   >
-                    <ThumbsDown size={15} />
+                    <ThumbsDown style={{ fontSize: 15 }} width="1em" height="1em" aria-hidden />
                   </Button>
                 </div>
               ) : null}
@@ -238,43 +276,9 @@ export function StandaloneWidgetPage() {
               ))}
             </div>
           ) : null}
-        </div>
 
-        {/* Footer / Eingabe */}
-        <footer className="border-t border-outline-variant bg-surface px-4 py-3">
-          {isActive ? (
-            <form
-              className="flex items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend(draft);
-              }}
-            >
-              <Input
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Frage eingeben…"
-                autoComplete="off"
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!draft.trim() || typing}
-                aria-label="Senden"
-                className="shrink-0 text-white"
-                style={{ backgroundColor: accent }}
-              >
-                <Send size={18} />
-              </Button>
-            </form>
-          ) : (
-            <p className="text-center text-sm text-on-surface-variant py-1">
-              Dieses Widget ist derzeit pausiert.
-            </p>
-          )}
-        </footer>
+          <div ref={bottomRef} aria-hidden="true" />
+        </ChatLayout>
       </div>
     </div>
   );
