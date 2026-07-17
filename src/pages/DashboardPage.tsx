@@ -1,13 +1,28 @@
 import { useEffect, useState } from "react";
-import { DashboardLayout, Grid } from "@ki4jlu/design-system";
+import { ArrowUpDown, ListFilter, Search } from "lucide-react";
+import { DashboardLayout, FilterMenu, Grid, Input, ListToolbar } from "@ki4jlu/design-system";
 import { AddTile } from "../components/AddTile";
 import { Alert } from "../components/Alert";
 import { EmptyState } from "../components/EmptyState";
-import { SearchToolbar, type SortOption, type StatusFilter } from "../components/SearchToolbar";
 import { WidgetCard } from "../components/WidgetCard";
 import { fetchAgents } from "../data/agentsStore";
 import { fetchWidgets } from "../data/widgetsStore";
-import type { Widget } from "../types/widget";
+import type { Widget, WidgetStatus } from "../types/widget";
+
+type StatusFilter = "all" | WidgetStatus;
+type SortOption = "name" | "conversations" | "rating";
+
+const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "active", label: "Aktiv" },
+  { value: "paused", label: "Pause" },
+];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "name", label: "Name (A-Z)" },
+  { value: "conversations", label: "Gespräche" },
+  { value: "rating", label: "Bewertung" },
+];
 
 export function DashboardPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
@@ -59,16 +74,41 @@ export function DashboardPage() {
     <DashboardLayout
       title="Dashboard Übersicht"
       description={`${filteredWidgets.length} Konnektor${filteredWidgets.length === 1 ? "" : "en"}`}
+      toolbar={
+        <ListToolbar
+          search={
+            <Input
+              leadingIcon={<Search aria-hidden />}
+              placeholder="Widgets durchsuchen..."
+              aria-label="Widgets durchsuchen"
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          }
+          filters={
+            <>
+              <FilterMenu
+                icon={ListFilter}
+                label="Filter"
+                options={FILTER_OPTIONS}
+                value={statusFilter}
+                defaultValue="all"
+                onChange={(value) => setStatusFilter(value as StatusFilter)}
+              />
+              <FilterMenu
+                icon={ArrowUpDown}
+                label="Sortieren"
+                options={SORT_OPTIONS}
+                value={sortOption}
+                defaultValue="name"
+                onChange={(value) => setSortOption(value as SortOption)}
+              />
+            </>
+          }
+        />
+      }
     >
-      <SearchToolbar
-        value={search}
-        onChange={setSearch}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        sortOption={sortOption}
-        onSortOptionChange={setSortOption}
-      />
-
       {loadError && <Alert>Konnektoren konnten nicht geladen werden: {loadError}</Alert>}
 
       {!loadError && widgets.length > 0 && filteredWidgets.length === 0 && (

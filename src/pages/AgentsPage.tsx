@@ -1,13 +1,34 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Badge, Button, Card, DashboardLayout, Grid } from "@ki4jlu/design-system";
-import { Bot, Brain, Link as LinkIcon, Pencil } from "lucide-react";
+import { Badge, Button, Card, DashboardLayout, FilterMenu, Grid, Input, ListToolbar } from "@ki4jlu/design-system";
+import { ArrowUpDown, Bot, Brain, Link as LinkIcon, ListFilter, Pencil, Search } from "lucide-react";
 import { AddTile } from "../components/AddTile";
 import { Alert } from "../components/Alert";
+import { EmptyState } from "../components/EmptyState";
 import { agentUsageByWidgets, fetchAgents } from "../data/agentsStore";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import type { Agent } from "../types/agent";
+
+type ConnectorFilter = "all" | "used" | "unused";
+type SortOption = "name" | "connectors" | "rules";
+
+const FILTER_OPTIONS: { value: ConnectorFilter; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "used", label: "Mit Konnektoren" },
+  { value: "unused", label: "Standalone" },
+];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "name", label: "Name (A-Z)" },
+  { value: "connectors", label: "Konnektoren" },
+  { value: "rules", label: "Regeln" },
+];
+
+/** Zählt die aktiven, nicht-leeren Regeln eines Agenten (Karten-Stat + Sortierung). */
+function activeRuleCount(agent: Agent): number {
+  return agent.rules.filter((r) => r.enabled && r.text.trim()).length;
+}
 
 export function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -38,7 +59,29 @@ export function AgentsPage() {
       .catch(() => setModelNames({}));
   }, []);
 
-  const sorted = [...agents].sort((a, b) => a.name.localeCompare(b.name));
+  const [search, setSearch] = useState("");
+  const [connectorFilter, setConnectorFilter] = useState<ConnectorFilter>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("name");
+
+  const filteredAgents = agents
+    .filter((agent) => {
+      const used = usage[agent.id] ?? 0;
+      if (connectorFilter === "used" && used === 0) return false;
+      if (connectorFilter === "unused" && used > 0) return false;
+      const query = search.trim().toLowerCase();
+      if (!query) return true;
+      return agent.name.toLowerCase().includes(query);
+    })
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "connectors":
+          return (usage[b.id] ?? 0) - (usage[a.id] ?? 0);
+        case "rules":
+          return activeRuleCount(b) - activeRuleCount(a);
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
 
   return (
     <DashboardLayout
@@ -49,13 +92,51 @@ export function AgentsPage() {
           System-Prompt und Regeln. Ein Agent wird einmal definiert und von beliebig vielen Konnektoren verwendet.
         </>
       }
+      toolbar={
+        <ListToolbar
+          search={
+            <Input
+              leadingIcon={<Search aria-hidden />}
+              placeholder="Agenten durchsuchen..."
+              aria-label="Agenten durchsuchen"
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          }
+          filters={
+            <>
+              <FilterMenu
+                icon={ListFilter}
+                label="Filter"
+                options={FILTER_OPTIONS}
+                value={connectorFilter}
+                defaultValue="all"
+                onChange={(value) => setConnectorFilter(value as ConnectorFilter)}
+              />
+              <FilterMenu
+                icon={ArrowUpDown}
+                label="Sortieren"
+                options={SORT_OPTIONS}
+                value={sortOption}
+                defaultValue="name"
+                onChange={(value) => setSortOption(value as SortOption)}
+              />
+            </>
+          }
+        />
+      }
     >
       {loadError && <Alert>Agenten konnten nicht geladen werden: {loadError}</Alert>}
 
+      {!loadError && agents.length > 0 && filteredAgents.length === 0 && (
+        <EmptyState title="Keine Agenten gefunden" hint="Suchbegriff oder Filter anpassen." />
+      )}
+
       <Grid cols={4}>
-        {sorted.map((agent) => {
+        {filteredAgents.map((agent) => {
           const used = usage[agent.id] ?? 0;
-          const activeRules = agent.rules.filter((r) => r.enabled && r.text.trim()).length;
+          const activeRules = activeRuleCount(agent);
           return (
             <Card key={agent.id} className="p-4 hover:shadow-card-hover hover:-translate-y-1 transition-all flex flex-col">
               <div className="flex justify-between items-start mb-3">
